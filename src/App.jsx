@@ -44,6 +44,12 @@ const WEEKDAYS = [
   { key: 'sat', label: 'السبت' },
 ];
 
+const RECURRENCE_CHOICES = [
+  { value: 'once', label: 'توصيلة (مرة واحدة)' },
+  { value: 'daily', label: 'ترحيل منتظم (يومياً)' },
+  { value: 'weekdays', label: 'ترحيل منتظم (أيام محددة)' },
+];
+
 const OFFER_PUBLIC_COLUMNS = [
   'id',
   'driver_name',
@@ -73,12 +79,18 @@ const REQUEST_PUBLIC_COLUMNS = [
   'start_area',
   'destination_area',
   'preferred_time',
+  'recurrence_type',
+  'recurrence_days',
   'seats_needed',
   'notes',
   'status',
   'expires_at',
   'created_at',
 ].join(', ');
+
+function isRecurringType(type) {
+  return type === 'daily' || type === 'weekdays';
+}
 
 function loadMySavedOffers() {
   try {
@@ -95,7 +107,7 @@ function saveMySavedOffers(list) {
   try {
     window.localStorage.setItem(MY_OFFERS_STORAGE_KEY, JSON.stringify(list));
   } catch {
-    // تجاهل الخطأ إذا كان التخزين المحلي غير متاح في التصفح الخفي
+    // تجاهل الخطأ إذا كان التخزين المحلي مقيداً في المتصفح
   }
 }
 
@@ -160,6 +172,23 @@ function formatDateTime(iso) {
   }
 }
 
+function formatTimeOnly(iso) {
+  if (!iso) return 'غير محدد';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  try {
+    return d.toLocaleTimeString('ar-SD', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return d.toLocaleTimeString('ar-EG', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+}
+
 function toDatetimeLocalValue(dateObj) {
   const pad = (n) => String(n).padStart(2, '0');
   return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(
@@ -168,16 +197,32 @@ function toDatetimeLocalValue(dateObj) {
 }
 
 function formatRecurrence(type, days) {
-  if (type === 'daily') return 'يتكرر يومياً';
+  if (type === 'daily') return 'يومياً';
   if (type === 'weekdays') {
     const namesMap = Object.fromEntries(WEEKDAYS.map((w) => [w.key, w.label]));
     const labels =
       Array.isArray(days) && days.length > 0
         ? days.map((k) => namesMap[k] || k).join('، ')
         : 'أيام محددة';
-    return `أيام محددة: ${labels}`;
+    return `أيام: ${labels}`;
   }
   return 'مرة واحدة';
+}
+
+function getEffectiveSortTimestamp(isoStr, recurrenceType) {
+  const base = new Date(isoStr).getTime();
+  if (Number.isNaN(base)) return Number.MAX_SAFE_INTEGER;
+  const now = Date.now();
+  if (!isRecurringType(recurrenceType) || base >= now) {
+    return base;
+  }
+  const orig = new Date(base);
+  const candidate = new Date(now);
+  candidate.setHours(orig.getHours(), orig.getMinutes(), 0, 0);
+  if (candidate.getTime() < now) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
+  return candidate.getTime();
 }
 
 function parseManageCode(rawCode) {
@@ -364,6 +409,23 @@ const ui = {
     color: active ? '#ffffff' : '#0d5c63',
     fontFamily: 'inherit',
     fontSize: '0.92rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+  }),
+  filterPillRow: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+    marginBottom: '12px',
+  },
+  filterPill: (active) => ({
+    padding: '8px 13px',
+    borderRadius: '999px',
+    border: active ? '1.5px solid #0d5c63' : '1px solid #b5cecb',
+    backgroundColor: active ? '#0d5c63' : '#f4faf9',
+    color: active ? '#ffffff' : '#143b40',
+    fontFamily: 'inherit',
+    fontSize: '0.84rem',
     fontWeight: 700,
     cursor: 'pointer',
   }),
@@ -565,6 +627,7 @@ export default function App() {
   const [boardError, setBoardError] = useState('');
   const [searchStart, setSearchStart] = useState('');
   const [searchDest, setSearchDest] = useState('');
+  const [searchTripKind, setSearchTripKind] = useState('all'); // 'all' | 'once' | 'recurring'
 
   // إعلاناتي المحفوظة محلياً على هذا الجهاز
   const [myOffers, setMyOffers] = useState(() => loadMySavedOffers());
@@ -600,19 +663,20 @@ export default function App() {
     available_seats: 3,
     price_per_seat: 0,
     expires_after_hours: 3,
+    recurring_valid_days: 14,
   });
   const [offerSubmitting, setOfferSubmitting] = useState(false);
   const [offerError, setOfferError] = useState('');
   const [savedManageCode, setSavedManageCode] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // إدارة السائق لإعلانه يدوياً برمز الإدارة (id_token) من جهاز آخر
+  // إدارة السائق لإعلانه يدوياً برمز الإدارة (id_token)
   const [manageCodeInput, setManageCodeInput] = useState('');
   const [manageSeatsInput, setManageSeatsInput] = useState(1);
   const [manageLoading, setManageLoading] = useState(false);
   const [manageFeedback, setManageFeedback] = useState({ type: '', text: '' });
 
-  // نموذج طلب ترحيل
+  // نموذج طلب توصيلة / ترحيل للطالب
   const [requestForm, setRequestForm] = useState({
     passenger_name: '',
     whatsapp_number: '',
@@ -620,9 +684,12 @@ export default function App() {
     start_area: '',
     destination_area: '',
     preferred_time: initialFutureTime,
+    recurrence_type: 'once',
+    recurrence_days: [],
     seats_needed: 1,
     notes: '',
     expires_after_hours: 3,
+    recurring_valid_days: 14,
   });
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [requestError, setRequestError] = useState('');
@@ -687,7 +754,6 @@ export default function App() {
       setOffers(liveOffers);
       setRequests(requestsRes.data || []);
 
-      // مزامنة حالة ومقاعد إعلاناتي المحفوظة مع أحدث بيانات من الخادم إن كانت لا تزال نشطة
       if (liveOffers.length > 0) {
         const liveMap = Object.fromEntries(liveOffers.map((o) => [o.id, o]));
         persistMyOffers((prev) =>
@@ -700,6 +766,8 @@ export default function App() {
               total_seats: match.total_seats,
               status: match.status,
               expires_at: match.expires_at,
+              recurrence_type: match.recurrence_type,
+              recurrence_days: match.recurrence_days,
             };
           })
         );
@@ -809,6 +877,12 @@ export default function App() {
       .filter((o) => new Date(o.expires_at).getTime() > nowMs)
       .filter((o) => o.status === 'active' || o.status === 'full')
       .filter((o) => {
+        const recurring = isRecurringType(o.recurrence_type);
+        if (searchTripKind === 'once' && recurring) return false;
+        if (searchTripKind === 'recurring' && !recurring) return false;
+        return true;
+      })
+      .filter((o) => {
         const stopsText = Array.isArray(o.intermediate_stops)
           ? o.intermediate_stops.join(' ')
           : '';
@@ -821,11 +895,12 @@ export default function App() {
       })
       .sort((a, b) => {
         const depDiff =
-          new Date(a.departure_time).getTime() - new Date(b.departure_time).getTime();
+          getEffectiveSortTimestamp(a.departure_time, a.recurrence_type) -
+          getEffectiveSortTimestamp(b.departure_time, b.recurrence_type);
         if (depDiff !== 0) return depDiff;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [offers, searchStart, searchDest]);
+  }, [offers, searchStart, searchDest, searchTripKind]);
 
   const filteredRequests = useMemo(() => {
     const startQ = searchStart.trim().toLowerCase();
@@ -835,17 +910,24 @@ export default function App() {
       .filter((r) => new Date(r.expires_at).getTime() > nowMs)
       .filter((r) => r.status === 'active')
       .filter((r) => {
+        const recurring = isRecurringType(r.recurrence_type);
+        if (searchTripKind === 'once' && recurring) return false;
+        if (searchTripKind === 'recurring' && !recurring) return false;
+        return true;
+      })
+      .filter((r) => {
         const okStart = !startQ || (r.start_area || '').toLowerCase().includes(startQ);
         const okDest = !destQ || (r.destination_area || '').toLowerCase().includes(destQ);
         return okStart && okDest;
       })
       .sort((a, b) => {
         const timeDiff =
-          new Date(a.preferred_time).getTime() - new Date(b.preferred_time).getTime();
+          getEffectiveSortTimestamp(a.preferred_time, a.recurrence_type) -
+          getEffectiveSortTimestamp(b.preferred_time, b.recurrence_type);
         if (timeDiff !== 0) return timeDiff;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [requests, searchStart, searchDest]);
+  }, [requests, searchStart, searchDest, searchTripKind]);
 
   const activeMyOffersCount = useMemo(() => {
     const nowMs = Date.now();
@@ -866,8 +948,20 @@ export default function App() {
     [adminRequests]
   );
 
-  const toggleRecurrenceDay = (dayKey) => {
+  const toggleOfferRecurrenceDay = (dayKey) => {
     setOfferForm((prev) => {
+      const exists = prev.recurrence_days.includes(dayKey);
+      return {
+        ...prev,
+        recurrence_days: exists
+          ? prev.recurrence_days.filter((k) => k !== dayKey)
+          : [...prev.recurrence_days, dayKey],
+      };
+    });
+  };
+
+  const toggleRequestRecurrenceDay = (dayKey) => {
+    setRequestForm((prev) => {
       const exists = prev.recurrence_days.includes(dayKey);
       return {
         ...prev,
@@ -898,7 +992,7 @@ export default function App() {
     const totalSeats = parseInt(offerForm.total_seats, 10);
     const availableSeats = parseInt(offerForm.available_seats, 10);
     const pricePerSeat = Number(offerForm.price_per_seat);
-    const expiresAfterHours = Math.max(1, Number(offerForm.expires_after_hours) || 3);
+    const recurring = isRecurringType(offerForm.recurrence_type);
 
     if (driverName.length < 2) {
       setOfferError('يرجى إدخال اسم السائق (حرفان على الأقل).');
@@ -917,13 +1011,13 @@ export default function App() {
       return;
     }
     if (!offerForm.departure_time) {
-      setOfferError('يرجى تحديد موعد المغادرة.');
+      setOfferError('يرجى تحديد موعد التحرك.');
       return;
     }
 
     const depDate = new Date(offerForm.departure_time);
     if (Number.isNaN(depDate.getTime()) || depDate.getTime() <= Date.now()) {
-      setOfferError('يجب أن يكون موعد المغادرة في المستقبل.');
+      setOfferError('يجب أن يكون موعد التحرك في المستقبل.');
       return;
     }
 
@@ -948,7 +1042,7 @@ export default function App() {
       offerForm.recurrence_type === 'weekdays' &&
       offerForm.recurrence_days.length === 0
     ) {
-      setOfferError('يرجى اختيار يوم واحد على الأقل للتكرار الأسبوعي.');
+      setOfferError('يرجى اختيار يوم واحد على الأقل للترحيل المنتظم.');
       return;
     }
 
@@ -957,9 +1051,22 @@ export default function App() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const expiresDate = new Date(
-      depDate.getTime() + expiresAfterHours * 60 * 60 * 1000
-    );
+    const expiresDate = recurring
+      ? new Date(
+          depDate.getTime() +
+            Math.max(1, Number(offerForm.recurring_valid_days) || 14) *
+              24 *
+              60 *
+              60 *
+              1000
+        )
+      : new Date(
+          depDate.getTime() +
+            Math.max(1, Number(offerForm.expires_after_hours) || 3) *
+              60 *
+              60 *
+              1000
+        );
 
     const generatedId = generateUuid();
     const generatedToken = generateUuid();
@@ -977,8 +1084,7 @@ export default function App() {
       recurrence_type: offerForm.recurrence_type,
       recurrence_days:
         offerForm.recurrence_type === 'weekdays' ? offerForm.recurrence_days : [],
-      recurrence_group_id:
-        offerForm.recurrence_type === 'once' ? null : generateUuid(),
+      recurrence_group_id: recurring ? generateUuid() : null,
       total_seats: totalSeats,
       available_seats: availableSeats,
       price_per_seat: pricePerSeat,
@@ -995,7 +1101,6 @@ export default function App() {
       const combinedCode = `${generatedId}_${generatedToken}`;
       setSavedManageCode(combinedCode);
 
-      // حفظ الإعلان تلقائياً في «إعلاناتي» على هذا الجهاز
       const savedEntry = {
         id: generatedId,
         manageToken: generatedToken,
@@ -1005,6 +1110,9 @@ export default function App() {
         start_area: startArea,
         destination_area: destArea,
         departure_time: depDate.toISOString(),
+        recurrence_type: offerForm.recurrence_type,
+        recurrence_days:
+          offerForm.recurrence_type === 'weekdays' ? offerForm.recurrence_days : [],
         expires_at: expiresDate.toISOString(),
         total_seats: totalSeats,
         available_seats: availableSeats,
@@ -1028,9 +1136,10 @@ export default function App() {
         available_seats: 3,
         price_per_seat: 0,
         expires_after_hours: 3,
+        recurring_valid_days: 14,
       });
     } catch (err) {
-      setOfferError(err?.message || 'حدث خطأ أثناء نشر عرض الترحيل.');
+      setOfferError(err?.message || 'حدث خطأ أثناء نشر العرض.');
     } finally {
       setOfferSubmitting(false);
     }
@@ -1229,7 +1338,7 @@ export default function App() {
     const destArea = requestForm.destination_area.trim();
     const seatsNeeded = parseInt(requestForm.seats_needed, 10);
     const notes = requestForm.notes.trim();
-    const expiresAfterHours = Math.max(1, Number(requestForm.expires_after_hours) || 3);
+    const recurring = isRecurringType(requestForm.recurrence_type);
 
     if (passengerName.length < 2) {
       setRequestError('يرجى إدخال الاسم (حرفان على الأقل).');
@@ -1244,13 +1353,13 @@ export default function App() {
       return;
     }
     if (!requestForm.preferred_time) {
-      setRequestError('يرجى تحديد الوقت المفضل للتحرك.');
+      setRequestError('يرجى تحديد وقت التحرك.');
       return;
     }
 
     const prefDate = new Date(requestForm.preferred_time);
     if (Number.isNaN(prefDate.getTime()) || prefDate.getTime() <= Date.now()) {
-      setRequestError('يجب أن يكون الوقت المفضل للتحرك في المستقبل.');
+      setRequestError('يجب أن يكون وقت التحرك في المستقبل.');
       return;
     }
 
@@ -1259,9 +1368,30 @@ export default function App() {
       return;
     }
 
-    const expiresDate = new Date(
-      prefDate.getTime() + expiresAfterHours * 60 * 60 * 1000
-    );
+    if (
+      requestForm.recurrence_type === 'weekdays' &&
+      requestForm.recurrence_days.length === 0
+    ) {
+      setRequestError('يرجى اختيار يوم واحد على الأقل لطلب الترحيل المنتظم.');
+      return;
+    }
+
+    const expiresDate = recurring
+      ? new Date(
+          prefDate.getTime() +
+            Math.max(1, Number(requestForm.recurring_valid_days) || 14) *
+              24 *
+              60 *
+              60 *
+              1000
+        )
+      : new Date(
+          prefDate.getTime() +
+            Math.max(1, Number(requestForm.expires_after_hours) || 3) *
+              60 *
+              60 *
+              1000
+        );
 
     const payload = {
       passenger_name: passengerName,
@@ -1270,6 +1400,9 @@ export default function App() {
       start_area: startArea,
       destination_area: destArea,
       preferred_time: prefDate.toISOString(),
+      recurrence_type: requestForm.recurrence_type,
+      recurrence_days:
+        requestForm.recurrence_type === 'weekdays' ? requestForm.recurrence_days : [],
       seats_needed: seatsNeeded,
       notes: notes || null,
       status: 'active',
@@ -1282,7 +1415,9 @@ export default function App() {
       if (error) throw error;
 
       setRequestSuccess(
-        'تم نشر طلب الترحيل بنجاح! سيظهر الآن لأصحاب العربات في تبويب البحث.'
+        recurring
+          ? 'تم نشر طلب الترحيل المنتظم بنجاح! سيبقى ظاهراً للسائقين طوال المدة التي اخترتها.'
+          : 'تم نشر طلب التوصيلة بنجاح! سيظهر الآن لأصحاب العربات في تبويب البحث.'
       );
       setRequestForm({
         passenger_name: '',
@@ -1291,12 +1426,15 @@ export default function App() {
         start_area: '',
         destination_area: '',
         preferred_time: toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000)),
+        recurrence_type: 'once',
+        recurrence_days: [],
         seats_needed: 1,
         notes: '',
         expires_after_hours: 3,
+        recurring_valid_days: 14,
       });
     } catch (err) {
-      setRequestError(err?.message || 'حدث خطأ أثناء نشر طلب الترحيل.');
+      setRequestError(err?.message || 'حدث خطأ أثناء نشر الطلب.');
     } finally {
       setRequestSubmitting(false);
     }
@@ -1434,7 +1572,7 @@ export default function App() {
       const deletedRequests = data?.deleted_requests ?? 0;
       setAdminFeedback({
         type: 'ok',
-        text: `تم تنظيف المنتهي بنجاح: حذف ${deletedOffers} عرض سائق و ${deletedRequests} طلب ترحيل.`,
+        text: `تم تنظيف المنتهي بنجاح: حذف ${deletedOffers} عرض سائق و ${deletedRequests} طلب راكب.`,
       });
       fetchAdminDashboard();
       fetchPublicListings();
@@ -1446,6 +1584,9 @@ export default function App() {
     }
   };
 
+  const offerIsRecurring = isRecurringType(offerForm.recurrence_type);
+  const requestIsRecurring = isRecurringType(requestForm.recurrence_type);
+
   return (
     <div style={ui.page}>
       <header style={ui.header}>
@@ -1454,7 +1595,7 @@ export default function App() {
             توصيلة السنتر
           </h1>
           <p style={ui.brandSub}>
-            مشاركة المواصلات بين طلاب الجامعة — مجاناً وبدون إنشاء حساب
+            توصيلات سريعة وترحيل منتظم بين طلاب الجامعة — مجاناً وبدون حساب
           </p>
 
           <nav style={ui.tabsRow} aria-label="الأقسام الرئيسية">
@@ -1470,7 +1611,7 @@ export default function App() {
               style={ui.tabBtn(tab === TABS.SEARCH)}
               onClick={() => setTab(TABS.SEARCH)}
             >
-              ابحث عن ترحيل
+              ابحث عن توصيلة / ترحيل
             </button>
             <button
               type="button"
@@ -1480,14 +1621,14 @@ export default function App() {
                 setOfferSubTab('publish');
               }}
             >
-              أعرض مشواراً {activeMyOffersCount > 0 ? `(${activeMyOffersCount})` : ''}
+              أعرض توصيلة / ترحيل {activeMyOffersCount > 0 ? `(${activeMyOffersCount})` : ''}
             </button>
             <button
               type="button"
               style={ui.tabBtn(tab === TABS.REQUEST)}
               onClick={() => setTab(TABS.REQUEST)}
             >
-              اطلب ترحيلاً
+              اطلب توصيلة / ترحيل
             </button>
             <button
               type="button"
@@ -1514,8 +1655,9 @@ export default function App() {
             <section style={ui.card}>
               <h2 style={ui.h2}>اختر ما تحتاجه الآن</h2>
               <p style={ui.pMuted}>
-                تصفح الرحلات المتاحة وتواصل مع أصحاب العربات مباشرة عبر واتساب أو
-                الاتصال دون الحاجة لتسجيل حساب.
+                سواء كنت تحتاج <strong>توصيلة سريعة لمرة واحدة</strong> أو{' '}
+                <strong>ترحيلاً منتظماً يومياً أو أسبوعياً</strong>، تصفح الإعلانات
+                وتواصل مباشرة عبر واتساب أو الاتصال.
               </p>
 
               <div style={ui.homeGrid}>
@@ -1524,7 +1666,9 @@ export default function App() {
                   style={ui.homeBtn('#0d5c63', '#ffffff')}
                   onClick={() => setTab(TABS.SEARCH)}
                 >
-                  <strong style={{ fontSize: '1.05rem' }}>أبحث عن ترحيل</strong>
+                  <strong style={{ fontSize: '1.05rem' }}>
+                    أبحث عن توصيلة أو ترحيل
+                  </strong>
                   <span style={{ fontSize: '0.84rem', opacity: 0.92 }}>
                     تصفح عروض السائقين وطلبات الركاب المتاحة الآن ({filteredOffers.length}{' '}
                     عرض • {filteredRequests.length} طلب)
@@ -1540,10 +1684,10 @@ export default function App() {
                   }}
                 >
                   <strong style={{ fontSize: '1.05rem' }}>
-                    أعرض مشواراً (لدي عربة)
+                    أعرض توصيلة أو ترحيل (لدي عربة)
                   </strong>
                   <span style={{ fontSize: '0.84rem', opacity: 0.92 }}>
-                    أعلن عن مقاعدك الفارغة وتحكم بها بضغطة زر من هذا الجهاز
+                    انشر مشواراً لمرة واحدة أو ترحيلاً منتظماً وتحكم بمقاعدك بضغطة زر
                   </span>
                 </button>
 
@@ -1552,9 +1696,11 @@ export default function App() {
                   style={ui.homeBtn('#ffffff', '#102a2e', '1.5px solid #96b8b4')}
                   onClick={() => setTab(TABS.REQUEST)}
                 >
-                  <strong style={{ fontSize: '1.05rem' }}>أطلب ترحيلاً</strong>
+                  <strong style={{ fontSize: '1.05rem' }}>
+                    أطلب توصيلة أو ترحيل
+                  </strong>
                   <span style={{ fontSize: '0.84rem', color: '#4c676b' }}>
-                    انشر وجهتك ووقتك ليتواصل معك السائقون على نفس المسار
+                    اطلب مشواراً لليوم أو ترحيلاً منتظماً ليتواصل معك السائقون
                   </span>
                 </button>
               </div>
@@ -1576,16 +1722,13 @@ export default function App() {
             </section>
 
             <section style={ui.card}>
-              <h3 style={ui.h3}>كيف تستخدم الموقع؟</h3>
+              <h3 style={ui.h3}>الفرق بين التوصيلة والترحيل المنتظم</h3>
               <p style={{ ...ui.pMuted, marginBottom: 0 }}>
-                1) للبحث عن توصيلة: اضغط «أبحث عن ترحيل» ثم تواصل مباشرة عبر زر واتساب
-                أو اتصال.
-                <br />
-                2) للسائقين: عند نشر مشوارك يُحفظ تلقائياً في قسم «إعلاناتي» على هاتفك
-                لتعديل المقاعد أو إغلاق الإعلان بضغطة واحدة.
-                <br />
-                3) لا توجد أرقام ظاهرة كنص في البطاقات لحماية خصوصيتك، بل أزرار تواصل
-                مباشرة فقط.
+                • <strong>توصيلة (مرة واحدة):</strong> لمشوار محدد اليوم أو غداً، وتختفي
+                تلقائياً بعد ساعات من موعدها.
+                <br />• <strong>ترحيل منتظم (يومي / أيام محددة):</strong> للمداومين
+                على نفس الخط أسبوعياً، ويبقى الإعلان ظاهراً لمدة أسبوع أو أكثر حسب
+                اختيارك.
               </p>
             </section>
           </>
@@ -1604,7 +1747,7 @@ export default function App() {
                   marginBottom: '10px',
                 }}
               >
-                <h2 style={{ ...ui.h2, margin: 0 }}>ابحث عن ترحيل</h2>
+                <h2 style={{ ...ui.h2, margin: 0 }}>ابحث عن توصيلة أو ترحيل</h2>
                 <button
                   type="button"
                   style={ui.secondaryBtn}
@@ -1612,6 +1755,30 @@ export default function App() {
                   disabled={boardLoading}
                 >
                   {boardLoading ? 'جاري التحديث...' : 'تحديث القائمة'}
+                </button>
+              </div>
+
+              <div style={ui.filterPillRow}>
+                <button
+                  type="button"
+                  style={ui.filterPill(searchTripKind === 'all')}
+                  onClick={() => setSearchTripKind('all')}
+                >
+                  الكل
+                </button>
+                <button
+                  type="button"
+                  style={ui.filterPill(searchTripKind === 'once')}
+                  onClick={() => setSearchTripKind('once')}
+                >
+                  توصيلة لمرة واحدة
+                </button>
+                <button
+                  type="button"
+                  style={ui.filterPill(searchTripKind === 'recurring')}
+                  onClick={() => setSearchTripKind('recurring')}
+                >
+                  ترحيل منتظم (يومي / أسبوعي)
                 </button>
               </div>
 
@@ -1638,16 +1805,17 @@ export default function App() {
                 </div>
               </div>
 
-              {(searchStart || searchDest) && (
+              {(searchStart || searchDest || searchTripKind !== 'all') && (
                 <button
                   type="button"
                   style={ui.secondaryBtn}
                   onClick={() => {
                     setSearchStart('');
                     setSearchDest('');
+                    setSearchTripKind('all');
                   }}
                 >
-                  مسح الفلاتر
+                  مسح كل الفلاتر
                 </button>
               )}
             </section>
@@ -1715,21 +1883,27 @@ export default function App() {
 
             <section style={ui.card}>
               <h2 style={ui.h2}>عروض السائقين ({filteredOffers.length})</h2>
-              <p style={ui.pMuted}>مرتبة حسب أقرب موعد مغادرة ثم الأحدث نشراً.</p>
+              <p style={ui.pMuted}>مرتبة حسب أقرب موعد تحرك ثم الأحدث نشراً.</p>
 
               {boardLoading && offers.length === 0 ? (
                 <p style={ui.pMuted}>جاري تحميل عروض السائقين...</p>
               ) : filteredOffers.length === 0 ? (
                 <p style={ui.pMuted}>
-                  لا توجد عروض سائقين مطابقة حالياً. جرّب تعديل البحث أو انشر طلب ترحيل.
+                  لا توجد عروض سائقين مطابقة حالياً. جرّب تغيير الفلتر أو انشر طلبك.
                 </p>
               ) : (
                 filteredOffers.map((offer) => {
                   const isFull =
                     offer.status === 'full' || Number(offer.available_seats) <= 0;
-                  const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض الترحيل في توصيلة السنتر من (${offer.start_area}) إلى (${offer.destination_area}) الساعة ${formatDateTime(
-                    offer.departure_time
-                  )}. هل يوجد مقعد متاح؟`;
+                  const recurring = isRecurringType(offer.recurrence_type);
+                  const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
+                  const timeText = recurring
+                    ? `الساعة ${formatTimeOnly(offer.departure_time)} (${formatRecurrence(
+                        offer.recurrence_type,
+                        offer.recurrence_days
+                      )})`
+                    : formatDateTime(offer.departure_time);
+                  const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
                   const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
                   const telHref = buildTelLink(
                     offer.phone_number || offer.whatsapp_number
@@ -1750,16 +1924,26 @@ export default function App() {
                         <strong style={{ fontSize: '1.02rem', color: '#0d5c63' }}>
                           {offer.start_area} ← {offer.destination_area}
                         </strong>
-                        <span
-                          style={ui.badge(
-                            isFull ? '#ffe3e3' : '#dcfce7',
-                            isFull ? '#a81f1f' : '#14532d'
-                          )}
-                        >
-                          {isFull
-                            ? 'مكتمل (لا توجد مقاعد)'
-                            : `متاح ${offer.available_seats} من ${offer.total_seats} مقاعد`}
-                        </span>
+                        <div style={ui.rowWrap}>
+                          <span
+                            style={ui.badge(
+                              recurring ? '#ede9fe' : '#e0f2fe',
+                              recurring ? '#5b21b6' : '#075985'
+                            )}
+                          >
+                            {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
+                          </span>
+                          <span
+                            style={ui.badge(
+                              isFull ? '#ffe3e3' : '#dcfce7',
+                              isFull ? '#a81f1f' : '#14532d'
+                            )}
+                          >
+                            {isFull
+                              ? 'مكتمل (لا توجد مقاعد)'
+                              : `متاح ${offer.available_seats} من ${offer.total_seats} مقاعد`}
+                          </span>
+                        </div>
                       </div>
 
                       <div
@@ -1774,10 +1958,8 @@ export default function App() {
                           <strong>العربة:</strong> {offer.vehicle_type}
                         </div>
                         <div>
-                          <strong>موعد التحرك:</strong>{' '}
-                          {formatDateTime(offer.departure_time)} •{' '}
-                          <strong>التكرار:</strong>{' '}
-                          {formatRecurrence(offer.recurrence_type, offer.recurrence_days)}
+                          <strong>{recurring ? 'وقت التحرك المعتاد:' : 'موعد التحرك:'}</strong>{' '}
+                          {timeText}
                         </div>
                         <div>
                           <strong>السعر للمقعد:</strong>{' '}
@@ -1832,20 +2014,27 @@ export default function App() {
             </section>
 
             <section style={ui.card}>
-              <h2 style={ui.h2}>طلبات الركاب ({filteredRequests.length})</h2>
+              <h2 style={ui.h2}>طلبات الطلاب ({filteredRequests.length})</h2>
               <p style={ui.pMuted}>
-                طلاب يبحثون عن ترحيل — إذا كنت صاحب عربة تواصل معهم مباشرة.
+                طلاب يبحثون عن توصيلة أو ترحيل منتظم — إذا كنت صاحب عربة تواصل معهم
+                مباشرة.
               </p>
 
               {boardLoading && requests.length === 0 ? (
-                <p style={ui.pMuted}>جاري تحميل طلبات الركاب...</p>
+                <p style={ui.pMuted}>جاري تحميل طلبات الطلاب...</p>
               ) : filteredRequests.length === 0 ? (
-                <p style={ui.pMuted}>لا توجد طلبات ركاب مطابقة حالياً.</p>
+                <p style={ui.pMuted}>لا توجد طلبات طلاب مطابقة حالياً.</p>
               ) : (
                 filteredRequests.map((req) => {
-                  const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب الترحيل الخاص بك في توصيلة السنتر من (${req.start_area}) إلى (${req.destination_area}) الساعة ${formatDateTime(
-                    req.preferred_time
-                  )}. لدي مقعد متاح على هذا المسار.`;
+                  const recurring = isRecurringType(req.recurrence_type);
+                  const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
+                  const timeText = recurring
+                    ? `الساعة ${formatTimeOnly(req.preferred_time)} (${formatRecurrence(
+                        req.recurrence_type,
+                        req.recurrence_days
+                      )})`
+                    : formatDateTime(req.preferred_time);
+                  const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب (${kindText}) الخاص بك في توصيلة السنتر من (${req.start_area}) إلى (${req.destination_area}) — ${timeText}. لدي مقعد متاح على هذا المسار.`;
                   const waHref = buildWhatsAppLink(req.whatsapp_number, waText);
                   const telHref = buildTelLink(req.phone_number || req.whatsapp_number);
 
@@ -1864,9 +2053,19 @@ export default function App() {
                         <strong style={{ fontSize: '1.02rem', color: '#0d5c63' }}>
                           {req.start_area} ← {req.destination_area}
                         </strong>
-                        <span style={ui.badge('#e0f2fe', '#075985')}>
-                          مطلوب {req.seats_needed} مقعد
-                        </span>
+                        <div style={ui.rowWrap}>
+                          <span
+                            style={ui.badge(
+                              recurring ? '#ede9fe' : '#e0f2fe',
+                              recurring ? '#5b21b6' : '#075985'
+                            )}
+                          >
+                            {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
+                          </span>
+                          <span style={ui.badge('#f1f5f9', '#334155')}>
+                            مطلوب {req.seats_needed} مقعد
+                          </span>
+                        </div>
                       </div>
 
                       <div
@@ -1880,8 +2079,8 @@ export default function App() {
                           <strong>الطالب:</strong> {req.passenger_name}
                         </div>
                         <div>
-                          <strong>الوقت المفضل:</strong>{' '}
-                          {formatDateTime(req.preferred_time)}
+                          <strong>{recurring ? 'وقت التحرك المعتاد:' : 'الوقت المفضل:'}</strong>{' '}
+                          {timeText}
                         </div>
                         {req.notes && (
                           <div>
@@ -1937,7 +2136,7 @@ export default function App() {
                 style={ui.subTabBtn(offerSubTab === 'publish')}
                 onClick={() => setOfferSubTab('publish')}
               >
-                نشر مشوار جديد
+                نشر عرض جديد
               </button>
               <button
                 type="button"
@@ -1950,21 +2149,21 @@ export default function App() {
 
             {offerSubTab === 'publish' && (
               <section style={ui.card}>
-                <h2 style={ui.h2}>أعرض مشواراً (لأصحاب العربات)</h2>
+                <h2 style={ui.h2}>أعرض توصيلة أو ترحيل (لأصحاب العربات)</h2>
                 <p style={ui.pMuted}>
-                  انشر تفاصيل رحلتك ليراها الطلاب. سيُحفظ إعلانك تلقائياً في تبويب{' '}
-                  <strong>«إعلاناتي على هذا الجهاز»</strong> لتحديث المقاعد أو إغلاقه
-                  بسهولة.
+                  اختر هل المشوار <strong>توصيلة لمرة واحدة</strong> أم{' '}
+                  <strong>ترحيل منتظم</strong>. سيُحفظ إعلانك تلقائياً في «إعلاناتي على
+                  هذا الجهاز» للتحكم بالمقاعد أو الإغلاق بضغطة زر.
                 </p>
 
                 {offerError && <div style={ui.errBox}>{offerError}</div>}
 
                 {savedManageCode && (
                   <div style={ui.okBox}>
-                    <strong>تم نشر عرض الترحيل وحفظه في «إعلاناتي» بنجاح!</strong>
+                    <strong>تم نشر العرض وحفظه في «إعلاناتي» بنجاح!</strong>
                     <div style={{ marginTop: '6px' }}>
                       يمكنك تعديله الآن بضغطة زر من قسم «إعلاناتي على هذا الجهاز»، أو
-                      نسخ الرمز الاحتياطي التالي إذا أردت إدارته من هاتف آخر:
+                      نسخ الرمز الاحتياطي التالي لإدارته من هاتف آخر:
                     </div>
                     <div style={ui.codeBox}>{savedManageCode}</div>
                     <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
@@ -1994,6 +2193,49 @@ export default function App() {
                 )}
 
                 <form onSubmit={handlePublishOffer}>
+                  <div style={ui.field}>
+                    <label style={ui.label}>
+                      نوع العرض <span style={ui.req}>*</span>
+                    </label>
+                    <div style={ui.rowWrap}>
+                      {RECURRENCE_CHOICES.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          style={ui.chipBtn(offerForm.recurrence_type === opt.value)}
+                          onClick={() =>
+                            setOfferForm({ ...offerForm, recurrence_type: opt.value })
+                          }
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {offerForm.recurrence_type === 'weekdays' && (
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        اختر أيام الترحيل المنتظم <span style={ui.req}>*</span>
+                      </label>
+                      <div style={ui.rowWrap}>
+                        {WEEKDAYS.map((day) => {
+                          const selected = offerForm.recurrence_days.includes(day.key);
+                          return (
+                            <button
+                              key={day.key}
+                              type="button"
+                              style={ui.chipBtn(selected)}
+                              onClick={() => toggleOfferRecurrenceDay(day.key)}
+                            >
+                              {day.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={ui.grid2}>
                     <div style={ui.field}>
                       <label style={ui.label}>
@@ -2099,7 +2341,9 @@ export default function App() {
                   <div style={ui.grid2}>
                     <div style={ui.field}>
                       <label style={ui.label}>
-                        موعد المغادرة (يجب أن يكون في المستقبل){' '}
+                        {offerIsRecurring
+                          ? 'تاريخ ووقت أول رحلة (توقيت التحرك المعتاد)'
+                          : 'موعد المغادرة (يجب أن يكون في المستقبل)'}{' '}
                         <span style={ui.req}>*</span>
                       </label>
                       <input
@@ -2113,61 +2357,45 @@ export default function App() {
                       />
                     </div>
 
-                    <div style={ui.field}>
-                      <label style={ui.label}>مدة بقاء الإعلان بعد المغادرة (بالساعات)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="72"
-                        value={offerForm.expires_after_hours}
-                        onChange={(e) =>
-                          setOfferForm({
-                            ...offerForm,
-                            expires_after_hours: e.target.value,
-                          })
-                        }
-                        style={ui.input}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={ui.field}>
-                    <label style={ui.label}>تكرار الرحلة</label>
-                    <select
-                      value={offerForm.recurrence_type}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, recurrence_type: e.target.value })
-                      }
-                      style={ui.input}
-                    >
-                      <option value="once">مرة واحدة</option>
-                      <option value="daily">يومياً</option>
-                      <option value="weekdays">أيام محددة من الأسبوع</option>
-                    </select>
-                  </div>
-
-                  {offerForm.recurrence_type === 'weekdays' && (
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        اختر الأيام <span style={ui.req}>*</span>
-                      </label>
-                      <div style={ui.rowWrap}>
-                        {WEEKDAYS.map((day) => {
-                          const selected = offerForm.recurrence_days.includes(day.key);
-                          return (
-                            <button
-                              key={day.key}
-                              type="button"
-                              style={ui.chipBtn(selected)}
-                              onClick={() => toggleRecurrenceDay(day.key)}
-                            >
-                              {day.label}
-                            </button>
-                          );
-                        })}
+                    {offerIsRecurring ? (
+                      <div style={ui.field}>
+                        <label style={ui.label}>مدة بقاء إعلان الترحيل</label>
+                        <select
+                          value={offerForm.recurring_valid_days}
+                          onChange={(e) =>
+                            setOfferForm({
+                              ...offerForm,
+                              recurring_valid_days: Number(e.target.value),
+                            })
+                          }
+                          style={ui.input}
+                        >
+                          <option value={7}>أسبوع واحد (7 أيام)</option>
+                          <option value={14}>أسبوعان (14 يوماً)</option>
+                          <option value={30}>شهر كامل (30 يوماً)</option>
+                        </select>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div style={ui.field}>
+                        <label style={ui.label}>
+                          مدة بقاء الإعلان بعد المغادرة (بالساعات)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="72"
+                          value={offerForm.expires_after_hours}
+                          onChange={(e) =>
+                            setOfferForm({
+                              ...offerForm,
+                              expires_after_hours: e.target.value,
+                            })
+                          }
+                          style={ui.input}
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   <div style={ui.grid2}>
                     <div style={ui.field}>
@@ -2226,7 +2454,11 @@ export default function App() {
                     style={ui.primaryBtn}
                     disabled={offerSubmitting}
                   >
-                    {offerSubmitting ? 'جاري النشر...' : 'نشر عرض الترحيل'}
+                    {offerSubmitting
+                      ? 'جاري النشر...'
+                      : offerIsRecurring
+                      ? 'نشر عرض الترحيل المنتظم'
+                      : 'نشر عرض التوصيلة'}
                   </button>
                 </form>
               </section>
@@ -2252,7 +2484,7 @@ export default function App() {
                   {myOffers.length === 0 ? (
                     <div>
                       <p style={ui.pMuted}>
-                        لا توجد إعلانات محفوظة على هذا الجهاز بعد. عند نشر مشوار جديد
+                        لا توجد إعلانات محفوظة على هذا الجهاز بعد. عند نشر عرض جديد
                         سيظهر هنا تلقائياً.
                       </p>
                       <button
@@ -2260,7 +2492,7 @@ export default function App() {
                         style={ui.secondaryBtn}
                         onClick={() => setOfferSubTab('publish')}
                       >
-                        نشر أول مشوار الآن
+                        نشر أول عرض الآن
                       </button>
                     </div>
                   ) : (
@@ -2271,6 +2503,7 @@ export default function App() {
                       const isClosed = item.status === 'closed';
                       const isFull =
                         item.status === 'full' || Number(item.available_seats) <= 0;
+                      const recurring = isRecurringType(item.recurrence_type);
                       const isBusy = busyMyOfferId === item.id;
                       const currentSeats = Number(item.available_seats) || 0;
                       const totalSeats = Math.max(1, Number(item.total_seats) || 1);
@@ -2298,9 +2531,19 @@ export default function App() {
                             <strong style={{ fontSize: '1rem', color: '#0d5c63' }}>
                               {item.start_area} ← {item.destination_area}
                             </strong>
-                            <span style={ui.badge(badgeColors[0], badgeColors[1])}>
-                              {badgeColors[2]}
-                            </span>
+                            <div style={ui.rowWrap}>
+                              <span
+                                style={ui.badge(
+                                  recurring ? '#ede9fe' : '#e0f2fe',
+                                  recurring ? '#5b21b6' : '#075985'
+                                )}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
+                              </span>
+                              <span style={ui.badge(badgeColors[0], badgeColors[1])}>
+                                {badgeColors[2]}
+                              </span>
+                            </div>
                           </div>
 
                           <div
@@ -2311,9 +2554,14 @@ export default function App() {
                             }}
                           >
                             <div>
-                              <strong>الموعد:</strong>{' '}
-                              {formatDateTime(item.departure_time)} •{' '}
-                              <strong>العربة:</strong> {item.vehicle_type}
+                              <strong>{recurring ? 'التوقيت:' : 'الموعد:'}</strong>{' '}
+                              {recurring
+                                ? `${formatTimeOnly(item.departure_time)} (${formatRecurrence(
+                                    item.recurrence_type,
+                                    item.recurrence_days
+                                  )})`
+                                : formatDateTime(item.departure_time)}{' '}
+                              • <strong>العربة:</strong> {item.vehicle_type}
                             </div>
                           </div>
 
@@ -2469,10 +2717,11 @@ export default function App() {
 
         {tab === TABS.REQUEST && (
           <section style={ui.card}>
-            <h2 style={ui.h2}>اطلب ترحيلاً (للطلاب)</h2>
+            <h2 style={ui.h2}>اطلب توصيلة أو ترحيل (للطلاب)</h2>
             <p style={ui.pMuted}>
-              سجّل منطقة انطلاقك ووجهتك والوقت المناسب ليتواصل معك أصحاب العربات على
-              نفس الطريق.
+              حدد هل تحتاج <strong>توصيلة سريعة لمرة واحدة</strong> أم{' '}
+              <strong>ترحيلاً منتظماً</strong> (يومي أو أيام محددة من الأسبوع) ليتواصل
+              معك أصحاب العربات على نفس المسار.
             </p>
 
             {requestError && <div style={ui.errBox}>{requestError}</div>}
@@ -2490,6 +2739,49 @@ export default function App() {
             )}
 
             <form onSubmit={handlePublishRequest}>
+              <div style={ui.field}>
+                <label style={ui.label}>
+                  نوع الطلب <span style={ui.req}>*</span>
+                </label>
+                <div style={ui.rowWrap}>
+                  {RECURRENCE_CHOICES.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      style={ui.chipBtn(requestForm.recurrence_type === opt.value)}
+                      onClick={() =>
+                        setRequestForm({ ...requestForm, recurrence_type: opt.value })
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {requestForm.recurrence_type === 'weekdays' && (
+                <div style={ui.field}>
+                  <label style={ui.label}>
+                    اختر أيام الترحيل المطلوبة <span style={ui.req}>*</span>
+                  </label>
+                  <div style={ui.rowWrap}>
+                    {WEEKDAYS.map((day) => {
+                      const selected = requestForm.recurrence_days.includes(day.key);
+                      return (
+                        <button
+                          key={day.key}
+                          type="button"
+                          style={ui.chipBtn(selected)}
+                          onClick={() => toggleRequestRecurrenceDay(day.key)}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div style={ui.grid2}>
                 <div style={ui.field}>
                   <label style={ui.label}>
@@ -2578,7 +2870,10 @@ export default function App() {
               <div style={ui.grid2}>
                 <div style={ui.field}>
                   <label style={ui.label}>
-                    الوقت المفضل للتحرك (في المستقبل) <span style={ui.req}>*</span>
+                    {requestIsRecurring
+                      ? 'تاريخ ووقت أول يوم (توقيت التحرك المعتاد)'
+                      : 'الوقت المفضل للتحرك (في المستقبل)'}{' '}
+                    <span style={ui.req}>*</span>
                   </label>
                   <input
                     type="datetime-local"
@@ -2591,22 +2886,44 @@ export default function App() {
                   />
                 </div>
 
-                <div style={ui.field}>
-                  <label style={ui.label}>مدة بقاء الطلب بعد الموعد (بالساعات)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="72"
-                    value={requestForm.expires_after_hours}
-                    onChange={(e) =>
-                      setRequestForm({
-                        ...requestForm,
-                        expires_after_hours: e.target.value,
-                      })
-                    }
-                    style={ui.input}
-                  />
-                </div>
+                {requestIsRecurring ? (
+                  <div style={ui.field}>
+                    <label style={ui.label}>مدة بقاء طلب الترحيل</label>
+                    <select
+                      value={requestForm.recurring_valid_days}
+                      onChange={(e) =>
+                        setRequestForm({
+                          ...requestForm,
+                          recurring_valid_days: Number(e.target.value),
+                        })
+                      }
+                      style={ui.input}
+                    >
+                      <option value={7}>أسبوع واحد (7 أيام)</option>
+                      <option value={14}>أسبوعان (14 يوماً)</option>
+                      <option value={30}>شهر كامل (30 يوماً)</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div style={ui.field}>
+                    <label style={ui.label}>
+                      مدة بقاء الطلب بعد الموعد (بالساعات)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="72"
+                      value={requestForm.expires_after_hours}
+                      onChange={(e) =>
+                        setRequestForm({
+                          ...requestForm,
+                          expires_after_hours: e.target.value,
+                        })
+                      }
+                      style={ui.input}
+                    />
+                  </div>
+                )}
               </div>
 
               <div style={ui.field}>
@@ -2617,7 +2934,7 @@ export default function App() {
                   onChange={(e) =>
                     setRequestForm({ ...requestForm, notes: e.target.value })
                   }
-                  placeholder="مثال: الانتظار أمام البوابة الرئيسية..."
+                  placeholder="مثال: الانتظار أمام البوابة الرئيسية، أو تفاصيل الرجعة..."
                   style={ui.input}
                 />
               </div>
@@ -2627,7 +2944,11 @@ export default function App() {
                 style={ui.primaryBtn}
                 disabled={requestSubmitting}
               >
-                {requestSubmitting ? 'جاري النشر...' : 'نشر طلب الترحيل'}
+                {requestSubmitting
+                  ? 'جاري النشر...'
+                  : requestIsRecurring
+                  ? 'نشر طلب الترحيل المنتظم'
+                  : 'نشر طلب التوصيلة'}
               </button>
             </form>
           </section>
@@ -2773,7 +3094,7 @@ export default function App() {
                             <strong>
                               {rep.target_type === 'offer'
                                 ? 'بلاغ على عرض سائق'
-                                : 'بلاغ على طلب راكب'}
+                                : 'بلاغ على طلب طالب'}
                             </strong>
                             <span
                               style={ui.badge(
@@ -2822,8 +3143,13 @@ export default function App() {
                                 <strong>الإعلان المرتبط:</strong> السائق{' '}
                                 {linkedOffer.driver_name} ({linkedOffer.vehicle_type}) —{' '}
                                 {linkedOffer.start_area} ← {linkedOffer.destination_area} •{' '}
-                                {formatDateTime(linkedOffer.departure_time)} • الحالة:{' '}
-                                {linkedOffer.status}
+                                {isRecurringType(linkedOffer.recurrence_type)
+                                  ? `ترحيل منتظم (${formatRecurrence(
+                                      linkedOffer.recurrence_type,
+                                      linkedOffer.recurrence_days
+                                    )})`
+                                  : formatDateTime(linkedOffer.departure_time)}{' '}
+                                • الحالة: {linkedOffer.status}
                               </div>
                             )}
 
@@ -2839,8 +3165,13 @@ export default function App() {
                                 <strong>الطلب المرتبط:</strong> الطالب{' '}
                                 {linkedRequest.passenger_name} — {linkedRequest.start_area} ←{' '}
                                 {linkedRequest.destination_area} •{' '}
-                                {formatDateTime(linkedRequest.preferred_time)} • الحالة:{' '}
-                                {linkedRequest.status}
+                                {isRecurringType(linkedRequest.recurrence_type)
+                                  ? `ترحيل منتظم (${formatRecurrence(
+                                      linkedRequest.recurrence_type,
+                                      linkedRequest.recurrence_days
+                                    )})`
+                                  : formatDateTime(linkedRequest.preferred_time)}{' '}
+                                • الحالة: {linkedRequest.status}
                               </div>
                             )}
                           </div>
@@ -2883,6 +3214,7 @@ export default function App() {
                   ) : (
                     adminOffers.map((o) => {
                       const expired = new Date(o.expires_at).getTime() <= Date.now();
+                      const recurring = isRecurringType(o.recurrence_type);
                       return (
                         <div key={o.id} style={ui.itemBox}>
                           <div
@@ -2896,14 +3228,24 @@ export default function App() {
                             <strong>
                               {o.driver_name}: {o.start_area} ← {o.destination_area}
                             </strong>
-                            <span
-                              style={ui.badge(
-                                expired || o.status === 'closed' ? '#ffe3e3' : '#dcfce7',
-                                expired || o.status === 'closed' ? '#a81f1f' : '#14532d'
-                              )}
-                            >
-                              {expired ? 'منتهي' : o.status}
-                            </span>
+                            <div style={ui.rowWrap}>
+                              <span
+                                style={ui.badge(
+                                  recurring ? '#ede9fe' : '#e0f2fe',
+                                  recurring ? '#5b21b6' : '#075985'
+                                )}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
+                              </span>
+                              <span
+                                style={ui.badge(
+                                  expired || o.status === 'closed' ? '#ffe3e3' : '#dcfce7',
+                                  expired || o.status === 'closed' ? '#a81f1f' : '#14532d'
+                                )}
+                              >
+                                {expired ? 'منتهي' : o.status}
+                              </span>
+                            </div>
                           </div>
                           <div style={{ fontSize: '0.86rem', marginTop: '4px' }}>
                             التحرك: {formatDateTime(o.departure_time)} • المقاعد:{' '}
@@ -2925,12 +3267,13 @@ export default function App() {
                 </section>
 
                 <section style={ui.card}>
-                  <h2 style={ui.h2}>كل طلبات الركاب ({adminRequests.length})</h2>
+                  <h2 style={ui.h2}>كل طلبات الطلاب ({adminRequests.length})</h2>
                   {adminRequests.length === 0 ? (
                     <p style={ui.pMuted}>لا توجد طلبات مسجلة.</p>
                   ) : (
                     adminRequests.map((r) => {
                       const expired = new Date(r.expires_at).getTime() <= Date.now();
+                      const recurring = isRecurringType(r.recurrence_type);
                       return (
                         <div key={r.id} style={ui.itemBox}>
                           <div
@@ -2944,17 +3287,27 @@ export default function App() {
                             <strong>
                               {r.passenger_name}: {r.start_area} ← {r.destination_area}
                             </strong>
-                            <span
-                              style={ui.badge(
-                                expired || r.status === 'closed' ? '#ffe3e3' : '#e0f2fe',
-                                expired || r.status === 'closed' ? '#a81f1f' : '#075985'
-                              )}
-                            >
-                              {expired ? 'منتهي' : r.status}
-                            </span>
+                            <div style={ui.rowWrap}>
+                              <span
+                                style={ui.badge(
+                                  recurring ? '#ede9fe' : '#e0f2fe',
+                                  recurring ? '#5b21b6' : '#075985'
+                                )}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
+                              </span>
+                              <span
+                                style={ui.badge(
+                                  expired || r.status === 'closed' ? '#ffe3e3' : '#e0f2fe',
+                                  expired || r.status === 'closed' ? '#a81f1f' : '#075985'
+                                )}
+                              >
+                                {expired ? 'منتهي' : r.status}
+                              </span>
+                            </div>
                           </div>
                           <div style={{ fontSize: '0.86rem', marginTop: '4px' }}>
-                            الوقت المفضل: {formatDateTime(r.preferred_time)} • المقاعد:{' '}
+                            الوقت: {formatDateTime(r.preferred_time)} • المقاعد:{' '}
                             {r.seats_needed}
                           </div>
                           <div style={{ marginTop: '8px' }}>
