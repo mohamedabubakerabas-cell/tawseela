@@ -17,6 +17,8 @@ const TABS = {
   ADMIN: 'admin',
 };
 
+const MY_OFFERS_STORAGE_KEY = 'tawseelat_my_offers_v1';
+
 const POPULAR_AREAS = [
   'السنتر / الجامعات',
   'الخرطوم - السوق العربي',
@@ -77,6 +79,25 @@ const REQUEST_PUBLIC_COLUMNS = [
   'expires_at',
   'created_at',
 ].join(', ');
+
+function loadMySavedOffers() {
+  try {
+    const raw = window.localStorage.getItem(MY_OFFERS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMySavedOffers(list) {
+  try {
+    window.localStorage.setItem(MY_OFFERS_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // تجاهل الخطأ إذا كان التخزين المحلي غير متاح في التصفح الخفي
+  }
+}
 
 function generateUuid() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -329,6 +350,23 @@ const ui = {
     textAlign: 'right',
     cursor: 'pointer',
   }),
+  subTabRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '8px',
+    marginBottom: '16px',
+  },
+  subTabBtn: (active) => ({
+    padding: '11px 12px',
+    borderRadius: '11px',
+    border: active ? '1.5px solid #0d5c63' : '1px solid #bfd6d3',
+    backgroundColor: active ? '#0d5c63' : '#ffffff',
+    color: active ? '#ffffff' : '#0d5c63',
+    fontFamily: 'inherit',
+    fontSize: '0.92rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+  }),
   field: {
     marginBottom: '13px',
   },
@@ -403,6 +441,17 @@ const ui = {
     fontWeight: 700,
     cursor: 'pointer',
   },
+  subtleBtn: {
+    padding: '8px 11px',
+    borderRadius: '9px',
+    border: '1px solid #cbd5e1',
+    backgroundColor: '#ffffff',
+    color: '#475569',
+    fontFamily: 'inherit',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
   waLink: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -469,6 +518,16 @@ const ui = {
     fontSize: '0.9rem',
     lineHeight: 1.65,
   },
+  infoBox: {
+    padding: '11px 13px',
+    borderRadius: '11px',
+    backgroundColor: '#eef7f6',
+    border: '1px solid #bdd9d6',
+    color: '#134e4a',
+    marginBottom: '13px',
+    fontSize: '0.86rem',
+    lineHeight: 1.6,
+  },
   codeBox: {
     marginTop: '10px',
     padding: '12px',
@@ -497,6 +556,7 @@ const ui = {
 
 export default function App() {
   const [tab, setTab] = useState(TABS.HOME);
+  const [offerSubTab, setOfferSubTab] = useState('publish'); // 'publish' | 'my_ads'
 
   // حالة البحث واللوحة العامة
   const [offers, setOffers] = useState([]);
@@ -505,6 +565,12 @@ export default function App() {
   const [boardError, setBoardError] = useState('');
   const [searchStart, setSearchStart] = useState('');
   const [searchDest, setSearchDest] = useState('');
+
+  // إعلاناتي المحفوظة محلياً على هذا الجهاز
+  const [myOffers, setMyOffers] = useState(() => loadMySavedOffers());
+  const [busyMyOfferId, setBusyMyOfferId] = useState('');
+  const [myOffersFeedback, setMyOffersFeedback] = useState({ type: '', text: '' });
+  const [copiedOfferId, setCopiedOfferId] = useState('');
 
   // حالة الإبلاغ
   const [reportTarget, setReportTarget] = useState(null);
@@ -540,7 +606,7 @@ export default function App() {
   const [savedManageCode, setSavedManageCode] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // إدارة السائق لإعلانه برمز الإدارة (id_token)
+  // إدارة السائق لإعلانه يدوياً برمز الإدارة (id_token) من جهاز آخر
   const [manageCodeInput, setManageCodeInput] = useState('');
   const [manageSeatsInput, setManageSeatsInput] = useState(1);
   const [manageLoading, setManageLoading] = useState(false);
@@ -577,6 +643,14 @@ export default function App() {
   const [adminDataLoading, setAdminDataLoading] = useState(false);
   const [adminFeedback, setAdminFeedback] = useState({ type: '', text: '' });
 
+  const persistMyOffers = (updater) => {
+    setMyOffers((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveMySavedOffers(next);
+      return next;
+    });
+  };
+
   const fetchPublicListings = async () => {
     if (!supabase) {
       setBoardError(
@@ -609,8 +683,27 @@ export default function App() {
       if (offersRes.error) throw offersRes.error;
       if (requestsRes.error) throw requestsRes.error;
 
-      setOffers(offersRes.data || []);
+      const liveOffers = offersRes.data || [];
+      setOffers(liveOffers);
       setRequests(requestsRes.data || []);
+
+      // مزامنة حالة ومقاعد إعلاناتي المحفوظة مع أحدث بيانات من الخادم إن كانت لا تزال نشطة
+      if (liveOffers.length > 0) {
+        const liveMap = Object.fromEntries(liveOffers.map((o) => [o.id, o]));
+        persistMyOffers((prev) =>
+          prev.map((item) => {
+            const match = liveMap[item.id];
+            if (!match) return item;
+            return {
+              ...item,
+              available_seats: match.available_seats,
+              total_seats: match.total_seats,
+              status: match.status,
+              expires_at: match.expires_at,
+            };
+          })
+        );
+      }
     } catch (err) {
       setBoardError(
         err?.message || 'تعذر تحميل الإعلانات حالياً. تأكد من اتصالك بالإنترنت.'
@@ -754,6 +847,15 @@ export default function App() {
       });
   }, [requests, searchStart, searchDest]);
 
+  const activeMyOffersCount = useMemo(() => {
+    const nowMs = Date.now();
+    return myOffers.filter(
+      (item) =>
+        item.status !== 'closed' &&
+        (!item.expires_at || new Date(item.expires_at).getTime() > nowMs)
+    ).length;
+  }, [myOffers]);
+
   const adminOffersMap = useMemo(
     () => Object.fromEntries(adminOffers.map((o) => [o.id, o])),
     [adminOffers]
@@ -892,7 +994,25 @@ export default function App() {
 
       const combinedCode = `${generatedId}_${generatedToken}`;
       setSavedManageCode(combinedCode);
-      setManageCodeInput(combinedCode);
+
+      // حفظ الإعلان تلقائياً في «إعلاناتي» على هذا الجهاز
+      const savedEntry = {
+        id: generatedId,
+        manageToken: generatedToken,
+        manageCode: combinedCode,
+        driver_name: driverName,
+        vehicle_type: vehicleType,
+        start_area: startArea,
+        destination_area: destArea,
+        departure_time: depDate.toISOString(),
+        expires_at: expiresDate.toISOString(),
+        total_seats: totalSeats,
+        available_seats: availableSeats,
+        status: availableSeats === 0 ? 'full' : 'active',
+        created_at: new Date().toISOString(),
+      };
+      persistMyOffers((prev) => [savedEntry, ...prev]);
+
       setOfferForm({
         driver_name: '',
         whatsapp_number: '',
@@ -916,14 +1036,106 @@ export default function App() {
     }
   };
 
-  const handleCopyManageCode = async () => {
-    if (!savedManageCode) return;
+  const handleCopyText = async (text, offerIdKey) => {
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(savedManageCode);
-      setCopiedCode(true);
+      await navigator.clipboard.writeText(text);
+      if (offerIdKey) {
+        setCopiedOfferId(offerIdKey);
+        setTimeout(() => setCopiedOfferId(''), 2200);
+      } else {
+        setCopiedCode(true);
+      }
     } catch {
-      setCopiedCode(false);
+      if (!offerIdKey) setCopiedCode(false);
     }
+  };
+
+  const handleQuickManageMyOffer = async (item, nextSeats, nextStatus) => {
+    setMyOffersFeedback({ type: '', text: '' });
+    if (!supabase) {
+      setMyOffersFeedback({
+        type: 'error',
+        text: 'إعدادات الاتصال بقاعدة البيانات غير مكتملة.',
+      });
+      return;
+    }
+
+    if (nextStatus === 'closed') {
+      const confirmed = window.confirm(
+        'هل تريد إغلاق هذا الإعلان نهائياً؟ سيختفي فوراً من صفحة البحث.'
+      );
+      if (!confirmed) return;
+    }
+
+    const total = Math.max(1, Number(item.total_seats) || 1);
+    const clampedSeats =
+      nextStatus === 'full' || nextStatus === 'closed'
+        ? 0
+        : Math.max(0, Math.min(total, Number(nextSeats) || 0));
+
+    const effectiveStatus =
+      nextStatus === 'closed'
+        ? 'closed'
+        : clampedSeats === 0 || nextStatus === 'full'
+        ? 'full'
+        : 'active';
+
+    setBusyMyOfferId(item.id);
+    try {
+      const { data, error } = await supabase.rpc('driver_manage_offer', {
+        p_offer_id: item.id,
+        p_manage_token: item.manageToken,
+        p_available_seats: clampedSeats,
+        p_status: effectiveStatus,
+      });
+
+      if (error) throw error;
+      if (!data) {
+        setMyOffersFeedback({
+          type: 'error',
+          text: 'تعذر تحديث الإعلان؛ ربما تم حذفه سابقاً من قِبل الإدارة أو انتهت صلاحيته.',
+        });
+        return;
+      }
+
+      persistMyOffers((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id
+            ? {
+                ...entry,
+                available_seats: clampedSeats,
+                status: effectiveStatus,
+              }
+            : entry
+        )
+      );
+
+      const okMsg =
+        effectiveStatus === 'closed'
+          ? `تم إغلاق إعلان (${item.start_area} ← ${item.destination_area}) بنجاح.`
+          : effectiveStatus === 'full'
+          ? `تم تعليم رحلة (${item.start_area} ← ${item.destination_area}) كمكتملة.`
+          : `تم تحديث المقاعد المتاحة إلى ${clampedSeats} من ${total}.`;
+
+      setMyOffersFeedback({ type: 'ok', text: okMsg });
+      fetchPublicListings();
+    } catch (err) {
+      setMyOffersFeedback({
+        type: 'error',
+        text: err?.message || 'حدث خطأ أثناء تحديث الإعلان.',
+      });
+    } finally {
+      setBusyMyOfferId('');
+    }
+  };
+
+  const handleRemoveFromMyDevice = (offerId) => {
+    persistMyOffers((prev) => prev.filter((item) => item.id !== offerId));
+    setMyOffersFeedback({
+      type: 'ok',
+      text: 'تمت إزالة البطاقة من قائمة جهازك فقط.',
+    });
   };
 
   const handleDriverManageAction = async (nextStatus) => {
@@ -940,7 +1152,7 @@ export default function App() {
     if (!parsed) {
       setManageFeedback({
         type: 'error',
-        text: 'صيغة رمز الإدارة غير صحيحة. يجب لصق الرمز كاملاً كما ظهر عند النشر (مع الشرطتين والشرطة السفلية _).',
+        text: 'صيغة رمز الإدارة غير صحيحة. الصق الرمز كاملاً كما ظهر عند النشر (مع الشرطة السفلية _).',
       });
       return;
     }
@@ -965,6 +1177,21 @@ export default function App() {
         });
         return;
       }
+
+      const finalStatus =
+        nextStatus === 'closed'
+          ? 'closed'
+          : nextStatus === 'full' || seatsNum === 0
+          ? 'full'
+          : 'active';
+
+      persistMyOffers((prev) =>
+        prev.map((entry) =>
+          entry.id === parsed.offerId
+            ? { ...entry, available_seats: seatsNum, status: finalStatus }
+            : entry
+        )
+      );
 
       const successText =
         nextStatus === 'closed'
@@ -1248,9 +1475,12 @@ export default function App() {
             <button
               type="button"
               style={ui.tabBtn(tab === TABS.OFFER)}
-              onClick={() => setTab(TABS.OFFER)}
+              onClick={() => {
+                setTab(TABS.OFFER);
+                setOfferSubTab('publish');
+              }}
             >
-              أعرض مشواراً
+              أعرض مشواراً {activeMyOffersCount > 0 ? `(${activeMyOffersCount})` : ''}
             </button>
             <button
               type="button"
@@ -1304,13 +1534,16 @@ export default function App() {
                 <button
                   type="button"
                   style={ui.homeBtn('#157a6e', '#ffffff')}
-                  onClick={() => setTab(TABS.OFFER)}
+                  onClick={() => {
+                    setTab(TABS.OFFER);
+                    setOfferSubTab('publish');
+                  }}
                 >
                   <strong style={{ fontSize: '1.05rem' }}>
                     أعرض مشواراً (لدي عربة)
                   </strong>
                   <span style={{ fontSize: '0.84rem', opacity: 0.92 }}>
-                    أعلن عن مقاعدك الفارغة أو عدّل إعلاناً سابقاً برمز الإدارة
+                    أعلن عن مقاعدك الفارغة وتحكم بها بضغطة زر من هذا الجهاز
                   </span>
                 </button>
 
@@ -1325,6 +1558,21 @@ export default function App() {
                   </span>
                 </button>
               </div>
+
+              {myOffers.length > 0 && (
+                <div style={{ marginTop: '14px' }}>
+                  <button
+                    type="button"
+                    style={{ ...ui.secondaryBtn, width: '100%', padding: '11px 14px' }}
+                    onClick={() => {
+                      setTab(TABS.OFFER);
+                      setOfferSubTab('my_ads');
+                    }}
+                  >
+                    إدارة إعلاناتي المحفوظة على هذا الجهاز ({myOffers.length})
+                  </button>
+                </div>
+              )}
             </section>
 
             <section style={ui.card}>
@@ -1333,8 +1581,8 @@ export default function App() {
                 1) للبحث عن توصيلة: اضغط «أبحث عن ترحيل» ثم تواصل مباشرة عبر زر واتساب
                 أو اتصال.
                 <br />
-                2) للسائقين: انشر مشوارك واحفظ «رمز الإدارة» الذي يظهر بعد النشر لتحديث
-                المقاعد أو إغلاق الإعلان في أي وقت.
+                2) للسائقين: عند نشر مشوارك يُحفظ تلقائياً في قسم «إعلاناتي» على هاتفك
+                لتعديل المقاعد أو إغلاق الإعلان بضغطة واحدة.
                 <br />
                 3) لا توجد أرقام ظاهرة كنص في البطاقات لحماية خصوصيتك، بل أزرار تواصل
                 مباشرة فقط.
@@ -1683,343 +1931,539 @@ export default function App() {
 
         {tab === TABS.OFFER && (
           <>
-            <section style={ui.card}>
-              <h2 style={ui.h2}>أعرض مشواراً (لأصحاب العربات)</h2>
-              <p style={ui.pMuted}>
-                انشر تفاصيل رحلتك ليراها الطلاب. بعد النشر سيظهر لك «رمز إدارة» خاص
-                بإعلانك — احفظه لتحديث المقاعد أو إغلاق الإعلان لاحقاً.
-              </p>
+            <div style={ui.subTabRow}>
+              <button
+                type="button"
+                style={ui.subTabBtn(offerSubTab === 'publish')}
+                onClick={() => setOfferSubTab('publish')}
+              >
+                نشر مشوار جديد
+              </button>
+              <button
+                type="button"
+                style={ui.subTabBtn(offerSubTab === 'my_ads')}
+                onClick={() => setOfferSubTab('my_ads')}
+              >
+                إعلاناتي على هذا الجهاز ({myOffers.length})
+              </button>
+            </div>
 
-              {offerError && <div style={ui.errBox}>{offerError}</div>}
+            {offerSubTab === 'publish' && (
+              <section style={ui.card}>
+                <h2 style={ui.h2}>أعرض مشواراً (لأصحاب العربات)</h2>
+                <p style={ui.pMuted}>
+                  انشر تفاصيل رحلتك ليراها الطلاب. سيُحفظ إعلانك تلقائياً في تبويب{' '}
+                  <strong>«إعلاناتي على هذا الجهاز»</strong> لتحديث المقاعد أو إغلاقه
+                  بسهولة.
+                </p>
 
-              {savedManageCode && (
-                <div style={ui.okBox}>
-                  <strong>تم نشر عرض الترحيل بنجاح!</strong>
-                  <div style={{ marginTop: '6px' }}>
-                    احفظ رمز الإدارة التالي الآن (يظهر هذه المرة فقط) لتتمكن من تعديل
-                    عدد المقاعد أو إغلاق الإعلان لاحقاً:
-                  </div>
-                  <div style={ui.codeBox}>{savedManageCode}</div>
-                  <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
-                    <button
-                      type="button"
-                      style={ui.secondaryBtn}
-                      onClick={handleCopyManageCode}
-                    >
-                      {copiedCode ? 'تم النسخ بنجاح ✓' : 'نسخ رمز الإدارة'}
-                    </button>
-                    <button
-                      type="button"
-                      style={ui.secondaryBtn}
-                      onClick={() => setTab(TABS.SEARCH)}
-                    >
-                      عرض الإعلانات الآن
-                    </button>
-                  </div>
-                </div>
-              )}
+                {offerError && <div style={ui.errBox}>{offerError}</div>}
 
-              <form onSubmit={handlePublishOffer}>
-                <div style={ui.grid2}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      اسم السائق <span style={ui.req}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={offerForm.driver_name}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, driver_name: e.target.value })
-                      }
-                      placeholder="مثال: أحمد محمد"
-                      style={ui.input}
-                      required
-                    />
-                  </div>
-
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      نوع العربة <span style={ui.req}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={offerForm.vehicle_type}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, vehicle_type: e.target.value })
-                      }
-                      placeholder="مثال: أكسنت فضي / فيتز / هايس"
-                      style={ui.input}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div style={ui.grid2}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      رقم الواتساب <span style={ui.req}>*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={offerForm.whatsapp_number}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, whatsapp_number: e.target.value })
-                      }
-                      placeholder="مثال: 0912345678"
-                      style={ui.input}
-                      required
-                    />
-                  </div>
-
-                  <div style={ui.field}>
-                    <label style={ui.label}>رقم اتصال إضافي (اختياري)</label>
-                    <input
-                      type="tel"
-                      value={offerForm.phone_number}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, phone_number: e.target.value })
-                      }
-                      placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
-                      style={ui.input}
-                    />
-                  </div>
-                </div>
-
-                <div style={ui.grid2}>
-                  <AreaInput
-                    label="منطقة الانطلاق"
-                    value={offerForm.start_area}
-                    onChange={(val) =>
-                      setOfferForm({ ...offerForm, start_area: val })
-                    }
-                    placeholder="اكتب نقطة الانطلاق"
-                  />
-                  <AreaInput
-                    label="الوجهة"
-                    value={offerForm.destination_area}
-                    onChange={(val) =>
-                      setOfferForm({ ...offerForm, destination_area: val })
-                    }
-                    placeholder="اكتب الوجهة (مثال: السنتر)"
-                  />
-                </div>
-
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    المحطات الوسيطة في المسار (اختياري، افصل بينها بفاصلة)
-                  </label>
-                  <input
-                    type="text"
-                    value={offerForm.intermediate_stops_input}
-                    onChange={(e) =>
-                      setOfferForm({
-                        ...offerForm,
-                        intermediate_stops_input: e.target.value,
-                      })
-                    }
-                    placeholder="مثال: شارع الستين، المعمورة، بري"
-                    style={ui.input}
-                  />
-                </div>
-
-                <div style={ui.grid2}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      موعد المغادرة (يجب أن يكون في المستقبل){' '}
-                      <span style={ui.req}>*</span>
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={offerForm.departure_time}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, departure_time: e.target.value })
-                      }
-                      style={ui.input}
-                      required
-                    />
-                  </div>
-
-                  <div style={ui.field}>
-                    <label style={ui.label}>مدة بقاء الإعلان بعد المغادرة (بالساعات)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="72"
-                      value={offerForm.expires_after_hours}
-                      onChange={(e) =>
-                        setOfferForm({
-                          ...offerForm,
-                          expires_after_hours: e.target.value,
-                        })
-                      }
-                      style={ui.input}
-                    />
-                  </div>
-                </div>
-
-                <div style={ui.field}>
-                  <label style={ui.label}>تكرار الرحلة</label>
-                  <select
-                    value={offerForm.recurrence_type}
-                    onChange={(e) =>
-                      setOfferForm({ ...offerForm, recurrence_type: e.target.value })
-                    }
-                    style={ui.input}
-                  >
-                    <option value="once">مرة واحدة</option>
-                    <option value="daily">يومياً</option>
-                    <option value="weekdays">أيام محددة من الأسبوع</option>
-                  </select>
-                </div>
-
-                {offerForm.recurrence_type === 'weekdays' && (
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      اختر الأيام <span style={ui.req}>*</span>
-                    </label>
-                    <div style={ui.rowWrap}>
-                      {WEEKDAYS.map((day) => {
-                        const selected = offerForm.recurrence_days.includes(day.key);
-                        return (
-                          <button
-                            key={day.key}
-                            type="button"
-                            style={ui.chipBtn(selected)}
-                            onClick={() => toggleRecurrenceDay(day.key)}
-                          >
-                            {day.label}
-                          </button>
-                        );
-                      })}
+                {savedManageCode && (
+                  <div style={ui.okBox}>
+                    <strong>تم نشر عرض الترحيل وحفظه في «إعلاناتي» بنجاح!</strong>
+                    <div style={{ marginTop: '6px' }}>
+                      يمكنك تعديله الآن بضغطة زر من قسم «إعلاناتي على هذا الجهاز»، أو
+                      نسخ الرمز الاحتياطي التالي إذا أردت إدارته من هاتف آخر:
+                    </div>
+                    <div style={ui.codeBox}>{savedManageCode}</div>
+                    <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
+                      <button
+                        type="button"
+                        style={ui.secondaryBtn}
+                        onClick={() => setOfferSubTab('my_ads')}
+                      >
+                        الانتقال إلى إعلاناتي
+                      </button>
+                      <button
+                        type="button"
+                        style={ui.secondaryBtn}
+                        onClick={() => handleCopyText(savedManageCode, '')}
+                      >
+                        {copiedCode ? 'تم النسخ بنجاح ✓' : 'نسخ الرمز الاحتياطي'}
+                      </button>
+                      <button
+                        type="button"
+                        style={ui.subtleBtn}
+                        onClick={() => setTab(TABS.SEARCH)}
+                      >
+                        عرض في صفحة البحث
+                      </button>
                     </div>
                   </div>
                 )}
 
-                <div style={ui.grid2}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      إجمالي مقاعد العربة <span style={ui.req}>*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={offerForm.total_seats}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, total_seats: e.target.value })
+                <form onSubmit={handlePublishOffer}>
+                  <div style={ui.grid2}>
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        اسم السائق <span style={ui.req}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={offerForm.driver_name}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, driver_name: e.target.value })
+                        }
+                        placeholder="مثال: أحمد محمد"
+                        style={ui.input}
+                        required
+                      />
+                    </div>
+
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        نوع العربة <span style={ui.req}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={offerForm.vehicle_type}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, vehicle_type: e.target.value })
+                        }
+                        placeholder="مثال: أكسنت فضي / فيتز / هايس"
+                        style={ui.input}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={ui.grid2}>
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        رقم الواتساب <span style={ui.req}>*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={offerForm.whatsapp_number}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, whatsapp_number: e.target.value })
+                        }
+                        placeholder="مثال: 0912345678"
+                        style={ui.input}
+                        required
+                      />
+                    </div>
+
+                    <div style={ui.field}>
+                      <label style={ui.label}>رقم اتصال إضافي (اختياري)</label>
+                      <input
+                        type="tel"
+                        value={offerForm.phone_number}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, phone_number: e.target.value })
+                        }
+                        placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
+                        style={ui.input}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={ui.grid2}>
+                    <AreaInput
+                      label="منطقة الانطلاق"
+                      value={offerForm.start_area}
+                      onChange={(val) =>
+                        setOfferForm({ ...offerForm, start_area: val })
                       }
-                      style={ui.input}
-                      required
+                      placeholder="اكتب نقطة الانطلاق"
+                    />
+                    <AreaInput
+                      label="الوجهة"
+                      value={offerForm.destination_area}
+                      onChange={(val) =>
+                        setOfferForm({ ...offerForm, destination_area: val })
+                      }
+                      placeholder="اكتب الوجهة (مثال: السنتر)"
                     />
                   </div>
 
                   <div style={ui.field}>
                     <label style={ui.label}>
-                      المقاعد المتاحة الآن <span style={ui.req}>*</span>
+                      المحطات الوسيطة في المسار (اختياري، افصل بينها بفاصلة)
+                    </label>
+                    <input
+                      type="text"
+                      value={offerForm.intermediate_stops_input}
+                      onChange={(e) =>
+                        setOfferForm({
+                          ...offerForm,
+                          intermediate_stops_input: e.target.value,
+                        })
+                      }
+                      placeholder="مثال: شارع الستين، المعمورة، بري"
+                      style={ui.input}
+                    />
+                  </div>
+
+                  <div style={ui.grid2}>
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        موعد المغادرة (يجب أن يكون في المستقبل){' '}
+                        <span style={ui.req}>*</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={offerForm.departure_time}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, departure_time: e.target.value })
+                        }
+                        style={ui.input}
+                        required
+                      />
+                    </div>
+
+                    <div style={ui.field}>
+                      <label style={ui.label}>مدة بقاء الإعلان بعد المغادرة (بالساعات)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={offerForm.expires_after_hours}
+                        onChange={(e) =>
+                          setOfferForm({
+                            ...offerForm,
+                            expires_after_hours: e.target.value,
+                          })
+                        }
+                        style={ui.input}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={ui.field}>
+                    <label style={ui.label}>تكرار الرحلة</label>
+                    <select
+                      value={offerForm.recurrence_type}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, recurrence_type: e.target.value })
+                      }
+                      style={ui.input}
+                    >
+                      <option value="once">مرة واحدة</option>
+                      <option value="daily">يومياً</option>
+                      <option value="weekdays">أيام محددة من الأسبوع</option>
+                    </select>
+                  </div>
+
+                  {offerForm.recurrence_type === 'weekdays' && (
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        اختر الأيام <span style={ui.req}>*</span>
+                      </label>
+                      <div style={ui.rowWrap}>
+                        {WEEKDAYS.map((day) => {
+                          const selected = offerForm.recurrence_days.includes(day.key);
+                          return (
+                            <button
+                              key={day.key}
+                              type="button"
+                              style={ui.chipBtn(selected)}
+                              onClick={() => toggleRecurrenceDay(day.key)}
+                            >
+                              {day.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={ui.grid2}>
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        إجمالي مقاعد العربة <span style={ui.req}>*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={offerForm.total_seats}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, total_seats: e.target.value })
+                        }
+                        style={ui.input}
+                        required
+                      />
+                    </div>
+
+                    <div style={ui.field}>
+                      <label style={ui.label}>
+                        المقاعد المتاحة الآن <span style={ui.req}>*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={offerForm.available_seats}
+                        onChange={(e) =>
+                          setOfferForm({ ...offerForm, available_seats: e.target.value })
+                        }
+                        style={ui.input}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={ui.field}>
+                    <label style={ui.label}>
+                      السعر للمقعد (جنيه سوداني — اكتب 0 إذا كان مجاناً أو بالاتفاق)
                     </label>
                     <input
                       type="number"
                       min="0"
-                      max="50"
-                      value={offerForm.available_seats}
+                      step="50"
+                      value={offerForm.price_per_seat}
                       onChange={(e) =>
-                        setOfferForm({ ...offerForm, available_seats: e.target.value })
+                        setOfferForm({ ...offerForm, price_per_seat: e.target.value })
                       }
                       style={ui.input}
-                      required
                     />
                   </div>
-                </div>
 
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    السعر للمقعد (جنيه سوداني — اكتب 0 إذا كان مجاناً أو بالاتفاق)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="50"
-                    value={offerForm.price_per_seat}
-                    onChange={(e) =>
-                      setOfferForm({ ...offerForm, price_per_seat: e.target.value })
-                    }
-                    style={ui.input}
-                  />
-                </div>
+                  <button
+                    type="submit"
+                    style={ui.primaryBtn}
+                    disabled={offerSubmitting}
+                  >
+                    {offerSubmitting ? 'جاري النشر...' : 'نشر عرض الترحيل'}
+                  </button>
+                </form>
+              </section>
+            )}
 
-                <button
-                  type="submit"
-                  style={ui.primaryBtn}
-                  disabled={offerSubmitting}
-                >
-                  {offerSubmitting ? 'جاري النشر...' : 'نشر عرض الترحيل'}
-                </button>
-              </form>
-            </section>
+            {offerSubTab === 'my_ads' && (
+              <>
+                <section style={ui.card}>
+                  <h2 style={ui.h2}>إعلاناتي المحفوظة على هذا الجهاز ({myOffers.length})</h2>
+                  <div style={ui.infoBox}>
+                    تُحفظ هذه القائمة محلياً داخل متصفحك الحالي فقط، لتتمكن من تحديث
+                    المقاعد أو إغلاق إعلاناتك بضغطة زر دون إدخال رمز الإدارة كل مرة.
+                  </div>
 
-            <section style={ui.card}>
-              <h2 style={ui.h2}>إدارة إعلان منشور سابقاً (للسائق)</h2>
-              <p style={ui.pMuted}>
-                أدخل رمز الإدارة (<code>id_token</code>) الذي حفظته بعد نشر إعلانك
-                لتحديث عدد المقاعد المتاحة أو تعليم الرحلة كمكتملة أو إغلاقها نهائياً.
-              </p>
+                  {myOffersFeedback.text && (
+                    <div
+                      style={myOffersFeedback.type === 'ok' ? ui.okBox : ui.errBox}
+                    >
+                      {myOffersFeedback.text}
+                    </div>
+                  )}
 
-              {manageFeedback.text && (
-                <div style={manageFeedback.type === 'ok' ? ui.okBox : ui.errBox}>
-                  {manageFeedback.text}
-                </div>
-              )}
+                  {myOffers.length === 0 ? (
+                    <div>
+                      <p style={ui.pMuted}>
+                        لا توجد إعلانات محفوظة على هذا الجهاز بعد. عند نشر مشوار جديد
+                        سيظهر هنا تلقائياً.
+                      </p>
+                      <button
+                        type="button"
+                        style={ui.secondaryBtn}
+                        onClick={() => setOfferSubTab('publish')}
+                      >
+                        نشر أول مشوار الآن
+                      </button>
+                    </div>
+                  ) : (
+                    myOffers.map((item) => {
+                      const isExpired =
+                        item.expires_at &&
+                        new Date(item.expires_at).getTime() <= Date.now();
+                      const isClosed = item.status === 'closed';
+                      const isFull =
+                        item.status === 'full' || Number(item.available_seats) <= 0;
+                      const isBusy = busyMyOfferId === item.id;
+                      const currentSeats = Number(item.available_seats) || 0;
+                      const totalSeats = Math.max(1, Number(item.total_seats) || 1);
 
-              <div style={ui.field}>
-                <label style={ui.label}>رمز الإدارة الكامل (id_token)</label>
-                <input
-                  type="text"
-                  value={manageCodeInput}
-                  onChange={(e) => setManageCodeInput(e.target.value)}
-                  placeholder="الصق الرمز هنا..."
-                  style={{ ...ui.input, direction: 'ltr', textAlign: 'left' }}
-                />
-              </div>
+                      const badgeColors = isClosed
+                        ? ['#e2e8f0', '#334155', 'مغلق']
+                        : isExpired
+                        ? ['#ffe3e3', '#a81f1f', 'منتهي الوقت']
+                        : isFull
+                        ? ['#fff3cd', '#854d0e', 'مكتمل (0 مقاعد)']
+                        : ['#dcfce7', '#14532d', `متاح ${currentSeats} من ${totalSeats}`];
 
-              <div style={ui.field}>
-                <label style={ui.label}>عدد المقاعد المتاحة الجديد</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={manageSeatsInput}
-                  onChange={(e) => setManageSeatsInput(e.target.value)}
-                  style={ui.input}
-                />
-              </div>
+                      return (
+                        <article key={item.id} style={ui.itemBox}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            <strong style={{ fontSize: '1rem', color: '#0d5c63' }}>
+                              {item.start_area} ← {item.destination_area}
+                            </strong>
+                            <span style={ui.badge(badgeColors[0], badgeColors[1])}>
+                              {badgeColors[2]}
+                            </span>
+                          </div>
 
-              <div style={ui.rowWrap}>
-                <button
-                  type="button"
-                  style={ui.secondaryBtn}
-                  disabled={manageLoading}
-                  onClick={() => handleDriverManageAction('active')}
-                >
-                  تحديث عدد المقاعد
-                </button>
-                <button
-                  type="button"
-                  style={ui.warnBtn}
-                  disabled={manageLoading}
-                  onClick={() => handleDriverManageAction('full')}
-                >
-                  اكتملت المقاعد
-                </button>
-                <button
-                  type="button"
-                  style={ui.dangerBtn}
-                  disabled={manageLoading}
-                  onClick={() => handleDriverManageAction('closed')}
-                >
-                  إغلاق الإعلان نهائياً
-                </button>
-              </div>
-            </section>
+                          <div
+                            style={{
+                              fontSize: '0.87rem',
+                              color: '#345256',
+                              lineHeight: 1.7,
+                            }}
+                          >
+                            <div>
+                              <strong>الموعد:</strong>{' '}
+                              {formatDateTime(item.departure_time)} •{' '}
+                              <strong>العربة:</strong> {item.vehicle_type}
+                            </div>
+                          </div>
+
+                          <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
+                            {!isClosed && !isExpired && (
+                              <>
+                                <button
+                                  type="button"
+                                  style={ui.secondaryBtn}
+                                  disabled={isBusy || currentSeats <= 0}
+                                  onClick={() =>
+                                    handleQuickManageMyOffer(
+                                      item,
+                                      currentSeats - 1,
+                                      currentSeats - 1 <= 0 ? 'full' : 'active'
+                                    )
+                                  }
+                                >
+                                  − مقعد
+                                </button>
+                                <button
+                                  type="button"
+                                  style={ui.secondaryBtn}
+                                  disabled={isBusy || currentSeats >= totalSeats}
+                                  onClick={() =>
+                                    handleQuickManageMyOffer(
+                                      item,
+                                      currentSeats + 1,
+                                      'active'
+                                    )
+                                  }
+                                >
+                                  + مقعد
+                                </button>
+                                <button
+                                  type="button"
+                                  style={ui.warnBtn}
+                                  disabled={isBusy || isFull}
+                                  onClick={() =>
+                                    handleQuickManageMyOffer(item, 0, 'full')
+                                  }
+                                >
+                                  اكتملت المقاعد
+                                </button>
+                                <button
+                                  type="button"
+                                  style={ui.dangerBtn}
+                                  disabled={isBusy}
+                                  onClick={() =>
+                                    handleQuickManageMyOffer(item, 0, 'closed')
+                                  }
+                                >
+                                  إغلاق الإعلان
+                                </button>
+                              </>
+                            )}
+
+                            <button
+                              type="button"
+                              style={ui.subtleBtn}
+                              onClick={() =>
+                                handleCopyText(item.manageCode, item.id)
+                              }
+                            >
+                              {copiedOfferId === item.id
+                                ? 'تم نسخ الرمز ✓'
+                                : 'نسخ الرمز'}
+                            </button>
+
+                            <button
+                              type="button"
+                              style={ui.subtleBtn}
+                              onClick={() => handleRemoveFromMyDevice(item.id)}
+                            >
+                              إزالة من القائمة
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })
+                  )}
+                </section>
+
+                <section style={ui.card}>
+                  <h3 style={ui.h3}>إدارة إعلان برمز يدوي (من جهاز آخر)</h3>
+                  <p style={ui.pMuted}>
+                    إذا نشرت إعلانك من هاتف آخر، الصق رمز الإدارة (
+                    <code>id_token</code>) هنا للتحكم به.
+                  </p>
+
+                  {manageFeedback.text && (
+                    <div
+                      style={manageFeedback.type === 'ok' ? ui.okBox : ui.errBox}
+                    >
+                      {manageFeedback.text}
+                    </div>
+                  )}
+
+                  <div style={ui.field}>
+                    <label style={ui.label}>رمز الإدارة الكامل (id_token)</label>
+                    <input
+                      type="text"
+                      value={manageCodeInput}
+                      onChange={(e) => setManageCodeInput(e.target.value)}
+                      placeholder="الصق الرمز هنا..."
+                      style={{ ...ui.input, direction: 'ltr', textAlign: 'left' }}
+                    />
+                  </div>
+
+                  <div style={ui.field}>
+                    <label style={ui.label}>عدد المقاعد المتاحة الجديد</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      value={manageSeatsInput}
+                      onChange={(e) => setManageSeatsInput(e.target.value)}
+                      style={ui.input}
+                    />
+                  </div>
+
+                  <div style={ui.rowWrap}>
+                    <button
+                      type="button"
+                      style={ui.secondaryBtn}
+                      disabled={manageLoading}
+                      onClick={() => handleDriverManageAction('active')}
+                    >
+                      تحديث عدد المقاعد
+                    </button>
+                    <button
+                      type="button"
+                      style={ui.warnBtn}
+                      disabled={manageLoading}
+                      onClick={() => handleDriverManageAction('full')}
+                    >
+                      اكتملت المقاعد
+                    </button>
+                    <button
+                      type="button"
+                      style={ui.dangerBtn}
+                      disabled={manageLoading}
+                      onClick={() => handleDriverManageAction('closed')}
+                    >
+                      إغلاق الإعلان نهائياً
+                    </button>
+                  </div>
+                </section>
+              </>
+            )}
           </>
         )}
 
@@ -2327,7 +2771,9 @@ export default function App() {
                             }}
                           >
                             <strong>
-                              {rep.target_type === 'offer' ? 'بلاغ على عرض سائق' : 'بلاغ على طلب راكب'}
+                              {rep.target_type === 'offer'
+                                ? 'بلاغ على عرض سائق'
+                                : 'بلاغ على طلب راكب'}
                             </strong>
                             <span
                               style={ui.badge(
