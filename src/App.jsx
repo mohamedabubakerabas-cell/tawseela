@@ -88,6 +88,1088 @@ const REQUEST_PUBLIC_COLUMNS = [
   'created_at',
 ].join(', ');
 
+const APP_CSS = `
+:root {
+  --bg: #f3f6f6;
+  --surface: #ffffff;
+  --surface-soft: #f8fbfb;
+  --primary: #0b555c;
+  --primary-dark: #073e44;
+  --primary-light: #e6f3f2;
+  --accent: #d9822b;
+  --accent-soft: #fef5e7;
+  --text: #0f2629;
+  --text-muted: #526b6e;
+  --border: #dce7e6;
+  --border-strong: #bdd1cf;
+  --green: #15803d;
+  --green-soft: #e6f7ed;
+  --red: #b42318;
+  --red-soft: #fef0f0;
+  --violet: #5b21b6;
+  --violet-soft: #f1ecfe;
+  --sky: #0369a1;
+  --sky-soft: #e6f4fc;
+  --shadow-sm: 0 2px 8px rgba(11, 56, 62, 0.05);
+  --shadow-md: 0 8px 24px rgba(11, 56, 62, 0.08);
+  --radius-lg: 18px;
+  --radius-md: 13px;
+  --radius-sm: 10px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  direction: rtl;
+}
+
+.tc-app {
+  min-height: 100vh;
+  padding-bottom: 92px;
+}
+
+/* Header */
+.tc-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: linear-gradient(135deg, #083f45 0%, #0d5c63 55%, #13736b 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(8, 63, 69, 0.22);
+}
+
+.tc-header-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tc-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tc-logo-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(6px);
+}
+
+.tc-brand-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.tc-brand-sub {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+  color: #cbece8;
+  font-weight: 600;
+}
+
+.tc-desktop-nav {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.tc-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eef9f8;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.tc-nav-pill:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tc-nav-pill.active {
+  background: #ffffff;
+  color: var(--primary-dark);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.tc-live-dot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #e6fffb;
+}
+
+.tc-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.28);
+}
+
+/* Mobile Bottom Nav */
+.tc-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(11, 56, 62, 0.08);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+}
+
+.tc-bottom-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 10px;
+  position: relative;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tc-bottom-btn.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.tc-bottom-count {
+  position: absolute;
+  top: 2px;
+  left: 16%;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Container & Cards */
+.tc-main {
+  max-width: 920px;
+  margin: 18px auto 0;
+  padding: 0 14px;
+  animation: tcFadeIn 0.22s ease;
+}
+
+@keyframes tcFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+/* Hero */
+.tc-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 24px 20px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #09464d 0%, #0e636a 55%, #168075 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(11, 79, 86, 0.22);
+}
+
+.tc-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.tc-hero-title {
+  margin: 0 0 8px;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tc-hero-desc {
+  margin: 0 0 16px;
+  font-size: 0.92rem;
+  color: #d9f3f0;
+  line-height: 1.7;
+  max-width: 620px;
+}
+
+.tc-stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tc-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Home Action Cards */
+.tc-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tc-action-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: right;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.tc-action-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.tc-action-tile.primary {
+  background: linear-gradient(135deg, #f0faf8 0%, #ffffff 100%);
+  border-color: #b7dcd8;
+}
+
+.tc-tile-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tc-tile-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-tile-title {
+  display: block;
+  font-size: 1.03rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.tc-tile-sub {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tc-tile-arrow {
+  color: var(--primary);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Comparison info cards */
+.tc-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tc-info-mini {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+
+/* Headings & Text */
+.tc-h2 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tc-h3 {
+  margin: 0 0 8px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.tc-muted {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* Forms & Inputs */
+.tc-form-section {
+  padding: 15px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.tc-form-section-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tc-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tc-field {
+  margin-bottom: 12px;
+}
+
+.tc-field:last-child {
+  margin-bottom: 0;
+}
+
+.tc-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #193b3f;
+}
+
+.tc-req {
+  color: var(--red);
+}
+
+.tc-input {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1.5px solid #cbdcdc;
+  background: #ffffff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.94rem;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tc-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3.5px rgba(11, 85, 92, 0.13);
+}
+
+.tc-input-ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Segmented Controls & Chips */
+.tc-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  background: #e7f0ef;
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.tc-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.89rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.tc-seg-btn.active {
+  background: #ffffff;
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(11, 56, 62, 0.1);
+}
+
+.tc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.tc-chip {
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1.5px solid #c5dad8;
+  background: #ffffff;
+  color: #1f4448;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tc-chip:hover {
+  border-color: var(--primary);
+}
+
+.tc-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(11, 85, 92, 0.22);
+}
+
+/* Buttons */
+.tc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 15px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.tc-btn:active {
+  transform: scale(0.98);
+}
+
+.tc-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tc-btn-primary {
+  width: 100%;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, #0b555c 0%, #12706b 100%);
+  color: #ffffff;
+  font-size: 0.96rem;
+  box-shadow: 0 5px 14px rgba(11, 85, 92, 0.22);
+}
+
+.tc-btn-primary:hover:not(:disabled) {
+  opacity: 0.95;
+}
+
+.tc-btn-soft {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: #c3e1df;
+}
+
+.tc-btn-soft:hover:not(:disabled) {
+  background: #d8ecea;
+}
+
+.tc-btn-wa {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.22);
+}
+
+.tc-btn-wa:hover {
+  background: #15803d;
+}
+
+.tc-btn-call {
+  background: #0d5c63;
+  color: #ffffff;
+}
+
+.tc-btn-call:hover {
+  background: #09444a;
+}
+
+.tc-btn-warn {
+  background: var(--accent-soft);
+  color: #9a5308;
+  border-color: #f3d2a4;
+}
+
+.tc-btn-danger {
+  background: var(--red-soft);
+  color: var(--red);
+  border-color: #f4c2c2;
+}
+
+.tc-btn-ghost {
+  background: #ffffff;
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+
+.tc-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Listing Cards (Ride Offers & Student Requests) */
+.tc-listing {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 13px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tc-listing:hover {
+  border-color: #b7d5d2;
+  box-shadow: var(--shadow-md);
+}
+
+.tc-listing-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tc-price-tag {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  background: var(--accent-soft);
+  border: 1px solid #f5d8aa;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.tc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.tc-badge-once { background: var(--sky-soft); color: var(--sky); }
+.tc-badge-rec { background: var(--violet-soft); color: var(--violet); }
+.tc-badge-ok { background: var(--green-soft); color: var(--green); }
+.tc-badge-full { background: var(--red-soft); color: var(--red); }
+.tc-badge-warn { background: var(--accent-soft); color: #9a5308; }
+.tc-badge-neutral { background: #edf2f2; color: #385154; }
+
+/* Route Timeline */
+.tc-route-box {
+  background: var(--surface-soft);
+  border: 1px solid #e4efef;
+  border-radius: 13px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.tc-route-point {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tc-dot-start {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 85, 92, 0.18);
+  flex-shrink: 0;
+}
+
+.tc-dot-end {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 130, 43, 0.2);
+  flex-shrink: 0;
+}
+
+.tc-route-line {
+  width: 2px;
+  min-height: 16px;
+  margin: 3px 4.5px;
+  border-right: 2px dashed #9cc0bc;
+}
+
+.tc-stops-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 20px 6px 0;
+}
+
+.tc-stop-pill {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #ffffff;
+  border: 1px solid #d7e5e4;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.tc-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 0.86rem;
+  color: #2f4e52;
+  margin-bottom: 12px;
+}
+
+.tc-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tc-notes-box {
+  background: #fcfdfd;
+  border-right: 3px solid var(--primary);
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.tc-listing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 11px;
+  border-top: 1px solid #ebf2f2;
+}
+
+/* Alerts & Code box */
+.tc-alert {
+  padding: 13px 15px;
+  border-radius: 13px;
+  font-size: 0.89rem;
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.tc-alert-ok {
+  background: var(--green-soft);
+  border: 1px solid #96e0b3;
+  color: #11532b;
+}
+
+.tc-alert-err {
+  background: var(--red-soft);
+  border: 1px solid #f4b8b8;
+  color: #981b1b;
+}
+
+.tc-alert-info {
+  background: var(--primary-light);
+  border: 1px solid #bcdad7;
+  color: var(--primary-dark);
+}
+
+.tc-code-box {
+  margin-top: 10px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px dashed #16a34a;
+  font-family: monospace;
+  font-size: 0.83rem;
+  direction: ltr;
+  text-align: left;
+  word-break: break-all;
+  color: var(--text);
+}
+
+/* Seat stepper in My Ads */
+.tc-seat-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  padding: 4px;
+}
+
+.tc-step-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #ffffff;
+  color: var(--primary-dark);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tc-step-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Empty & Skeleton */
+.tc-empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--text-muted);
+}
+
+.tc-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.tc-skeleton {
+  height: 118px;
+  border-radius: 15px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #edf3f3 25%, #f6fafa 50%, #edf3f3 75%);
+  background-size: 200% 100%;
+  animation: tcShimmer 1.3s infinite linear;
+}
+
+@keyframes tcShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Modal */
+.tc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 32, 36, 0.52);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tc-modal {
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px 18px;
+  box-shadow: 0 20px 48px rgba(10, 32, 36, 0.25);
+  animation: tcFadeIn 0.18s ease;
+}
+
+/* Admin Stats */
+.tc-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tc-admin-stat {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 13px 10px;
+  text-align: center;
+}
+
+.tc-admin-stat-num {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.tc-admin-stat-label {
+  font-size: 0.77rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+@media (min-width: 720px) {
+  .tc-app { padding-bottom: 44px; }
+  .tc-desktop-nav { display: flex; }
+  .tc-bottom-nav { display: none; }
+  .tc-grid-2 { grid-template-columns: 1fr 1fr; }
+  .tc-actions-grid { grid-template-columns: repeat(3, 1fr); }
+  .tc-action-tile {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 18px;
+  }
+  .tc-tile-arrow { display: none; }
+  .tc-info-grid { grid-template-columns: 1fr 1fr; }
+  .tc-hero { padding: 30px 28px; }
+  .tc-hero-title { font-size: 1.7rem; }
+}
+`;
+
+function Icon({ name, size = 18 }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': 'true',
+  };
+
+  switch (name) {
+    case 'home':
+      return (
+        <svg {...common}>
+          <path d="M3 10.5 12 3l9 7.5" />
+          <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+        </svg>
+      );
+    case 'search':
+      return (
+        <svg {...common}>
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      );
+    case 'car':
+      return (
+        <svg {...common}>
+          <path d="M5 17h14v-5l-2-5H7l-2 5v5Z" />
+          <circle cx="7.5" cy="17.5" r="1.5" />
+          <circle cx="16.5" cy="17.5" r="1.5" />
+          <path d="M5 12h14" />
+        </svg>
+      );
+    case 'hand':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="7" r="3" />
+          <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+        </svg>
+      );
+    case 'shield':
+      return (
+        <svg {...common}>
+          <path d="M12 3 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-3Z" />
+        </svg>
+      );
+    case 'clock':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      );
+    case 'repeat':
+      return (
+        <svg {...common}>
+          <path d="M17 2l4 4-4 4" />
+          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+          <path d="M7 22l-4-4 4-4" />
+          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+        </svg>
+      );
+    case 'whatsapp':
+      return (
+        <svg {...common}>
+          <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.5L3 20l1.2-5.1A8.5 8.5 0 1 1 21 11.5Z" />
+          <path d="M9.5 9.5c.3 1.7 2.3 3.7 4 4" />
+        </svg>
+      );
+    case 'phone':
+      return (
+        <svg {...common}>
+          <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.7 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.4 1.7.6 2.6.7a2 2 0 0 1 1.7 2Z" />
+        </svg>
+      );
+    case 'flag':
+      return (
+        <svg {...common}>
+          <path d="M5 21V4" />
+          <path d="M5 4h11l-2 4 2 4H5" />
+        </svg>
+      );
+    case 'refresh':
+      return (
+        <svg {...common}>
+          <path d="M21 12a9 9 0 1 1-2.6-6.4L21 8" />
+          <path d="M21 3v5h-5" />
+        </svg>
+      );
+    case 'chevronLeft':
+      return (
+        <svg {...common}>
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      );
+    case 'copy':
+      return (
+        <svg {...common}>
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      );
+    case 'route':
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="19" r="3" />
+          <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+          <circle cx="18" cy="5" r="3" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...common}>
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="M19 6l-1 14H6L5 6" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 function isRecurringType(type) {
   return type === 'daily' || type === 'weekdays';
 }
@@ -107,7 +1189,7 @@ function saveMySavedOffers(list) {
   try {
     window.localStorage.setItem(MY_OFFERS_STORAGE_KEY, JSON.stringify(list));
   } catch {
-    // تجاهل الخطأ إذا كان التخزين المحلي مقيداً في المتصفح
+    // تجاهل الخطأ إذا كان التخزين المحلي مقيداً
   }
 }
 
@@ -120,7 +1202,10 @@ function generateUuid() {
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(
+    16,
+    20
+  )}-${hex.slice(20)}`;
 }
 
 function normalizeSudanNumber(raw) {
@@ -259,14 +1344,14 @@ function AreaInput({ label, value, onChange, placeholder }) {
   };
 
   return (
-    <div style={ui.field}>
-      <label style={ui.label}>
-        {label} <span style={ui.req}>*</span>
+    <div className="tc-field">
+      <label className="tc-label">
+        {label} <span className="tc-req">*</span>
       </label>
       <select
         value={customMode ? '__custom__' : value}
         onChange={handleSelect}
-        style={ui.input}
+        className="tc-input"
       >
         <option value="">-- اختر منطقة شائعة أو اكتب موقعاً مخصصاً --</option>
         {POPULAR_AREAS.map((area) => (
@@ -283,7 +1368,7 @@ function AreaInput({ label, value, onChange, placeholder }) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder || 'اكتب اسم المنطقة أو المحطة'}
-            style={ui.input}
+            className="tc-input"
             required
           />
         </div>
@@ -292,333 +1377,38 @@ function AreaInput({ label, value, onChange, placeholder }) {
   );
 }
 
-const ui = {
-  page: {
-    fontFamily: "'Cairo', system-ui, -apple-system, sans-serif",
-    direction: 'rtl',
-    minHeight: '100vh',
-    backgroundColor: '#f2f7f6',
-    color: '#102a2e',
-    paddingBottom: '48px',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #0d5c63 0%, #157a6e 100%)',
-    color: '#ffffff',
-    padding: '14px 14px 12px',
-    position: 'sticky',
-    top: 0,
-    zIndex: 20,
-    boxShadow: '0 2px 10px rgba(13, 92, 99, 0.2)',
-  },
-  headerWrap: {
-    maxWidth: '880px',
-    margin: '0 auto',
-  },
-  brandTitle: {
-    margin: 0,
-    fontSize: '1.35rem',
-    fontWeight: 800,
-    cursor: 'pointer',
-  },
-  brandSub: {
-    margin: '2px 0 10px',
-    fontSize: '0.82rem',
-    color: '#d9f2ee',
-  },
-  tabsRow: {
-    display: 'flex',
-    gap: '6px',
-    overflowX: 'auto',
-    paddingBottom: '2px',
-  },
-  tabBtn: (active) => ({
-    flex: '0 0 auto',
-    padding: '8px 13px',
-    borderRadius: '10px',
-    border: active ? '1px solid #ffffff' : '1px solid rgba(255,255,255,0.32)',
-    backgroundColor: active ? '#ffffff' : 'rgba(255,255,255,0.12)',
-    color: active ? '#0d5c63' : '#ffffff',
-    fontFamily: 'inherit',
-    fontSize: '0.86rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  }),
-  main: {
-    maxWidth: '880px',
-    margin: '16px auto 0',
-    padding: '0 14px',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: '15px',
-    padding: '18px 16px',
-    border: '1px solid #d4e4e2',
-    boxShadow: '0 2px 8px rgba(16, 42, 46, 0.04)',
-    marginBottom: '16px',
-  },
-  h2: {
-    margin: '0 0 8px',
-    fontSize: '1.15rem',
-    fontWeight: 800,
-    color: '#0d5c63',
-  },
-  h3: {
-    margin: '0 0 8px',
-    fontSize: '1rem',
-    fontWeight: 800,
-    color: '#144c52',
-  },
-  pMuted: {
-    margin: '0 0 12px',
-    fontSize: '0.9rem',
-    color: '#4c676b',
-    lineHeight: 1.65,
-  },
-  homeGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(225px, 1fr))',
-    gap: '12px',
-    marginTop: '14px',
-  },
-  homeBtn: (bg, color, border) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: '6px',
-    padding: '18px 15px',
-    borderRadius: '14px',
-    backgroundColor: bg,
-    color,
-    border: border || 'none',
-    fontFamily: 'inherit',
-    textAlign: 'right',
-    cursor: 'pointer',
-  }),
-  subTabRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '8px',
-    marginBottom: '16px',
-  },
-  subTabBtn: (active) => ({
-    padding: '11px 12px',
-    borderRadius: '11px',
-    border: active ? '1.5px solid #0d5c63' : '1px solid #bfd6d3',
-    backgroundColor: active ? '#0d5c63' : '#ffffff',
-    color: active ? '#ffffff' : '#0d5c63',
-    fontFamily: 'inherit',
-    fontSize: '0.92rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  }),
-  filterPillRow: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap',
-    marginBottom: '12px',
-  },
-  filterPill: (active) => ({
-    padding: '8px 13px',
-    borderRadius: '999px',
-    border: active ? '1.5px solid #0d5c63' : '1px solid #b5cecb',
-    backgroundColor: active ? '#0d5c63' : '#f4faf9',
-    color: active ? '#ffffff' : '#143b40',
-    fontFamily: 'inherit',
-    fontSize: '0.84rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  }),
-  field: {
-    marginBottom: '13px',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '5px',
-    fontSize: '0.89rem',
-    fontWeight: 700,
-    color: '#143b40',
-  },
-  req: {
-    color: '#c92a2a',
-  },
-  input: {
-    width: '100%',
-    boxSizing: 'border-box',
-    padding: '10px 12px',
-    borderRadius: '10px',
-    border: '1px solid #b5cecb',
-    backgroundColor: '#ffffff',
-    color: '#102a2e',
-    fontFamily: 'inherit',
-    fontSize: '0.95rem',
-  },
-  grid2: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-    gap: '12px',
-  },
-  primaryBtn: {
-    width: '100%',
-    padding: '12px 16px',
-    borderRadius: '11px',
-    border: 'none',
-    backgroundColor: '#0d5c63',
-    color: '#ffffff',
-    fontFamily: 'inherit',
-    fontSize: '0.96rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  secondaryBtn: {
-    padding: '9px 13px',
-    borderRadius: '10px',
-    border: '1px solid #96b8b4',
-    backgroundColor: '#edf6f5',
-    color: '#0d5c63',
-    fontFamily: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  warnBtn: {
-    padding: '9px 13px',
-    borderRadius: '10px',
-    border: '1px solid #e6be8a',
-    backgroundColor: '#fff9ef',
-    color: '#9a5b00',
-    fontFamily: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  dangerBtn: {
-    padding: '9px 13px',
-    borderRadius: '10px',
-    border: '1px solid #e5a9a9',
-    backgroundColor: '#fff2f2',
-    color: '#a81f1f',
-    fontFamily: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  subtleBtn: {
-    padding: '8px 11px',
-    borderRadius: '9px',
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#ffffff',
-    color: '#475569',
-    fontFamily: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  waLink: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '9px 14px',
-    borderRadius: '10px',
-    backgroundColor: '#15803d',
-    color: '#ffffff',
-    textDecoration: 'none',
-    fontSize: '0.87rem',
-    fontWeight: 700,
-  },
-  telLink: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '9px 14px',
-    borderRadius: '10px',
-    backgroundColor: '#0f766e',
-    color: '#ffffff',
-    textDecoration: 'none',
-    fontSize: '0.87rem',
-    fontWeight: 700,
-  },
-  rowWrap: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  itemBox: {
-    border: '1px solid #d4e4e2',
-    borderRadius: '12px',
-    padding: '14px',
-    backgroundColor: '#fafdfd',
-    marginBottom: '12px',
-  },
-  badge: (bg, fg) => ({
-    display: 'inline-block',
-    padding: '3px 9px',
-    borderRadius: '999px',
-    backgroundColor: bg,
-    color: fg,
-    fontSize: '0.77rem',
-    fontWeight: 700,
-  }),
-  okBox: {
-    padding: '12px 14px',
-    borderRadius: '11px',
-    backgroundColor: '#e7f8ee',
-    border: '1px solid #88dca9',
-    color: '#11592e',
-    marginBottom: '13px',
-    fontSize: '0.9rem',
-    lineHeight: 1.65,
-  },
-  errBox: {
-    padding: '12px 14px',
-    borderRadius: '11px',
-    backgroundColor: '#fff1f1',
-    border: '1px solid #f2b4b4',
-    color: '#9e1c1c',
-    marginBottom: '13px',
-    fontSize: '0.9rem',
-    lineHeight: 1.65,
-  },
-  infoBox: {
-    padding: '11px 13px',
-    borderRadius: '11px',
-    backgroundColor: '#eef7f6',
-    border: '1px solid #bdd9d6',
-    color: '#134e4a',
-    marginBottom: '13px',
-    fontSize: '0.86rem',
-    lineHeight: 1.6,
-  },
-  codeBox: {
-    marginTop: '10px',
-    padding: '12px',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    border: '1.5px dashed #15803d',
-    fontFamily: 'monospace',
-    fontSize: '0.84rem',
-    direction: 'ltr',
-    textAlign: 'left',
-    wordBreak: 'break-all',
-    color: '#0f292e',
-  },
-  chipBtn: (selected) => ({
-    padding: '7px 11px',
-    borderRadius: '999px',
-    border: selected ? '1px solid #0d5c63' : '1px solid #b5cecb',
-    backgroundColor: selected ? '#0d5c63' : '#ffffff',
-    color: selected ? '#ffffff' : '#143b40',
-    fontFamily: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-  }),
-};
+function RouteTimeline({ start, destination, stops = [] }) {
+  return (
+    <div className="tc-route-box">
+      <div className="tc-route-point">
+        <span className="tc-dot-start" />
+        <span>{start}</span>
+      </div>
+      <div className="tc-route-line" />
+      {Array.isArray(stops) && stops.length > 0 && (
+        <div className="tc-stops-wrap">
+          <span style={{ fontSize: '0.75rem', color: '#526b6e', fontWeight: 700 }}>
+            يمر بـ:
+          </span>
+          {stops.map((st, idx) => (
+            <span key={`${st}-${idx}`} className="tc-stop-pill">
+              {st}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="tc-route-point">
+        <span className="tc-dot-end" />
+        <span>{destination}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [tab, setTab] = useState(TABS.HOME);
-  const [offerSubTab, setOfferSubTab] = useState('publish'); // 'publish' | 'my_ads'
+  const [offerSubTab, setOfferSubTab] = useState('publish');
+  const [boardSection, setBoardSection] = useState('all'); // 'all' | 'offers' | 'requests'
 
   // حالة البحث واللوحة العامة
   const [offers, setOffers] = useState([]);
@@ -627,7 +1417,7 @@ export default function App() {
   const [boardError, setBoardError] = useState('');
   const [searchStart, setSearchStart] = useState('');
   const [searchDest, setSearchDest] = useState('');
-  const [searchTripKind, setSearchTripKind] = useState('all'); // 'all' | 'once' | 'recurring'
+  const [searchTripKind, setSearchTripKind] = useState('all');
 
   // إعلاناتي المحفوظة محلياً على هذا الجهاز
   const [myOffers, setMyOffers] = useState(() => loadMySavedOffers());
@@ -670,7 +1460,7 @@ export default function App() {
   const [savedManageCode, setSavedManageCode] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // إدارة السائق لإعلانه يدوياً برمز الإدارة (id_token)
+  // إدارة السائق لإعلانه يدوياً برمز الإدارة
   const [manageCodeInput, setManageCodeInput] = useState('');
   const [manageSeatsInput, setManageSeatsInput] = useState(1);
   const [manageLoading, setManageLoading] = useState(false);
@@ -729,7 +1519,6 @@ export default function App() {
     setBoardError('');
     try {
       const nowIso = new Date().toISOString();
-
       const [offersRes, requestsRes] = await Promise.all([
         supabase
           .from('ride_offers')
@@ -937,6 +1726,11 @@ export default function App() {
         (!item.expires_at || new Date(item.expires_at).getTime() > nowMs)
     ).length;
   }, [myOffers]);
+
+  const pendingReportsCount = useMemo(
+    () => adminReports.filter((r) => r.status === 'pending').length,
+    [adminReports]
+  );
 
   const adminOffersMap = useMemo(
     () => Object.fromEntries(adminOffers.map((o) => [o.id, o])),
@@ -1211,11 +2005,7 @@ export default function App() {
       persistMyOffers((prev) =>
         prev.map((entry) =>
           entry.id === item.id
-            ? {
-                ...entry,
-                available_seats: clampedSeats,
-                status: effectiveStatus,
-              }
+            ? { ...entry, available_seats: clampedSeats, status: effectiveStatus }
             : entry
         )
       );
@@ -1417,7 +2207,7 @@ export default function App() {
       setRequestSuccess(
         recurring
           ? 'تم نشر طلب الترحيل المنتظم بنجاح! سيبقى ظاهراً للسائقين طوال المدة التي اخترتها.'
-          : 'تم نشر طلب التوصيلة بنجاح! سيظهر الآن لأصحاب العربات في تبويب البحث.'
+          : 'تم نشر طلب التوصيلة بنجاح! سيظهر الآن لأصحاب العربات في صفحة البحث.'
       );
       setRequestForm({
         passenger_name: '',
@@ -1572,7 +2362,7 @@ export default function App() {
       const deletedRequests = data?.deleted_requests ?? 0;
       setAdminFeedback({
         type: 'ok',
-        text: `تم تنظيف المنتهي بنجاح: حذف ${deletedOffers} عرض سائق و ${deletedRequests} طلب راكب.`,
+        text: `تم تنظيف المنتهي بنجاح: حذف ${deletedOffers} عرض سائق و ${deletedRequests} طلب طالب.`,
       });
       fetchAdminDashboard();
       fetchPublicListings();
@@ -1587,622 +2377,713 @@ export default function App() {
   const offerIsRecurring = isRecurringType(offerForm.recurrence_type);
   const requestIsRecurring = isRecurringType(requestForm.recurrence_type);
 
-  return (
-    <div style={ui.page}>
-      <header style={ui.header}>
-        <div style={ui.headerWrap}>
-          <h1 style={ui.brandTitle} onClick={() => setTab(TABS.HOME)}>
-            توصيلة السنتر
-          </h1>
-          <p style={ui.brandSub}>
-            توصيلات سريعة وترحيل منتظم بين طلاب الجامعة — مجاناً وبدون حساب
-          </p>
+  const openTab = (nextTab) => {
+    setTab(nextTab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-          <nav style={ui.tabsRow} aria-label="الأقسام الرئيسية">
+  return (
+    <div className="tc-app">
+      <style>{APP_CSS}</style>
+
+      <header className="tc-header">
+        <div className="tc-header-inner">
+          <div className="tc-brand" onClick={() => openTab(TABS.HOME)}>
+            <div className="tc-logo-box">
+              <Icon name="route" size={22} />
+            </div>
+            <div>
+              <h1 className="tc-brand-title">توصيلة السنتر</h1>
+              <p className="tc-brand-sub">مواصلات طلاب الجامعة • توصيلة وترحيل</p>
+            </div>
+          </div>
+
+          <nav className="tc-desktop-nav" aria-label="التنقل الرئيسي">
             <button
               type="button"
-              style={ui.tabBtn(tab === TABS.HOME)}
-              onClick={() => setTab(TABS.HOME)}
+              className={`tc-nav-pill ${tab === TABS.HOME ? 'active' : ''}`}
+              onClick={() => openTab(TABS.HOME)}
             >
+              <Icon name="home" size={16} />
               الرئيسية
             </button>
             <button
               type="button"
-              style={ui.tabBtn(tab === TABS.SEARCH)}
-              onClick={() => setTab(TABS.SEARCH)}
+              className={`tc-nav-pill ${tab === TABS.SEARCH ? 'active' : ''}`}
+              onClick={() => openTab(TABS.SEARCH)}
             >
-              ابحث عن توصيلة / ترحيل
+              <Icon name="search" size={16} />
+              البحث
             </button>
             <button
               type="button"
-              style={ui.tabBtn(tab === TABS.OFFER)}
+              className={`tc-nav-pill ${tab === TABS.OFFER ? 'active' : ''}`}
               onClick={() => {
-                setTab(TABS.OFFER);
                 setOfferSubTab('publish');
+                openTab(TABS.OFFER);
               }}
             >
-              أعرض توصيلة / ترحيل {activeMyOffersCount > 0 ? `(${activeMyOffersCount})` : ''}
+              <Icon name="car" size={16} />
+              أعرض مشواراً {activeMyOffersCount > 0 ? `(${activeMyOffersCount})` : ''}
             </button>
             <button
               type="button"
-              style={ui.tabBtn(tab === TABS.REQUEST)}
-              onClick={() => setTab(TABS.REQUEST)}
+              className={`tc-nav-pill ${tab === TABS.REQUEST ? 'active' : ''}`}
+              onClick={() => openTab(TABS.REQUEST)}
             >
-              اطلب توصيلة / ترحيل
+              <Icon name="hand" size={16} />
+              اطلب توصيلة
             </button>
             <button
               type="button"
-              style={ui.tabBtn(tab === TABS.ADMIN)}
-              onClick={() => setTab(TABS.ADMIN)}
+              className={`tc-nav-pill ${tab === TABS.ADMIN ? 'active' : ''}`}
+              onClick={() => openTab(TABS.ADMIN)}
             >
+              <Icon name="shield" size={16} />
               الإدارة
             </button>
           </nav>
+
+          <div className="tc-live-dot-badge">
+            <span className="tc-pulse-dot" />
+            <span>{filteredOffers.length + filteredRequests.length} متاح</span>
+          </div>
         </div>
       </header>
 
-      <main style={ui.main}>
+      <main className="tc-main">
         {!supabase && (
-          <div style={ui.errBox}>
+          <div className="tc-alert tc-alert-err">
             تنبيه إعداد: لم يتم العثور على <code>VITE_SUPABASE_URL</code> أو{' '}
             <code>VITE_SUPABASE_ANON_KEY</code>. أضفهما في إعدادات Netlify أو ملف{' '}
             <code>.env</code> ثم أعد النشر.
           </div>
         )}
 
+        {/* ======================= الرئيسية ======================= */}
         {tab === TABS.HOME && (
           <>
-            <section style={ui.card}>
-              <h2 style={ui.h2}>اختر ما تحتاجه الآن</h2>
-              <p style={ui.pMuted}>
-                سواء كنت تحتاج <strong>توصيلة سريعة لمرة واحدة</strong> أو{' '}
-                <strong>ترحيلاً منتظماً يومياً أو أسبوعياً</strong>، تصفح الإعلانات
-                وتواصل مباشرة عبر واتساب أو الاتصال.
+            <section className="tc-hero">
+              <h2 className="tc-hero-title">مشوارك للجامعة أسهل وأوفر مع زملائك</h2>
+              <p className="tc-hero-desc">
+                منصة طلابية مجانية تربط أصحاب العربات بالطلاب على نفس المسار — سواء
+                كنت تبحث عن <strong>توصيلة سريعة لليوم</strong> أو{' '}
+                <strong>ترحيل منتظم يومي أو أسبوعي</strong>، بدون تسجيل حساب.
               </p>
-
-              <div style={ui.homeGrid}>
-                <button
-                  type="button"
-                  style={ui.homeBtn('#0d5c63', '#ffffff')}
-                  onClick={() => setTab(TABS.SEARCH)}
-                >
-                  <strong style={{ fontSize: '1.05rem' }}>
-                    أبحث عن توصيلة أو ترحيل
-                  </strong>
-                  <span style={{ fontSize: '0.84rem', opacity: 0.92 }}>
-                    تصفح عروض السائقين وطلبات الركاب المتاحة الآن ({filteredOffers.length}{' '}
-                    عرض • {filteredRequests.length} طلب)
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  style={ui.homeBtn('#157a6e', '#ffffff')}
-                  onClick={() => {
-                    setTab(TABS.OFFER);
-                    setOfferSubTab('publish');
-                  }}
-                >
-                  <strong style={{ fontSize: '1.05rem' }}>
-                    أعرض توصيلة أو ترحيل (لدي عربة)
-                  </strong>
-                  <span style={{ fontSize: '0.84rem', opacity: 0.92 }}>
-                    انشر مشواراً لمرة واحدة أو ترحيلاً منتظماً وتحكم بمقاعدك بضغطة زر
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  style={ui.homeBtn('#ffffff', '#102a2e', '1.5px solid #96b8b4')}
-                  onClick={() => setTab(TABS.REQUEST)}
-                >
-                  <strong style={{ fontSize: '1.05rem' }}>
-                    أطلب توصيلة أو ترحيل
-                  </strong>
-                  <span style={{ fontSize: '0.84rem', color: '#4c676b' }}>
-                    اطلب مشواراً لليوم أو ترحيلاً منتظماً ليتواصل معك السائقون
-                  </span>
-                </button>
+              <div className="tc-stats-strip">
+                <span className="tc-stat-chip">
+                  <Icon name="car" size={16} />
+                  {filteredOffers.length} عرض سائق متاح الآن
+                </span>
+                <span className="tc-stat-chip">
+                  <Icon name="hand" size={16} />
+                  {filteredRequests.length} طلب طالب نشط
+                </span>
               </div>
-
-              {myOffers.length > 0 && (
-                <div style={{ marginTop: '14px' }}>
-                  <button
-                    type="button"
-                    style={{ ...ui.secondaryBtn, width: '100%', padding: '11px 14px' }}
-                    onClick={() => {
-                      setTab(TABS.OFFER);
-                      setOfferSubTab('my_ads');
-                    }}
-                  >
-                    إدارة إعلاناتي المحفوظة على هذا الجهاز ({myOffers.length})
-                  </button>
-                </div>
-              )}
             </section>
 
-            <section style={ui.card}>
-              <h3 style={ui.h3}>الفرق بين التوصيلة والترحيل المنتظم</h3>
-              <p style={{ ...ui.pMuted, marginBottom: 0 }}>
-                • <strong>توصيلة (مرة واحدة):</strong> لمشوار محدد اليوم أو غداً، وتختفي
-                تلقائياً بعد ساعات من موعدها.
-                <br />• <strong>ترحيل منتظم (يومي / أيام محددة):</strong> للمداومين
-                على نفس الخط أسبوعياً، ويبقى الإعلان ظاهراً لمدة أسبوع أو أكثر حسب
-                اختيارك.
-              </p>
+            <section className="tc-actions-grid">
+              <button
+                type="button"
+                className="tc-action-tile primary"
+                onClick={() => openTab(TABS.SEARCH)}
+              >
+                <span
+                  className="tc-tile-icon"
+                  style={{ background: '#0b555c', color: '#ffffff' }}
+                >
+                  <Icon name="search" size={24} />
+                </span>
+                <span className="tc-tile-body">
+                  <span className="tc-tile-title">أبحث عن توصيلة أو ترحيل</span>
+                  <span className="tc-tile-sub">
+                    تصفح عروض السائقين وطلبات الطلاب وفلتر حسب المسار والنوع
+                  </span>
+                </span>
+                <span className="tc-tile-arrow">
+                  <Icon name="chevronLeft" size={20} />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="tc-action-tile"
+                onClick={() => {
+                  setOfferSubTab('publish');
+                  openTab(TABS.OFFER);
+                }}
+              >
+                <span
+                  className="tc-tile-icon"
+                  style={{ background: '#e6f7ed', color: '#15803d' }}
+                >
+                  <Icon name="car" size={24} />
+                </span>
+                <span className="tc-tile-body">
+                  <span className="tc-tile-title">أعرض توصيلة أو ترحيل (لدي عربة)</span>
+                  <span className="tc-tile-sub">
+                    شارك مقاعدك الفارغة وتحكم بها بضغطة زر من جهازك
+                  </span>
+                </span>
+                <span className="tc-tile-arrow">
+                  <Icon name="chevronLeft" size={20} />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="tc-action-tile"
+                onClick={() => openTab(TABS.REQUEST)}
+              >
+                <span
+                  className="tc-tile-icon"
+                  style={{ background: '#fef5e7', color: '#c47119' }}
+                >
+                  <Icon name="hand" size={24} />
+                </span>
+                <span className="tc-tile-body">
+                  <span className="tc-tile-title">أطلب توصيلة أو ترحيل</span>
+                  <span className="tc-tile-sub">
+                    انشر وجهتك وموعدك ليتواصل معك السائقون مباشرة عبر واتساب
+                  </span>
+                </span>
+                <span className="tc-tile-arrow">
+                  <Icon name="chevronLeft" size={20} />
+                </span>
+              </button>
+            </section>
+
+            {myOffers.length > 0 && (
+              <section className="tc-card" style={{ padding: '14px 16px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div>
+                    <strong style={{ color: '#073e44', fontSize: '0.96rem' }}>
+                      لديك {myOffers.length} إعلان محفوظ على هذا الجهاز
+                    </strong>
+                    <div style={{ fontSize: '0.82rem', color: '#526b6e' }}>
+                      عدّل عدد المقاعد أو أغلق الإعلان فوراً بدون إدخال الرمز.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-soft"
+                    onClick={() => {
+                      setOfferSubTab('my_ads');
+                      openTab(TABS.OFFER);
+                    }}
+                  >
+                    إدارة إعلاناتي
+                  </button>
+                </div>
+              </section>
+            )}
+
+            <section className="tc-card">
+              <h3 className="tc-h3">توصيلة سريعة أم ترحيل منتظم؟</h3>
+              <div className="tc-info-grid">
+                <div className="tc-info-mini">
+                  <span className="tc-badge tc-badge-once" style={{ flexShrink: 0 }}>
+                    <Icon name="clock" size={14} /> توصيلة
+                  </span>
+                  <div style={{ fontSize: '0.85rem', color: '#425d60', lineHeight: 1.6 }}>
+                    لمشوار لمرة واحدة اليوم أو غداً؛ يختفي الإعلان تلقائياً بعد بضع
+                    ساعات من وقت التحرك لتبقى القائمة حديثة.
+                  </div>
+                </div>
+                <div className="tc-info-mini">
+                  <span className="tc-badge tc-badge-rec" style={{ flexShrink: 0 }}>
+                    <Icon name="repeat" size={14} /> ترحيل منتظم
+                  </span>
+                  <div style={{ fontSize: '0.85rem', color: '#425d60', lineHeight: 1.6 }}>
+                    للطلاب والسائقين الملتزمين بنفس المسار يومياً أو في أيام محددة؛
+                    يبقى منشوراً لمدة أسبوع أو أسبوعين أو شهر.
+                  </div>
+                </div>
+              </div>
             </section>
           </>
         )}
 
+        {/* ======================= البحث ======================= */}
         {tab === TABS.SEARCH && (
           <>
-            <section style={ui.card}>
+            <section className="tc-card">
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
-                  gap: '8px',
-                  marginBottom: '10px',
+                  gap: '10px',
+                  marginBottom: '12px',
                 }}
               >
-                <h2 style={{ ...ui.h2, margin: 0 }}>ابحث عن توصيلة أو ترحيل</h2>
+                <h2 className="tc-h2" style={{ margin: 0 }}>
+                  <Icon name="search" size={20} />
+                  ابحث عن توصيلة أو ترحيل
+                </h2>
                 <button
                   type="button"
-                  style={ui.secondaryBtn}
+                  className="tc-btn tc-btn-soft"
                   onClick={fetchPublicListings}
                   disabled={boardLoading}
                 >
-                  {boardLoading ? 'جاري التحديث...' : 'تحديث القائمة'}
+                  <Icon name="refresh" size={15} />
+                  {boardLoading ? 'جاري التحديث...' : 'تحديث'}
                 </button>
               </div>
 
-              <div style={ui.filterPillRow}>
+              <div className="tc-chips" style={{ marginBottom: '13px' }}>
                 <button
                   type="button"
-                  style={ui.filterPill(searchTripKind === 'all')}
+                  className={`tc-chip ${searchTripKind === 'all' ? 'active' : ''}`}
                   onClick={() => setSearchTripKind('all')}
                 >
                   الكل
                 </button>
                 <button
                   type="button"
-                  style={ui.filterPill(searchTripKind === 'once')}
+                  className={`tc-chip ${searchTripKind === 'once' ? 'active' : ''}`}
                   onClick={() => setSearchTripKind('once')}
                 >
                   توصيلة لمرة واحدة
                 </button>
                 <button
                   type="button"
-                  style={ui.filterPill(searchTripKind === 'recurring')}
+                  className={`tc-chip ${searchTripKind === 'recurring' ? 'active' : ''}`}
                   onClick={() => setSearchTripKind('recurring')}
                 >
-                  ترحيل منتظم (يومي / أسبوعي)
+                  ترحيل منتظم
                 </button>
               </div>
 
-              <div style={ui.grid2}>
-                <div style={ui.field}>
-                  <label style={ui.label}>منطقة الانطلاق (أو محطة بالمسار)</label>
+              <div className="tc-grid-2">
+                <div className="tc-field">
+                  <label className="tc-label">منطقة الانطلاق أو محطة بالمسار</label>
                   <input
                     type="text"
                     value={searchStart}
                     onChange={(e) => setSearchStart(e.target.value)}
-                    placeholder="مثال: الرياض، جبرة، الثورة..."
-                    style={ui.input}
+                    placeholder="مثال: الرياض، جبرة، شمبات..."
+                    className="tc-input"
                   />
                 </div>
-                <div style={ui.field}>
-                  <label style={ui.label}>الوجهة</label>
+                <div className="tc-field">
+                  <label className="tc-label">الوجهة</label>
                   <input
                     type="text"
                     value={searchDest}
                     onChange={(e) => setSearchDest(e.target.value)}
                     placeholder="مثال: السنتر، الجامعات..."
-                    style={ui.input}
+                    className="tc-input"
                   />
                 </div>
               </div>
 
               {(searchStart || searchDest || searchTripKind !== 'all') && (
-                <button
-                  type="button"
-                  style={ui.secondaryBtn}
-                  onClick={() => {
-                    setSearchStart('');
-                    setSearchDest('');
-                    setSearchTripKind('all');
-                  }}
-                >
-                  مسح كل الفلاتر
-                </button>
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-ghost"
+                    onClick={() => {
+                      setSearchStart('');
+                      setSearchDest('');
+                      setSearchTripKind('all');
+                    }}
+                  >
+                    مسح كل الفلاتر
+                  </button>
+                </div>
               )}
             </section>
 
-            {boardError && <div style={ui.errBox}>{boardError}</div>}
+            <div
+              className="tc-segmented"
+              style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}
+            >
+              <button
+                type="button"
+                className={`tc-seg-btn ${boardSection === 'all' ? 'active' : ''}`}
+                onClick={() => setBoardSection('all')}
+              >
+                الكل ({filteredOffers.length + filteredRequests.length})
+              </button>
+              <button
+                type="button"
+                className={`tc-seg-btn ${boardSection === 'offers' ? 'active' : ''}`}
+                onClick={() => setBoardSection('offers')}
+              >
+                عروض السائقين ({filteredOffers.length})
+              </button>
+              <button
+                type="button"
+                className={`tc-seg-btn ${boardSection === 'requests' ? 'active' : ''}`}
+                onClick={() => setBoardSection('requests')}
+              >
+                طلبات الطلاب ({filteredRequests.length})
+              </button>
+            </div>
+
+            {boardError && <div className="tc-alert tc-alert-err">{boardError}</div>}
 
             {reportMsg.text && (
-              <div style={reportMsg.type === 'ok' ? ui.okBox : ui.errBox}>
+              <div
+                className={`tc-alert ${
+                  reportMsg.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                }`}
+              >
                 {reportMsg.text}
               </div>
             )}
 
-            {reportTarget && (
-              <section style={{ ...ui.card, borderColor: '#e5a9a9' }}>
-                <h3 style={{ ...ui.h3, color: '#a81f1f' }}>
-                  إرسال بلاغ عن: {reportTarget.label}
-                </h3>
-                <form onSubmit={handleSubmitReport}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      سبب البلاغ <span style={ui.req}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={reportReason}
-                      onChange={(e) => setReportReason(e.target.value)}
-                      placeholder="مثال: رقم غير صحيح، إعلان مزعج، سلوك غير لائق..."
-                      style={ui.input}
-                      required
-                    />
-                  </div>
-                  <div style={ui.field}>
-                    <label style={ui.label}>تفاصيل إضافية (اختياري)</label>
-                    <textarea
-                      rows="2"
-                      value={reportDetails}
-                      onChange={(e) => setReportDetails(e.target.value)}
-                      placeholder="أضف أي تفاصيل تساعد المشرف..."
-                      style={ui.input}
-                    />
-                  </div>
-                  <div style={ui.rowWrap}>
-                    <button
-                      type="submit"
-                      style={ui.dangerBtn}
-                      disabled={reportLoading}
-                    >
-                      {reportLoading ? 'جاري الإرسال...' : 'تأكيد إرسال البلاغ'}
-                    </button>
+            {(boardSection === 'all' || boardSection === 'offers') && (
+              <section style={{ marginBottom: '20px' }}>
+                <h2 className="tc-h2" style={{ marginBottom: '10px' }}>
+                  <Icon name="car" size={20} />
+                  عروض السائقين ({filteredOffers.length})
+                </h2>
+
+                {boardLoading && offers.length === 0 ? (
+                  <>
+                    <div className="tc-skeleton" />
+                    <div className="tc-skeleton" />
+                  </>
+                ) : filteredOffers.length === 0 ? (
+                  <div className="tc-card tc-empty">
+                    <div className="tc-empty-icon">
+                      <Icon name="car" size={24} />
+                    </div>
+                    <div style={{ fontWeight: 700, marginBottom: '6px' }}>
+                      لا توجد عروض سائقين مطابقة حالياً
+                    </div>
+                    <p className="tc-muted" style={{ marginBottom: '12px' }}>
+                      يمكنك مسح الفلاتر أو نشر طلبك ليتواصل معك السائقون على نفس المسار.
+                    </p>
                     <button
                       type="button"
-                      style={ui.secondaryBtn}
-                      onClick={() => {
-                        setReportTarget(null);
-                        setReportReason('');
-                        setReportDetails('');
-                      }}
+                      className="tc-btn tc-btn-soft"
+                      onClick={() => openTab(TABS.REQUEST)}
                     >
-                      إلغاء
+                      انشر طلب توصيلة / ترحيل
                     </button>
                   </div>
-                </form>
+                ) : (
+                  filteredOffers.map((offer) => {
+                    const isFull =
+                      offer.status === 'full' || Number(offer.available_seats) <= 0;
+                    const recurring = isRecurringType(offer.recurrence_type);
+                    const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
+                    const timeText = recurring
+                      ? `الساعة ${formatTimeOnly(offer.departure_time)} (${formatRecurrence(
+                          offer.recurrence_type,
+                          offer.recurrence_days
+                        )})`
+                      : formatDateTime(offer.departure_time);
+                    const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
+                    const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
+                    const telHref = buildTelLink(
+                      offer.phone_number || offer.whatsapp_number
+                    );
+
+                    return (
+                      <article key={offer.id} className="tc-listing">
+                        <div className="tc-listing-top">
+                          <div className="tc-btn-row">
+                            <span
+                              className={`tc-badge ${
+                                recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                              }`}
+                            >
+                              <Icon name={recurring ? 'repeat' : 'clock'} size={13} />
+                              {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
+                            </span>
+                            <span
+                              className={`tc-badge ${
+                                isFull ? 'tc-badge-full' : 'tc-badge-ok'
+                              }`}
+                            >
+                              {isFull
+                                ? 'مكتمل (0 مقاعد)'
+                                : `متاح ${offer.available_seats} من ${offer.total_seats}`}
+                            </span>
+                          </div>
+                          <span className="tc-price-tag">
+                            {Number(offer.price_per_seat) > 0
+                              ? `${Number(offer.price_per_seat).toLocaleString()} ج.س`
+                              : 'مجاناً / بالاتفاق'}
+                          </span>
+                        </div>
+
+                        <RouteTimeline
+                          start={offer.start_area}
+                          destination={offer.destination_area}
+                          stops={offer.intermediate_stops}
+                        />
+
+                        <div className="tc-meta-grid">
+                          <span className="tc-meta-item">
+                            <Icon name="car" size={15} />
+                            <strong>{offer.driver_name}</strong> • {offer.vehicle_type}
+                          </span>
+                          <span className="tc-meta-item">
+                            <Icon name="clock" size={15} />
+                            {timeText}
+                          </span>
+                        </div>
+
+                        <div className="tc-listing-footer">
+                          <div className="tc-btn-row">
+                            {waHref && (
+                              <a
+                                href={waHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="tc-btn tc-btn-wa"
+                              >
+                                <Icon name="whatsapp" size={16} />
+                                واتساب
+                              </a>
+                            )}
+                            {telHref && (
+                              <a href={telHref} className="tc-btn tc-btn-call">
+                                <Icon name="phone" size={15} />
+                                اتصال
+                              </a>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="tc-btn tc-btn-ghost"
+                            onClick={() => {
+                              setReportMsg({ type: '', text: '' });
+                              setReportTarget({
+                                type: 'offer',
+                                id: offer.id,
+                                label: `عرض السائق ${offer.driver_name} (${offer.start_area} ← ${offer.destination_area})`,
+                              });
+                            }}
+                          >
+                            <Icon name="flag" size={14} />
+                            إبلاغ
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
               </section>
             )}
 
-            <section style={ui.card}>
-              <h2 style={ui.h2}>عروض السائقين ({filteredOffers.length})</h2>
-              <p style={ui.pMuted}>مرتبة حسب أقرب موعد تحرك ثم الأحدث نشراً.</p>
+            {(boardSection === 'all' || boardSection === 'requests') && (
+              <section>
+                <h2 className="tc-h2" style={{ marginBottom: '10px' }}>
+                  <Icon name="hand" size={20} />
+                  طلبات الطلاب ({filteredRequests.length})
+                </h2>
 
-              {boardLoading && offers.length === 0 ? (
-                <p style={ui.pMuted}>جاري تحميل عروض السائقين...</p>
-              ) : filteredOffers.length === 0 ? (
-                <p style={ui.pMuted}>
-                  لا توجد عروض سائقين مطابقة حالياً. جرّب تغيير الفلتر أو انشر طلبك.
-                </p>
-              ) : (
-                filteredOffers.map((offer) => {
-                  const isFull =
-                    offer.status === 'full' || Number(offer.available_seats) <= 0;
-                  const recurring = isRecurringType(offer.recurrence_type);
-                  const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
-                  const timeText = recurring
-                    ? `الساعة ${formatTimeOnly(offer.departure_time)} (${formatRecurrence(
-                        offer.recurrence_type,
-                        offer.recurrence_days
-                      )})`
-                    : formatDateTime(offer.departure_time);
-                  const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
-                  const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
-                  const telHref = buildTelLink(
-                    offer.phone_number || offer.whatsapp_number
-                  );
+                {boardLoading && requests.length === 0 ? (
+                  <div className="tc-skeleton" />
+                ) : filteredRequests.length === 0 ? (
+                  <div className="tc-card tc-empty">
+                    <div className="tc-empty-icon">
+                      <Icon name="hand" size={24} />
+                    </div>
+                    <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                      لا توجد طلبات طلاب مطابقة حالياً
+                    </div>
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      عند نشر الطلاب لطلبات توصيل أو ترحيل ستظهر هنا مباشرة.
+                    </p>
+                  </div>
+                ) : (
+                  filteredRequests.map((req) => {
+                    const recurring = isRecurringType(req.recurrence_type);
+                    const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
+                    const timeText = recurring
+                      ? `الساعة ${formatTimeOnly(req.preferred_time)} (${formatRecurrence(
+                          req.recurrence_type,
+                          req.recurrence_days
+                        )})`
+                      : formatDateTime(req.preferred_time);
+                    const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب (${kindText}) الخاص بك في توصيلة السنتر من (${req.start_area}) إلى (${req.destination_area}) — ${timeText}. لدي مقعد متاح على هذا المسار.`;
+                    const waHref = buildWhatsAppLink(req.whatsapp_number, waText);
+                    const telHref = buildTelLink(req.phone_number || req.whatsapp_number);
 
-                  return (
-                    <article key={offer.id} style={ui.itemBox}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: '8px',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        <strong style={{ fontSize: '1.02rem', color: '#0d5c63' }}>
-                          {offer.start_area} ← {offer.destination_area}
-                        </strong>
-                        <div style={ui.rowWrap}>
-                          <span
-                            style={ui.badge(
-                              recurring ? '#ede9fe' : '#e0f2fe',
-                              recurring ? '#5b21b6' : '#075985'
-                            )}
-                          >
-                            {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
-                          </span>
-                          <span
-                            style={ui.badge(
-                              isFull ? '#ffe3e3' : '#dcfce7',
-                              isFull ? '#a81f1f' : '#14532d'
-                            )}
-                          >
-                            {isFull
-                              ? 'مكتمل (لا توجد مقاعد)'
-                              : `متاح ${offer.available_seats} من ${offer.total_seats} مقاعد`}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: '0.9rem',
-                          lineHeight: 1.75,
-                          color: '#254347',
-                        }}
-                      >
-                        <div>
-                          <strong>السائق:</strong> {offer.driver_name} •{' '}
-                          <strong>العربة:</strong> {offer.vehicle_type}
-                        </div>
-                        <div>
-                          <strong>{recurring ? 'وقت التحرك المعتاد:' : 'موعد التحرك:'}</strong>{' '}
-                          {timeText}
-                        </div>
-                        <div>
-                          <strong>السعر للمقعد:</strong>{' '}
-                          {Number(offer.price_per_seat) > 0
-                            ? `${Number(offer.price_per_seat).toLocaleString()} جنيه`
-                            : 'مجاناً / بالاتفاق'}
-                        </div>
-                        {Array.isArray(offer.intermediate_stops) &&
-                          offer.intermediate_stops.length > 0 && (
-                            <div>
-                              <strong>يمر بـ:</strong>{' '}
-                              {offer.intermediate_stops.join(' ← ')}
-                            </div>
-                          )}
-                      </div>
-
-                      <div style={{ ...ui.rowWrap, marginTop: '12px' }}>
-                        {waHref && (
-                          <a
-                            href={waHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={ui.waLink}
-                          >
-                            تواصل واتساب
-                          </a>
-                        )}
-                        {telHref && (
-                          <a href={telHref} style={ui.telLink}>
-                            اتصال هاتفي
-                          </a>
-                        )}
-                        <button
-                          type="button"
-                          style={ui.dangerBtn}
-                          onClick={() => {
-                            setReportMsg({ type: '', text: '' });
-                            setReportTarget({
-                              type: 'offer',
-                              id: offer.id,
-                              label: `عرض السائق ${offer.driver_name} (${offer.start_area} ← ${offer.destination_area})`,
-                            });
-                          }}
-                        >
-                          إبلاغ
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </section>
-
-            <section style={ui.card}>
-              <h2 style={ui.h2}>طلبات الطلاب ({filteredRequests.length})</h2>
-              <p style={ui.pMuted}>
-                طلاب يبحثون عن توصيلة أو ترحيل منتظم — إذا كنت صاحب عربة تواصل معهم
-                مباشرة.
-              </p>
-
-              {boardLoading && requests.length === 0 ? (
-                <p style={ui.pMuted}>جاري تحميل طلبات الطلاب...</p>
-              ) : filteredRequests.length === 0 ? (
-                <p style={ui.pMuted}>لا توجد طلبات طلاب مطابقة حالياً.</p>
-              ) : (
-                filteredRequests.map((req) => {
-                  const recurring = isRecurringType(req.recurrence_type);
-                  const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
-                  const timeText = recurring
-                    ? `الساعة ${formatTimeOnly(req.preferred_time)} (${formatRecurrence(
-                        req.recurrence_type,
-                        req.recurrence_days
-                      )})`
-                    : formatDateTime(req.preferred_time);
-                  const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب (${kindText}) الخاص بك في توصيلة السنتر من (${req.start_area}) إلى (${req.destination_area}) — ${timeText}. لدي مقعد متاح على هذا المسار.`;
-                  const waHref = buildWhatsAppLink(req.whatsapp_number, waText);
-                  const telHref = buildTelLink(req.phone_number || req.whatsapp_number);
-
-                  return (
-                    <article key={req.id} style={ui.itemBox}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: '8px',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        <strong style={{ fontSize: '1.02rem', color: '#0d5c63' }}>
-                          {req.start_area} ← {req.destination_area}
-                        </strong>
-                        <div style={ui.rowWrap}>
-                          <span
-                            style={ui.badge(
-                              recurring ? '#ede9fe' : '#e0f2fe',
-                              recurring ? '#5b21b6' : '#075985'
-                            )}
-                          >
-                            {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
-                          </span>
-                          <span style={ui.badge('#f1f5f9', '#334155')}>
-                            مطلوب {req.seats_needed} مقعد
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: '0.9rem',
-                          lineHeight: 1.75,
-                          color: '#254347',
-                        }}
-                      >
-                        <div>
-                          <strong>الطالب:</strong> {req.passenger_name}
-                        </div>
-                        <div>
-                          <strong>{recurring ? 'وقت التحرك المعتاد:' : 'الوقت المفضل:'}</strong>{' '}
-                          {timeText}
-                        </div>
-                        {req.notes && (
-                          <div>
-                            <strong>ملاحظات:</strong> {req.notes}
+                    return (
+                      <article key={req.id} className="tc-listing">
+                        <div className="tc-listing-top">
+                          <div className="tc-btn-row">
+                            <span
+                              className={`tc-badge ${
+                                recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                              }`}
+                            >
+                              <Icon name={recurring ? 'repeat' : 'clock'} size={13} />
+                              {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
+                            </span>
+                            <span className="tc-badge tc-badge-neutral">
+                              مطلوب {req.seats_needed} مقعد
+                            </span>
                           </div>
-                        )}
-                      </div>
+                        </div>
 
-                      <div style={{ ...ui.rowWrap, marginTop: '12px' }}>
-                        {waHref && (
-                          <a
-                            href={waHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={ui.waLink}
+                        <RouteTimeline
+                          start={req.start_area}
+                          destination={req.destination_area}
+                        />
+
+                        <div className="tc-meta-grid">
+                          <span className="tc-meta-item">
+                            <Icon name="hand" size={15} />
+                            <strong>{req.passenger_name}</strong>
+                          </span>
+                          <span className="tc-meta-item">
+                            <Icon name="clock" size={15} />
+                            {timeText}
+                          </span>
+                        </div>
+
+                        {req.notes && (
+                          <div className="tc-notes-box">{req.notes}</div>
+                        )}
+
+                        <div className="tc-listing-footer">
+                          <div className="tc-btn-row">
+                            {waHref && (
+                              <a
+                                href={waHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="tc-btn tc-btn-wa"
+                              >
+                                <Icon name="whatsapp" size={16} />
+                                واتساب
+                              </a>
+                            )}
+                            {telHref && (
+                              <a href={telHref} className="tc-btn tc-btn-call">
+                                <Icon name="phone" size={15} />
+                                اتصال
+                              </a>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="tc-btn tc-btn-ghost"
+                            onClick={() => {
+                              setReportMsg({ type: '', text: '' });
+                              setReportTarget({
+                                type: 'request',
+                                id: req.id,
+                                label: `طلب الطالب ${req.passenger_name} (${req.start_area} ← ${req.destination_area})`,
+                              });
+                            }}
                           >
-                            تواصل واتساب
-                          </a>
-                        )}
-                        {telHref && (
-                          <a href={telHref} style={ui.telLink}>
-                            اتصال هاتفي
-                          </a>
-                        )}
-                        <button
-                          type="button"
-                          style={ui.dangerBtn}
-                          onClick={() => {
-                            setReportMsg({ type: '', text: '' });
-                            setReportTarget({
-                              type: 'request',
-                              id: req.id,
-                              label: `طلب الطالب ${req.passenger_name} (${req.start_area} ← ${req.destination_area})`,
-                            });
-                          }}
-                        >
-                          إبلاغ
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </section>
+                            <Icon name="flag" size={14} />
+                            إبلاغ
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </section>
+            )}
           </>
         )}
 
+        {/* ======================= أعرض مشواراً + إعلاناتي ======================= */}
         {tab === TABS.OFFER && (
           <>
-            <div style={ui.subTabRow}>
+            <div className="tc-segmented">
               <button
                 type="button"
-                style={ui.subTabBtn(offerSubTab === 'publish')}
+                className={`tc-seg-btn ${offerSubTab === 'publish' ? 'active' : ''}`}
                 onClick={() => setOfferSubTab('publish')}
               >
+                <Icon name="car" size={16} />
                 نشر عرض جديد
               </button>
               <button
                 type="button"
-                style={ui.subTabBtn(offerSubTab === 'my_ads')}
+                className={`tc-seg-btn ${offerSubTab === 'my_ads' ? 'active' : ''}`}
                 onClick={() => setOfferSubTab('my_ads')}
               >
-                إعلاناتي على هذا الجهاز ({myOffers.length})
+                <Icon name="route" size={16} />
+                إعلاناتي ({myOffers.length})
               </button>
             </div>
 
             {offerSubTab === 'publish' && (
-              <section style={ui.card}>
-                <h2 style={ui.h2}>أعرض توصيلة أو ترحيل (لأصحاب العربات)</h2>
-                <p style={ui.pMuted}>
-                  اختر هل المشوار <strong>توصيلة لمرة واحدة</strong> أم{' '}
-                  <strong>ترحيل منتظم</strong>. سيُحفظ إعلانك تلقائياً في «إعلاناتي على
-                  هذا الجهاز» للتحكم بالمقاعد أو الإغلاق بضغطة زر.
+              <section className="tc-card">
+                <h2 className="tc-h2">
+                  <Icon name="car" size={20} />
+                  أعرض توصيلة أو ترحيل (لأصحاب العربات)
+                </h2>
+                <p className="tc-muted">
+                  انشر رحلتك ليراها الطلاب، وسيُحفظ إعلانك تلقائياً في «إعلاناتي» للتحكم
+                  بالمقاعد أو الإغلاق بضغطة زر.
                 </p>
 
-                {offerError && <div style={ui.errBox}>{offerError}</div>}
+                {offerError && <div className="tc-alert tc-alert-err">{offerError}</div>}
 
                 {savedManageCode && (
-                  <div style={ui.okBox}>
+                  <div className="tc-alert tc-alert-ok">
                     <strong>تم نشر العرض وحفظه في «إعلاناتي» بنجاح!</strong>
-                    <div style={{ marginTop: '6px' }}>
-                      يمكنك تعديله الآن بضغطة زر من قسم «إعلاناتي على هذا الجهاز»، أو
-                      نسخ الرمز الاحتياطي التالي لإدارته من هاتف آخر:
+                    <div style={{ marginTop: '5px' }}>
+                      يمكنك إدارته الآن مباشرة من قسم «إعلاناتي»، أو نسخ هذا الرمز
+                      الاحتياطي إذا أردت التعديل من هاتف آخر:
                     </div>
-                    <div style={ui.codeBox}>{savedManageCode}</div>
-                    <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
+                    <div className="tc-code-box">{savedManageCode}</div>
+                    <div className="tc-btn-row" style={{ marginTop: '10px' }}>
                       <button
                         type="button"
-                        style={ui.secondaryBtn}
+                        className="tc-btn tc-btn-soft"
                         onClick={() => setOfferSubTab('my_ads')}
                       >
                         الانتقال إلى إعلاناتي
                       </button>
                       <button
                         type="button"
-                        style={ui.secondaryBtn}
+                        className="tc-btn tc-btn-ghost"
                         onClick={() => handleCopyText(savedManageCode, '')}
                       >
-                        {copiedCode ? 'تم النسخ بنجاح ✓' : 'نسخ الرمز الاحتياطي'}
+                        <Icon name="copy" size={15} />
+                        {copiedCode ? 'تم النسخ ✓' : 'نسخ الرمز'}
                       </button>
                       <button
                         type="button"
-                        style={ui.subtleBtn}
-                        onClick={() => setTab(TABS.SEARCH)}
+                        className="tc-btn tc-btn-ghost"
+                        onClick={() => openTab(TABS.SEARCH)}
                       >
-                        عرض في صفحة البحث
+                        عرض في البحث
                       </button>
                     </div>
                   </div>
                 )}
 
                 <form onSubmit={handlePublishOffer}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      نوع العرض <span style={ui.req}>*</span>
-                    </label>
-                    <div style={ui.rowWrap}>
+                  <div className="tc-form-section">
+                    <div className="tc-form-section-title">
+                      <Icon name="repeat" size={16} />
+                      1. نوع العرض
+                    </div>
+                    <div className="tc-chips">
                       {RECURRENCE_CHOICES.map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
-                          style={ui.chipBtn(offerForm.recurrence_type === opt.value)}
+                          className={`tc-chip ${
+                            offerForm.recurrence_type === opt.value ? 'active' : ''
+                          }`}
                           onClick={() =>
                             setOfferForm({ ...offerForm, recurrence_type: opt.value })
                           }
@@ -2211,247 +3092,273 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                  {offerForm.recurrence_type === 'weekdays' && (
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        اختر أيام الترحيل المنتظم <span style={ui.req}>*</span>
-                      </label>
-                      <div style={ui.rowWrap}>
-                        {WEEKDAYS.map((day) => {
-                          const selected = offerForm.recurrence_days.includes(day.key);
-                          return (
+                    {offerForm.recurrence_type === 'weekdays' && (
+                      <div style={{ marginTop: '12px' }}>
+                        <label className="tc-label">
+                          اختر أيام الترحيل المنتظم <span className="tc-req">*</span>
+                        </label>
+                        <div className="tc-chips">
+                          {WEEKDAYS.map((day) => (
                             <button
                               key={day.key}
                               type="button"
-                              style={ui.chipBtn(selected)}
+                              className={`tc-chip ${
+                                offerForm.recurrence_days.includes(day.key)
+                                  ? 'active'
+                                  : ''
+                              }`}
                               onClick={() => toggleOfferRecurrenceDay(day.key)}
                             >
                               {day.label}
                             </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={ui.grid2}>
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        اسم السائق <span style={ui.req}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={offerForm.driver_name}
-                        onChange={(e) =>
-                          setOfferForm({ ...offerForm, driver_name: e.target.value })
-                        }
-                        placeholder="مثال: أحمد محمد"
-                        style={ui.input}
-                        required
-                      />
-                    </div>
-
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        نوع العربة <span style={ui.req}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={offerForm.vehicle_type}
-                        onChange={(e) =>
-                          setOfferForm({ ...offerForm, vehicle_type: e.target.value })
-                        }
-                        placeholder="مثال: أكسنت فضي / فيتز / هايس"
-                        style={ui.input}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div style={ui.grid2}>
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        رقم الواتساب <span style={ui.req}>*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        value={offerForm.whatsapp_number}
-                        onChange={(e) =>
-                          setOfferForm({ ...offerForm, whatsapp_number: e.target.value })
-                        }
-                        placeholder="مثال: 0912345678"
-                        style={ui.input}
-                        required
-                      />
-                    </div>
-
-                    <div style={ui.field}>
-                      <label style={ui.label}>رقم اتصال إضافي (اختياري)</label>
-                      <input
-                        type="tel"
-                        value={offerForm.phone_number}
-                        onChange={(e) =>
-                          setOfferForm({ ...offerForm, phone_number: e.target.value })
-                        }
-                        placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
-                        style={ui.input}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={ui.grid2}>
-                    <AreaInput
-                      label="منطقة الانطلاق"
-                      value={offerForm.start_area}
-                      onChange={(val) =>
-                        setOfferForm({ ...offerForm, start_area: val })
-                      }
-                      placeholder="اكتب نقطة الانطلاق"
-                    />
-                    <AreaInput
-                      label="الوجهة"
-                      value={offerForm.destination_area}
-                      onChange={(val) =>
-                        setOfferForm({ ...offerForm, destination_area: val })
-                      }
-                      placeholder="اكتب الوجهة (مثال: السنتر)"
-                    />
-                  </div>
-
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      المحطات الوسيطة في المسار (اختياري، افصل بينها بفاصلة)
-                    </label>
-                    <input
-                      type="text"
-                      value={offerForm.intermediate_stops_input}
-                      onChange={(e) =>
-                        setOfferForm({
-                          ...offerForm,
-                          intermediate_stops_input: e.target.value,
-                        })
-                      }
-                      placeholder="مثال: شارع الستين، المعمورة، بري"
-                      style={ui.input}
-                    />
-                  </div>
-
-                  <div style={ui.grid2}>
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        {offerIsRecurring
-                          ? 'تاريخ ووقت أول رحلة (توقيت التحرك المعتاد)'
-                          : 'موعد المغادرة (يجب أن يكون في المستقبل)'}{' '}
-                        <span style={ui.req}>*</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={offerForm.departure_time}
-                        onChange={(e) =>
-                          setOfferForm({ ...offerForm, departure_time: e.target.value })
-                        }
-                        style={ui.input}
-                        required
-                      />
-                    </div>
-
-                    {offerIsRecurring ? (
-                      <div style={ui.field}>
-                        <label style={ui.label}>مدة بقاء إعلان الترحيل</label>
-                        <select
-                          value={offerForm.recurring_valid_days}
-                          onChange={(e) =>
-                            setOfferForm({
-                              ...offerForm,
-                              recurring_valid_days: Number(e.target.value),
-                            })
-                          }
-                          style={ui.input}
-                        >
-                          <option value={7}>أسبوع واحد (7 أيام)</option>
-                          <option value={14}>أسبوعان (14 يوماً)</option>
-                          <option value={30}>شهر كامل (30 يوماً)</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <div style={ui.field}>
-                        <label style={ui.label}>
-                          مدة بقاء الإعلان بعد المغادرة (بالساعات)
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="72"
-                          value={offerForm.expires_after_hours}
-                          onChange={(e) =>
-                            setOfferForm({
-                              ...offerForm,
-                              expires_after_hours: e.target.value,
-                            })
-                          }
-                          style={ui.input}
-                        />
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <div style={ui.grid2}>
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        إجمالي مقاعد العربة <span style={ui.req}>*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={offerForm.total_seats}
-                        onChange={(e) =>
-                          setOfferForm({ ...offerForm, total_seats: e.target.value })
+                  <div className="tc-form-section">
+                    <div className="tc-form-section-title">
+                      <Icon name="car" size={16} />
+                      2. بيانات السائق والتواصل
+                    </div>
+                    <div className="tc-grid-2">
+                      <div className="tc-field">
+                        <label className="tc-label">
+                          اسم السائق <span className="tc-req">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={offerForm.driver_name}
+                          onChange={(e) =>
+                            setOfferForm({ ...offerForm, driver_name: e.target.value })
+                          }
+                          placeholder="مثال: أحمد محمد"
+                          className="tc-input"
+                          required
+                        />
+                      </div>
+
+                      <div className="tc-field">
+                        <label className="tc-label">
+                          نوع العربة <span className="tc-req">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={offerForm.vehicle_type}
+                          onChange={(e) =>
+                            setOfferForm({ ...offerForm, vehicle_type: e.target.value })
+                          }
+                          placeholder="مثال: يارس أبيض / أكسنت / هايس"
+                          className="tc-input"
+                          required
+                        />
+                      </div>
+
+                      <div className="tc-field">
+                        <label className="tc-label">
+                          رقم الواتساب <span className="tc-req">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={offerForm.whatsapp_number}
+                          onChange={(e) =>
+                            setOfferForm({
+                              ...offerForm,
+                              whatsapp_number: e.target.value,
+                            })
+                          }
+                          placeholder="مثال: 0912345678"
+                          className="tc-input tc-input-ltr"
+                          required
+                        />
+                      </div>
+
+                      <div className="tc-field">
+                        <label className="tc-label">رقم اتصال إضافي (اختياري)</label>
+                        <input
+                          type="tel"
+                          value={offerForm.phone_number}
+                          onChange={(e) =>
+                            setOfferForm({ ...offerForm, phone_number: e.target.value })
+                          }
+                          placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
+                          className="tc-input tc-input-ltr"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tc-form-section">
+                    <div className="tc-form-section-title">
+                      <Icon name="route" size={16} />
+                      3. المسار والتوقيت
+                    </div>
+                    <div className="tc-grid-2">
+                      <AreaInput
+                        label="منطقة الانطلاق"
+                        value={offerForm.start_area}
+                        onChange={(val) =>
+                          setOfferForm({ ...offerForm, start_area: val })
                         }
-                        style={ui.input}
-                        required
+                        placeholder="اكتب نقطة الانطلاق"
+                      />
+                      <AreaInput
+                        label="الوجهة"
+                        value={offerForm.destination_area}
+                        onChange={(val) =>
+                          setOfferForm({ ...offerForm, destination_area: val })
+                        }
+                        placeholder="اكتب الوجهة (مثال: السنتر)"
                       />
                     </div>
 
-                    <div style={ui.field}>
-                      <label style={ui.label}>
-                        المقاعد المتاحة الآن <span style={ui.req}>*</span>
+                    <div className="tc-field" style={{ marginTop: '12px' }}>
+                      <label className="tc-label">
+                        المحطات الوسيطة في المسار (اختياري، افصل بينها بفاصلة)
+                      </label>
+                      <input
+                        type="text"
+                        value={offerForm.intermediate_stops_input}
+                        onChange={(e) =>
+                          setOfferForm({
+                            ...offerForm,
+                            intermediate_stops_input: e.target.value,
+                          })
+                        }
+                        placeholder="مثال: شارع الستين، المعمورة، بري"
+                        className="tc-input"
+                      />
+                    </div>
+
+                    <div className="tc-grid-2" style={{ marginTop: '12px' }}>
+                      <div className="tc-field">
+                        <label className="tc-label">
+                          {offerIsRecurring
+                            ? 'تاريخ ووقت أول رحلة (توقيت التحرك المعتاد)'
+                            : 'موعد المغادرة (في المستقبل)'}{' '}
+                          <span className="tc-req">*</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={offerForm.departure_time}
+                          onChange={(e) =>
+                            setOfferForm({
+                              ...offerForm,
+                              departure_time: e.target.value,
+                            })
+                          }
+                          className="tc-input"
+                          required
+                        />
+                      </div>
+
+                      {offerIsRecurring ? (
+                        <div className="tc-field">
+                          <label className="tc-label">مدة بقاء إعلان الترحيل</label>
+                          <select
+                            value={offerForm.recurring_valid_days}
+                            onChange={(e) =>
+                              setOfferForm({
+                                ...offerForm,
+                                recurring_valid_days: Number(e.target.value),
+                              })
+                            }
+                            className="tc-input"
+                          >
+                            <option value={7}>أسبوع واحد (7 أيام)</option>
+                            <option value={14}>أسبوعان (14 يوماً)</option>
+                            <option value={30}>شهر كامل (30 يوماً)</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="tc-field">
+                          <label className="tc-label">
+                            بقاء الإعلان بعد المغادرة (بالساعات)
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="72"
+                            value={offerForm.expires_after_hours}
+                            onChange={(e) =>
+                              setOfferForm({
+                                ...offerForm,
+                                expires_after_hours: e.target.value,
+                              })
+                            }
+                            className="tc-input"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="tc-form-section">
+                    <div className="tc-form-section-title">
+                      <Icon name="clock" size={16} />
+                      4. المقاعد والتكلفة
+                    </div>
+                    <div className="tc-grid-2">
+                      <div className="tc-field">
+                        <label className="tc-label">
+                          إجمالي مقاعد العربة <span className="tc-req">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="50"
+                          value={offerForm.total_seats}
+                          onChange={(e) =>
+                            setOfferForm({ ...offerForm, total_seats: e.target.value })
+                          }
+                          className="tc-input"
+                          required
+                        />
+                      </div>
+
+                      <div className="tc-field">
+                        <label className="tc-label">
+                          المقاعد المتاحة الآن <span className="tc-req">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="50"
+                          value={offerForm.available_seats}
+                          onChange={(e) =>
+                            setOfferForm({
+                              ...offerForm,
+                              available_seats: e.target.value,
+                            })
+                          }
+                          className="tc-input"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="tc-field" style={{ marginTop: '12px' }}>
+                      <label className="tc-label">
+                        السعر للمقعد (جنيه سوداني — اكتب 0 إذا كان مجاناً أو بالاتفاق)
                       </label>
                       <input
                         type="number"
                         min="0"
-                        max="50"
-                        value={offerForm.available_seats}
+                        step="50"
+                        value={offerForm.price_per_seat}
                         onChange={(e) =>
-                          setOfferForm({ ...offerForm, available_seats: e.target.value })
+                          setOfferForm({ ...offerForm, price_per_seat: e.target.value })
                         }
-                        style={ui.input}
-                        required
+                        className="tc-input"
                       />
                     </div>
                   </div>
 
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      السعر للمقعد (جنيه سوداني — اكتب 0 إذا كان مجاناً أو بالاتفاق)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="50"
-                      value={offerForm.price_per_seat}
-                      onChange={(e) =>
-                        setOfferForm({ ...offerForm, price_per_seat: e.target.value })
-                      }
-                      style={ui.input}
-                    />
-                  </div>
-
                   <button
                     type="submit"
-                    style={ui.primaryBtn}
+                    className="tc-btn tc-btn-primary"
                     disabled={offerSubmitting}
                   >
                     {offerSubmitting
@@ -2466,30 +3373,40 @@ export default function App() {
 
             {offerSubTab === 'my_ads' && (
               <>
-                <section style={ui.card}>
-                  <h2 style={ui.h2}>إعلاناتي المحفوظة على هذا الجهاز ({myOffers.length})</h2>
-                  <div style={ui.infoBox}>
-                    تُحفظ هذه القائمة محلياً داخل متصفحك الحالي فقط، لتتمكن من تحديث
-                    المقاعد أو إغلاق إعلاناتك بضغطة زر دون إدخال رمز الإدارة كل مرة.
+                <section className="tc-card">
+                  <h2 className="tc-h2">
+                    <Icon name="route" size={20} />
+                    إعلاناتي المحفوظة على هذا الجهاز ({myOffers.length})
+                  </h2>
+                  <div className="tc-alert tc-alert-info">
+                    تُحفظ هذه القائمة محلياً داخل متصفح جهازك فقط، لتتمكن من تعديل المقاعد
+                    أو إغلاق الإعلان فوراً دون إدخال رمز الإدارة.
                   </div>
 
                   {myOffersFeedback.text && (
                     <div
-                      style={myOffersFeedback.type === 'ok' ? ui.okBox : ui.errBox}
+                      className={`tc-alert ${
+                        myOffersFeedback.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                      }`}
                     >
                       {myOffersFeedback.text}
                     </div>
                   )}
 
                   {myOffers.length === 0 ? (
-                    <div>
-                      <p style={ui.pMuted}>
-                        لا توجد إعلانات محفوظة على هذا الجهاز بعد. عند نشر عرض جديد
-                        سيظهر هنا تلقائياً.
+                    <div className="tc-empty">
+                      <div className="tc-empty-icon">
+                        <Icon name="car" size={24} />
+                      </div>
+                      <div style={{ fontWeight: 700, marginBottom: '6px' }}>
+                        لا توجد إعلانات محفوظة على هذا الجهاز بعد
+                      </div>
+                      <p className="tc-muted">
+                        بمجرد نشر أول عرض سيظهر هنا تلقائياً بأزرار التحكم السريع.
                       </p>
                       <button
                         type="button"
-                        style={ui.secondaryBtn}
+                        className="tc-btn tc-btn-soft"
                         onClick={() => setOfferSubTab('publish')}
                       >
                         نشر أول عرض الآن
@@ -2508,136 +3425,153 @@ export default function App() {
                       const currentSeats = Number(item.available_seats) || 0;
                       const totalSeats = Math.max(1, Number(item.total_seats) || 1);
 
-                      const badgeColors = isClosed
-                        ? ['#e2e8f0', '#334155', 'مغلق']
-                        : isExpired
-                        ? ['#ffe3e3', '#a81f1f', 'منتهي الوقت']
-                        : isFull
-                        ? ['#fff3cd', '#854d0e', 'مكتمل (0 مقاعد)']
-                        : ['#dcfce7', '#14532d', `متاح ${currentSeats} من ${totalSeats}`];
-
                       return (
-                        <article key={item.id} style={ui.itemBox}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              flexWrap: 'wrap',
-                              gap: '8px',
-                              marginBottom: '6px',
-                            }}
-                          >
-                            <strong style={{ fontSize: '1rem', color: '#0d5c63' }}>
-                              {item.start_area} ← {item.destination_area}
-                            </strong>
-                            <div style={ui.rowWrap}>
+                        <article key={item.id} className="tc-listing">
+                          <div className="tc-listing-top">
+                            <div className="tc-btn-row">
                               <span
-                                style={ui.badge(
-                                  recurring ? '#ede9fe' : '#e0f2fe',
-                                  recurring ? '#5b21b6' : '#075985'
-                                )}
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
                               >
                                 {recurring ? 'ترحيل منتظم' : 'توصيلة'}
                               </span>
-                              <span style={ui.badge(badgeColors[0], badgeColors[1])}>
-                                {badgeColors[2]}
+                              <span
+                                className={`tc-badge ${
+                                  isClosed
+                                    ? 'tc-badge-neutral'
+                                    : isExpired
+                                    ? 'tc-badge-full'
+                                    : isFull
+                                    ? 'tc-badge-warn'
+                                    : 'tc-badge-ok'
+                                }`}
+                              >
+                                {isClosed
+                                  ? 'مغلق'
+                                  : isExpired
+                                  ? 'منتهي الوقت'
+                                  : isFull
+                                  ? 'مكتمل (0 مقاعد)'
+                                  : `متاح ${currentSeats} من ${totalSeats}`}
                               </span>
                             </div>
                           </div>
 
-                          <div
-                            style={{
-                              fontSize: '0.87rem',
-                              color: '#345256',
-                              lineHeight: 1.7,
-                            }}
-                          >
-                            <div>
-                              <strong>{recurring ? 'التوقيت:' : 'الموعد:'}</strong>{' '}
+                          <RouteTimeline
+                            start={item.start_area}
+                            destination={item.destination_area}
+                          />
+
+                          <div className="tc-meta-grid">
+                            <span className="tc-meta-item">
+                              <Icon name="clock" size={15} />
                               {recurring
-                                ? `${formatTimeOnly(item.departure_time)} (${formatRecurrence(
+                                ? `${formatTimeOnly(
+                                    item.departure_time
+                                  )} (${formatRecurrence(
                                     item.recurrence_type,
                                     item.recurrence_days
                                   )})`
-                                : formatDateTime(item.departure_time)}{' '}
-                              • <strong>العربة:</strong> {item.vehicle_type}
-                            </div>
+                                : formatDateTime(item.departure_time)}
+                            </span>
+                            <span className="tc-meta-item">
+                              <Icon name="car" size={15} />
+                              {item.vehicle_type}
+                            </span>
                           </div>
 
-                          <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
-                            {!isClosed && !isExpired && (
-                              <>
-                                <button
-                                  type="button"
-                                  style={ui.secondaryBtn}
-                                  disabled={isBusy || currentSeats <= 0}
-                                  onClick={() =>
-                                    handleQuickManageMyOffer(
-                                      item,
-                                      currentSeats - 1,
-                                      currentSeats - 1 <= 0 ? 'full' : 'active'
-                                    )
-                                  }
-                                >
-                                  − مقعد
-                                </button>
-                                <button
-                                  type="button"
-                                  style={ui.secondaryBtn}
-                                  disabled={isBusy || currentSeats >= totalSeats}
-                                  onClick={() =>
-                                    handleQuickManageMyOffer(
-                                      item,
-                                      currentSeats + 1,
-                                      'active'
-                                    )
-                                  }
-                                >
-                                  + مقعد
-                                </button>
-                                <button
-                                  type="button"
-                                  style={ui.warnBtn}
-                                  disabled={isBusy || isFull}
-                                  onClick={() =>
-                                    handleQuickManageMyOffer(item, 0, 'full')
-                                  }
-                                >
-                                  اكتملت المقاعد
-                                </button>
-                                <button
-                                  type="button"
-                                  style={ui.dangerBtn}
-                                  disabled={isBusy}
-                                  onClick={() =>
-                                    handleQuickManageMyOffer(item, 0, 'closed')
-                                  }
-                                >
-                                  إغلاق الإعلان
-                                </button>
-                              </>
-                            )}
+                          <div className="tc-listing-footer">
+                            <div className="tc-btn-row">
+                              {!isClosed && !isExpired && (
+                                <>
+                                  <div className="tc-seat-stepper">
+                                    <button
+                                      type="button"
+                                      className="tc-step-btn"
+                                      disabled={isBusy || currentSeats <= 0}
+                                      onClick={() =>
+                                        handleQuickManageMyOffer(
+                                          item,
+                                          currentSeats - 1,
+                                          currentSeats - 1 <= 0 ? 'full' : 'active'
+                                        )
+                                      }
+                                      aria-label="إنقاص مقعد"
+                                    >
+                                      −
+                                    </button>
+                                    <span
+                                      style={{
+                                        minWidth: '24px',
+                                        textAlign: 'center',
+                                        fontWeight: 800,
+                                        fontSize: '0.9rem',
+                                      }}
+                                    >
+                                      {currentSeats}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="tc-step-btn"
+                                      disabled={isBusy || currentSeats >= totalSeats}
+                                      onClick={() =>
+                                        handleQuickManageMyOffer(
+                                          item,
+                                          currentSeats + 1,
+                                          'active'
+                                        )
+                                      }
+                                      aria-label="زيادة مقعد"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
 
-                            <button
-                              type="button"
-                              style={ui.subtleBtn}
-                              onClick={() =>
-                                handleCopyText(item.manageCode, item.id)
-                              }
-                            >
-                              {copiedOfferId === item.id
-                                ? 'تم نسخ الرمز ✓'
-                                : 'نسخ الرمز'}
-                            </button>
+                                  <button
+                                    type="button"
+                                    className="tc-btn tc-btn-warn"
+                                    disabled={isBusy || isFull}
+                                    onClick={() =>
+                                      handleQuickManageMyOffer(item, 0, 'full')
+                                    }
+                                  >
+                                    اكتملت
+                                  </button>
 
-                            <button
-                              type="button"
-                              style={ui.subtleBtn}
-                              onClick={() => handleRemoveFromMyDevice(item.id)}
-                            >
-                              إزالة من القائمة
-                            </button>
+                                  <button
+                                    type="button"
+                                    className="tc-btn tc-btn-danger"
+                                    disabled={isBusy}
+                                    onClick={() =>
+                                      handleQuickManageMyOffer(item, 0, 'closed')
+                                    }
+                                  >
+                                    إغلاق الإعلان
+                                  </button>
+                                </>
+                              )}
+                            </div>
+
+                            <div className="tc-btn-row">
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-ghost"
+                                onClick={() =>
+                                  handleCopyText(item.manageCode, item.id)
+                                }
+                              >
+                                <Icon name="copy" size={14} />
+                                {copiedOfferId === item.id ? 'نُسخ ✓' : 'الرمز'}
+                              </button>
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-ghost"
+                                onClick={() => handleRemoveFromMyDevice(item.id)}
+                              >
+                                إزالة
+                              </button>
+                            </div>
                           </div>
                         </article>
                       );
@@ -2645,56 +3579,59 @@ export default function App() {
                   )}
                 </section>
 
-                <section style={ui.card}>
-                  <h3 style={ui.h3}>إدارة إعلان برمز يدوي (من جهاز آخر)</h3>
-                  <p style={ui.pMuted}>
+                <section className="tc-card">
+                  <h3 className="tc-h3">إدارة إعلان برمز يدوي (من جهاز آخر)</h3>
+                  <p className="tc-muted">
                     إذا نشرت إعلانك من هاتف آخر، الصق رمز الإدارة (
-                    <code>id_token</code>) هنا للتحكم به.
+                    <code>id_token</code>) هنا لتحديث المقاعد أو إغلاقه.
                   </p>
 
                   {manageFeedback.text && (
                     <div
-                      style={manageFeedback.type === 'ok' ? ui.okBox : ui.errBox}
+                      className={`tc-alert ${
+                        manageFeedback.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                      }`}
                     >
                       {manageFeedback.text}
                     </div>
                   )}
 
-                  <div style={ui.field}>
-                    <label style={ui.label}>رمز الإدارة الكامل (id_token)</label>
-                    <input
-                      type="text"
-                      value={manageCodeInput}
-                      onChange={(e) => setManageCodeInput(e.target.value)}
-                      placeholder="الصق الرمز هنا..."
-                      style={{ ...ui.input, direction: 'ltr', textAlign: 'left' }}
-                    />
+                  <div className="tc-grid-2">
+                    <div className="tc-field">
+                      <label className="tc-label">رمز الإدارة الكامل (id_token)</label>
+                      <input
+                        type="text"
+                        value={manageCodeInput}
+                        onChange={(e) => setManageCodeInput(e.target.value)}
+                        placeholder="الصق الرمز هنا..."
+                        className="tc-input tc-input-ltr"
+                      />
+                    </div>
+                    <div className="tc-field">
+                      <label className="tc-label">عدد المقاعد المتاحة الجديد</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={manageSeatsInput}
+                        onChange={(e) => setManageSeatsInput(e.target.value)}
+                        className="tc-input"
+                      />
+                    </div>
                   </div>
 
-                  <div style={ui.field}>
-                    <label style={ui.label}>عدد المقاعد المتاحة الجديد</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="50"
-                      value={manageSeatsInput}
-                      onChange={(e) => setManageSeatsInput(e.target.value)}
-                      style={ui.input}
-                    />
-                  </div>
-
-                  <div style={ui.rowWrap}>
+                  <div className="tc-btn-row" style={{ marginTop: '12px' }}>
                     <button
                       type="button"
-                      style={ui.secondaryBtn}
+                      className="tc-btn tc-btn-soft"
                       disabled={manageLoading}
                       onClick={() => handleDriverManageAction('active')}
                     >
-                      تحديث عدد المقاعد
+                      تحديث المقاعد
                     </button>
                     <button
                       type="button"
-                      style={ui.warnBtn}
+                      className="tc-btn tc-btn-warn"
                       disabled={manageLoading}
                       onClick={() => handleDriverManageAction('full')}
                     >
@@ -2702,7 +3639,7 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      style={ui.dangerBtn}
+                      className="tc-btn tc-btn-danger"
                       disabled={manageLoading}
                       onClick={() => handleDriverManageAction('closed')}
                     >
@@ -2715,40 +3652,50 @@ export default function App() {
           </>
         )}
 
+        {/* ======================= اطلب توصيلة / ترحيل ======================= */}
         {tab === TABS.REQUEST && (
-          <section style={ui.card}>
-            <h2 style={ui.h2}>اطلب توصيلة أو ترحيل (للطلاب)</h2>
-            <p style={ui.pMuted}>
+          <section className="tc-card">
+            <h2 className="tc-h2">
+              <Icon name="hand" size={20} />
+              اطلب توصيلة أو ترحيل (للطلاب)
+            </h2>
+            <p className="tc-muted">
               حدد هل تحتاج <strong>توصيلة سريعة لمرة واحدة</strong> أم{' '}
-              <strong>ترحيلاً منتظماً</strong> (يومي أو أيام محددة من الأسبوع) ليتواصل
-              معك أصحاب العربات على نفس المسار.
+              <strong>ترحيلاً منتظماً</strong> ليتواصل معك أصحاب العربات على نفس المسار.
             </p>
 
-            {requestError && <div style={ui.errBox}>{requestError}</div>}
+            {requestError && (
+              <div className="tc-alert tc-alert-err">{requestError}</div>
+            )}
             {requestSuccess && (
-              <div style={ui.okBox}>
-                {requestSuccess}{' '}
-                <button
-                  type="button"
-                  style={{ ...ui.secondaryBtn, marginRight: '8px' }}
-                  onClick={() => setTab(TABS.SEARCH)}
-                >
-                  الانتقال لصفحة البحث
-                </button>
+              <div className="tc-alert tc-alert-ok">
+                <div>{requestSuccess}</div>
+                <div style={{ marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-soft"
+                    onClick={() => openTab(TABS.SEARCH)}
+                  >
+                    الانتقال لصفحة البحث
+                  </button>
+                </div>
               </div>
             )}
 
             <form onSubmit={handlePublishRequest}>
-              <div style={ui.field}>
-                <label style={ui.label}>
-                  نوع الطلب <span style={ui.req}>*</span>
-                </label>
-                <div style={ui.rowWrap}>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="repeat" size={16} />
+                  1. نوع الطلب
+                </div>
+                <div className="tc-chips">
                   {RECURRENCE_CHOICES.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      style={ui.chipBtn(requestForm.recurrence_type === opt.value)}
+                      className={`tc-chip ${
+                        requestForm.recurrence_type === opt.value ? 'active' : ''
+                      }`}
                       onClick={() =>
                         setRequestForm({ ...requestForm, recurrence_type: opt.value })
                       }
@@ -2757,191 +3704,203 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {requestForm.recurrence_type === 'weekdays' && (
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    اختر أيام الترحيل المطلوبة <span style={ui.req}>*</span>
-                  </label>
-                  <div style={ui.rowWrap}>
-                    {WEEKDAYS.map((day) => {
-                      const selected = requestForm.recurrence_days.includes(day.key);
-                      return (
+                {requestForm.recurrence_type === 'weekdays' && (
+                  <div style={{ marginTop: '12px' }}>
+                    <label className="tc-label">
+                      اختر أيام الترحيل المطلوبة <span className="tc-req">*</span>
+                    </label>
+                    <div className="tc-chips">
+                      {WEEKDAYS.map((day) => (
                         <button
                           key={day.key}
                           type="button"
-                          style={ui.chipBtn(selected)}
+                          className={`tc-chip ${
+                            requestForm.recurrence_days.includes(day.key) ? 'active' : ''
+                          }`}
                           onClick={() => toggleRequestRecurrenceDay(day.key)}
                         >
                           {day.label}
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div style={ui.grid2}>
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    الاسم <span style={ui.req}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={requestForm.passenger_name}
-                    onChange={(e) =>
-                      setRequestForm({ ...requestForm, passenger_name: e.target.value })
-                    }
-                    placeholder="مثال: سارة علي"
-                    style={ui.input}
-                    required
-                  />
-                </div>
-
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    عدد المقاعد المطلوبة <span style={ui.req}>*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={requestForm.seats_needed}
-                    onChange={(e) =>
-                      setRequestForm({ ...requestForm, seats_needed: e.target.value })
-                    }
-                    style={ui.input}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div style={ui.grid2}>
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    رقم الواتساب <span style={ui.req}>*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={requestForm.whatsapp_number}
-                    onChange={(e) =>
-                      setRequestForm({ ...requestForm, whatsapp_number: e.target.value })
-                    }
-                    placeholder="مثال: 0912345678"
-                    style={ui.input}
-                    required
-                  />
-                </div>
-
-                <div style={ui.field}>
-                  <label style={ui.label}>رقم اتصال إضافي (اختياري)</label>
-                  <input
-                    type="tel"
-                    value={requestForm.phone_number}
-                    onChange={(e) =>
-                      setRequestForm({ ...requestForm, phone_number: e.target.value })
-                    }
-                    placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
-                    style={ui.input}
-                  />
-                </div>
-              </div>
-
-              <div style={ui.grid2}>
-                <AreaInput
-                  label="منطقة الانطلاق"
-                  value={requestForm.start_area}
-                  onChange={(val) =>
-                    setRequestForm({ ...requestForm, start_area: val })
-                  }
-                  placeholder="اكتب منطقة انطلاقك"
-                />
-                <AreaInput
-                  label="الوجهة"
-                  value={requestForm.destination_area}
-                  onChange={(val) =>
-                    setRequestForm({ ...requestForm, destination_area: val })
-                  }
-                  placeholder="اكتب وجهتك"
-                />
-              </div>
-
-              <div style={ui.grid2}>
-                <div style={ui.field}>
-                  <label style={ui.label}>
-                    {requestIsRecurring
-                      ? 'تاريخ ووقت أول يوم (توقيت التحرك المعتاد)'
-                      : 'الوقت المفضل للتحرك (في المستقبل)'}{' '}
-                    <span style={ui.req}>*</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={requestForm.preferred_time}
-                    onChange={(e) =>
-                      setRequestForm({ ...requestForm, preferred_time: e.target.value })
-                    }
-                    style={ui.input}
-                    required
-                  />
-                </div>
-
-                {requestIsRecurring ? (
-                  <div style={ui.field}>
-                    <label style={ui.label}>مدة بقاء طلب الترحيل</label>
-                    <select
-                      value={requestForm.recurring_valid_days}
-                      onChange={(e) =>
-                        setRequestForm({
-                          ...requestForm,
-                          recurring_valid_days: Number(e.target.value),
-                        })
-                      }
-                      style={ui.input}
-                    >
-                      <option value={7}>أسبوع واحد (7 أيام)</option>
-                      <option value={14}>أسبوعان (14 يوماً)</option>
-                      <option value={30}>شهر كامل (30 يوماً)</option>
-                    </select>
-                  </div>
-                ) : (
-                  <div style={ui.field}>
-                    <label style={ui.label}>
-                      مدة بقاء الطلب بعد الموعد (بالساعات)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="72"
-                      value={requestForm.expires_after_hours}
-                      onChange={(e) =>
-                        setRequestForm({
-                          ...requestForm,
-                          expires_after_hours: e.target.value,
-                        })
-                      }
-                      style={ui.input}
-                    />
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div style={ui.field}>
-                <label style={ui.label}>ملاحظات إضافية (اختياري)</label>
-                <textarea
-                  rows="2"
-                  value={requestForm.notes}
-                  onChange={(e) =>
-                    setRequestForm({ ...requestForm, notes: e.target.value })
-                  }
-                  placeholder="مثال: الانتظار أمام البوابة الرئيسية، أو تفاصيل الرجعة..."
-                  style={ui.input}
-                />
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="hand" size={16} />
+                  2. بيانات الطالب والتواصل
+                </div>
+                <div className="tc-grid-2">
+                  <div className="tc-field">
+                    <label className="tc-label">
+                      الاسم <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.passenger_name}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, passenger_name: e.target.value })
+                      }
+                      placeholder="مثال: سارة علي"
+                      className="tc-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="tc-field">
+                    <label className="tc-label">
+                      عدد المقاعد المطلوبة <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={requestForm.seats_needed}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, seats_needed: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="tc-field">
+                    <label className="tc-label">
+                      رقم الواتساب <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={requestForm.whatsapp_number}
+                      onChange={(e) =>
+                        setRequestForm({
+                          ...requestForm,
+                          whatsapp_number: e.target.value,
+                        })
+                      }
+                      placeholder="مثال: 0912345678"
+                      className="tc-input tc-input-ltr"
+                      required
+                    />
+                  </div>
+
+                  <div className="tc-field">
+                    <label className="tc-label">رقم اتصال إضافي (اختياري)</label>
+                    <input
+                      type="tel"
+                      value={requestForm.phone_number}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, phone_number: e.target.value })
+                      }
+                      placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
+                      className="tc-input tc-input-ltr"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="route" size={16} />
+                  3. المسار والتوقيت
+                </div>
+                <div className="tc-grid-2">
+                  <AreaInput
+                    label="منطقة الانطلاق"
+                    value={requestForm.start_area}
+                    onChange={(val) =>
+                      setRequestForm({ ...requestForm, start_area: val })
+                    }
+                    placeholder="اكتب منطقة انطلاقك"
+                  />
+                  <AreaInput
+                    label="الوجهة"
+                    value={requestForm.destination_area}
+                    onChange={(val) =>
+                      setRequestForm({ ...requestForm, destination_area: val })
+                    }
+                    placeholder="اكتب وجهتك"
+                  />
+                </div>
+
+                <div className="tc-grid-2" style={{ marginTop: '12px' }}>
+                  <div className="tc-field">
+                    <label className="tc-label">
+                      {requestIsRecurring
+                        ? 'تاريخ ووقت أول يوم (توقيت التحرك المعتاد)'
+                        : 'الوقت المفضل للتحرك (في المستقبل)'}{' '}
+                      <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={requestForm.preferred_time}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, preferred_time: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
+                  </div>
+
+                  {requestIsRecurring ? (
+                    <div className="tc-field">
+                      <label className="tc-label">مدة بقاء طلب الترحيل</label>
+                      <select
+                        value={requestForm.recurring_valid_days}
+                        onChange={(e) =>
+                          setRequestForm({
+                            ...requestForm,
+                            recurring_valid_days: Number(e.target.value),
+                          })
+                        }
+                        className="tc-input"
+                      >
+                        <option value={7}>أسبوع واحد (7 أيام)</option>
+                        <option value={14}>أسبوعان (14 يوماً)</option>
+                        <option value={30}>شهر كامل (30 يوماً)</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="tc-field">
+                      <label className="tc-label">
+                        بقاء الطلب بعد الموعد (بالساعات)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={requestForm.expires_after_hours}
+                        onChange={(e) =>
+                          setRequestForm({
+                            ...requestForm,
+                            expires_after_hours: e.target.value,
+                          })
+                        }
+                        className="tc-input"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="tc-field" style={{ marginTop: '12px' }}>
+                  <label className="tc-label">ملاحظات إضافية (اختياري)</label>
+                  <textarea
+                    rows="2"
+                    value={requestForm.notes}
+                    onChange={(e) =>
+                      setRequestForm({ ...requestForm, notes: e.target.value })
+                    }
+                    placeholder="مثال: الانتظار أمام البوابة الرئيسية، أو تفاصيل الرجعة..."
+                    className="tc-input"
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
-                style={ui.primaryBtn}
+                className="tc-btn tc-btn-primary"
                 disabled={requestSubmitting}
               >
                 {requestSubmitting
@@ -2954,59 +3913,71 @@ export default function App() {
           </section>
         )}
 
+        {/* ======================= الإدارة ======================= */}
         {tab === TABS.ADMIN && (
           <>
             {!session ? (
-              <section style={ui.card}>
-                <h2 style={ui.h2}>دخول الإدارة</h2>
-                <p style={ui.pMuted}>
-                  هذه الصفحة مخصصة لمشرف الموقع فقط لإدارة البلاغات وحذف الإعلانات
-                  المنتهية أو المخالفة.
-                </p>
-                {loginError && <div style={ui.errBox}>{loginError}</div>}
+              <section className="tc-card" style={{ maxWidth: '460px', margin: '12px auto' }}>
+                <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+                  <div className="tc-empty-icon">
+                    <Icon name="shield" size={24} />
+                  </div>
+                  <h2 className="tc-h2" style={{ justifyContent: 'center' }}>
+                    دخول لوحة الإدارة
+                  </h2>
+                  <p className="tc-muted" style={{ marginBottom: 0 }}>
+                    مخصصة لمشرف الموقع لمتابعة البلاغات وتنظيف الإعلانات.
+                  </p>
+                </div>
+
+                {loginError && <div className="tc-alert tc-alert-err">{loginError}</div>}
+
                 <form onSubmit={handleAdminLogin}>
-                  <div style={ui.field}>
-                    <label style={ui.label}>البريد الإلكتروني</label>
+                  <div className="tc-field">
+                    <label className="tc-label">البريد الإلكتروني</label>
                     <input
                       type="email"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      style={{ ...ui.input, direction: 'ltr', textAlign: 'left' }}
+                      className="tc-input tc-input-ltr"
                       required
                     />
                   </div>
-                  <div style={ui.field}>
-                    <label style={ui.label}>كلمة المرور</label>
+                  <div className="tc-field">
+                    <label className="tc-label">كلمة المرور</label>
                     <input
                       type="password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      style={{ ...ui.input, direction: 'ltr', textAlign: 'left' }}
+                      className="tc-input tc-input-ltr"
                       required
                     />
                   </div>
                   <button
                     type="submit"
-                    style={ui.primaryBtn}
+                    className="tc-btn tc-btn-primary"
                     disabled={loginLoading}
+                    style={{ marginTop: '6px' }}
                   >
                     {loginLoading ? 'جاري التحقق...' : 'تسجيل الدخول'}
                   </button>
                 </form>
               </section>
             ) : adminCheckLoading ? (
-              <section style={ui.card}>
-                <p style={ui.pMuted}>جاري التحقق من صلاحيات المشرف...</p>
+              <section className="tc-card">
+                <p className="tc-muted" style={{ margin: 0 }}>
+                  جاري التحقق من صلاحيات المشرف...
+                </p>
               </section>
             ) : !isAdmin ? (
-              <section style={ui.card}>
-                <div style={ui.errBox}>
+              <section className="tc-card">
+                <div className="tc-alert tc-alert-err">
                   تم تسجيل الدخول بحساب ({session.user?.email})، لكنه غير مضاف في جدول{' '}
                   <code>admin_users</code>.
                 </div>
                 <button
                   type="button"
-                  style={ui.secondaryBtn}
+                  className="tc-btn tc-btn-soft"
                   onClick={handleAdminLogout}
                 >
                   تسجيل الخروج
@@ -3014,7 +3985,7 @@ export default function App() {
               </section>
             ) : (
               <>
-                <section style={ui.card}>
+                <section className="tc-card">
                   <div
                     style={{
                       display: 'flex',
@@ -3025,30 +3996,35 @@ export default function App() {
                     }}
                   >
                     <div>
-                      <h2 style={{ ...ui.h2, margin: 0 }}>لوحة تحكم الإدارة</h2>
-                      <p style={{ ...ui.pMuted, margin: '4px 0 0' }}>
-                        مرحباً ({session.user?.email})
+                      <h2 className="tc-h2" style={{ margin: 0 }}>
+                        <Icon name="shield" size={20} />
+                        لوحة تحكم الإدارة
+                      </h2>
+                      <p className="tc-muted" style={{ margin: '4px 0 0' }}>
+                        المشرف: {session.user?.email}
                       </p>
                     </div>
-                    <div style={ui.rowWrap}>
+                    <div className="tc-btn-row">
                       <button
                         type="button"
-                        style={ui.secondaryBtn}
+                        className="tc-btn tc-btn-soft"
                         onClick={fetchAdminDashboard}
                         disabled={adminDataLoading}
                       >
-                        تحديث البيانات
+                        <Icon name="refresh" size={15} />
+                        تحديث
                       </button>
                       <button
                         type="button"
-                        style={ui.warnBtn}
+                        className="tc-btn tc-btn-warn"
                         onClick={handleDeleteExpiredAds}
                       >
-                        حذف المنتهي (تنظيف)
+                        <Icon name="trash" size={15} />
+                        حذف المنتهي
                       </button>
                       <button
                         type="button"
-                        style={ui.dangerBtn}
+                        className="tc-btn tc-btn-danger"
                         onClick={handleAdminLogout}
                       >
                         خروج
@@ -3057,18 +4033,39 @@ export default function App() {
                   </div>
                 </section>
 
+                <div className="tc-admin-stats">
+                  <div className="tc-admin-stat">
+                    <span className="tc-admin-stat-num">{pendingReportsCount}</span>
+                    <span className="tc-admin-stat-label">بلاغات قيد المراجعة</span>
+                  </div>
+                  <div className="tc-admin-stat">
+                    <span className="tc-admin-stat-num">{adminOffers.length}</span>
+                    <span className="tc-admin-stat-label">إجمالي العروض</span>
+                  </div>
+                  <div className="tc-admin-stat">
+                    <span className="tc-admin-stat-num">{adminRequests.length}</span>
+                    <span className="tc-admin-stat-label">إجمالي الطلبات</span>
+                  </div>
+                </div>
+
                 {adminFeedback.text && (
-                  <div style={adminFeedback.type === 'ok' ? ui.okBox : ui.errBox}>
+                  <div
+                    className={`tc-alert ${
+                      adminFeedback.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                    }`}
+                  >
                     {adminFeedback.text}
                   </div>
                 )}
 
-                <section style={ui.card}>
-                  <h2 style={ui.h2}>البلاغات ({adminReports.length})</h2>
+                <section className="tc-card">
+                  <h2 className="tc-h2">البلاغات ({adminReports.length})</h2>
                   {adminDataLoading ? (
-                    <p style={ui.pMuted}>جاري تحميل البلاغات...</p>
+                    <div className="tc-skeleton" />
                   ) : adminReports.length === 0 ? (
-                    <p style={ui.pMuted}>لا توجد بلاغات حالياً.</p>
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      لا توجد بلاغات حالياً.
+                    </p>
                   ) : (
                     adminReports.map((rep) => {
                       const linkedOffer =
@@ -3081,34 +4078,21 @@ export default function App() {
                         rep.target_type === 'offer' ? rep.offer_id : rep.request_id;
 
                       return (
-                        <article key={rep.id} style={ui.itemBox}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              flexWrap: 'wrap',
-                              gap: '8px',
-                              marginBottom: '6px',
-                            }}
-                          >
+                        <article key={rep.id} className="tc-listing">
+                          <div className="tc-listing-top">
                             <strong>
                               {rep.target_type === 'offer'
                                 ? 'بلاغ على عرض سائق'
                                 : 'بلاغ على طلب طالب'}
                             </strong>
                             <span
-                              style={ui.badge(
+                              className={`tc-badge ${
                                 rep.status === 'pending'
-                                  ? '#fff3cd'
+                                  ? 'tc-badge-warn'
                                   : rep.status === 'reviewed'
-                                  ? '#dcfce7'
-                                  : '#e2e8f0',
-                                rep.status === 'pending'
-                                  ? '#854d0e'
-                                  : rep.status === 'reviewed'
-                                  ? '#14532d'
-                                  : '#334155'
-                              )}
+                                  ? 'tc-badge-ok'
+                                  : 'tc-badge-neutral'
+                              }`}
                             >
                               {rep.status === 'pending'
                                 ? 'قيد المراجعة'
@@ -3118,7 +4102,7 @@ export default function App() {
                             </span>
                           </div>
 
-                          <div style={{ fontSize: '0.89rem', lineHeight: 1.7 }}>
+                          <div style={{ fontSize: '0.88rem', lineHeight: 1.7 }}>
                             <div>
                               <strong>السبب:</strong> {rep.reason}
                             </div>
@@ -3127,77 +4111,51 @@ export default function App() {
                                 <strong>تفاصيل:</strong> {rep.details}
                               </div>
                             )}
-                            <div>
-                              <strong>تاريخ البلاغ:</strong> {formatDateTime(rep.created_at)}
+                            <div style={{ color: '#526b6e', fontSize: '0.82rem' }}>
+                              تاريخ البلاغ: {formatDateTime(rep.created_at)}
                             </div>
 
                             {linkedOffer && (
-                              <div
-                                style={{
-                                  marginTop: '8px',
-                                  padding: '8px 10px',
-                                  backgroundColor: '#eef6f5',
-                                  borderRadius: '8px',
-                                }}
-                              >
-                                <strong>الإعلان المرتبط:</strong> السائق{' '}
-                                {linkedOffer.driver_name} ({linkedOffer.vehicle_type}) —{' '}
-                                {linkedOffer.start_area} ← {linkedOffer.destination_area} •{' '}
-                                {isRecurringType(linkedOffer.recurrence_type)
-                                  ? `ترحيل منتظم (${formatRecurrence(
-                                      linkedOffer.recurrence_type,
-                                      linkedOffer.recurrence_days
-                                    )})`
-                                  : formatDateTime(linkedOffer.departure_time)}{' '}
-                                • الحالة: {linkedOffer.status}
+                              <div className="tc-notes-box" style={{ marginTop: '8px' }}>
+                                <strong>الإعلان المرتبط:</strong> {linkedOffer.driver_name}{' '}
+                                ({linkedOffer.vehicle_type}) — {linkedOffer.start_area} ←{' '}
+                                {linkedOffer.destination_area} • الحالة: {linkedOffer.status}
                               </div>
                             )}
 
                             {linkedRequest && (
-                              <div
-                                style={{
-                                  marginTop: '8px',
-                                  padding: '8px 10px',
-                                  backgroundColor: '#eef6f5',
-                                  borderRadius: '8px',
-                                }}
-                              >
-                                <strong>الطلب المرتبط:</strong> الطالب{' '}
-                                {linkedRequest.passenger_name} — {linkedRequest.start_area} ←{' '}
-                                {linkedRequest.destination_area} •{' '}
-                                {isRecurringType(linkedRequest.recurrence_type)
-                                  ? `ترحيل منتظم (${formatRecurrence(
-                                      linkedRequest.recurrence_type,
-                                      linkedRequest.recurrence_days
-                                    )})`
-                                  : formatDateTime(linkedRequest.preferred_time)}{' '}
-                                • الحالة: {linkedRequest.status}
+                              <div className="tc-notes-box" style={{ marginTop: '8px' }}>
+                                <strong>الطلب المرتبط:</strong>{' '}
+                                {linkedRequest.passenger_name} — {linkedRequest.start_area}{' '}
+                                ← {linkedRequest.destination_area} • الحالة:{' '}
+                                {linkedRequest.status}
                               </div>
                             )}
                           </div>
 
-                          <div style={{ ...ui.rowWrap, marginTop: '10px' }}>
+                          <div className="tc-btn-row" style={{ marginTop: '10px' }}>
                             <button
                               type="button"
-                              style={ui.secondaryBtn}
+                              className="tc-btn tc-btn-soft"
                               onClick={() => handleUpdateReportStatus(rep.id, 'reviewed')}
                             >
                               تمت المراجعة
                             </button>
                             <button
                               type="button"
-                              style={ui.warnBtn}
+                              className="tc-btn tc-btn-warn"
                               onClick={() => handleUpdateReportStatus(rep.id, 'dismissed')}
                             >
                               تجاهل
                             </button>
                             <button
                               type="button"
-                              style={ui.dangerBtn}
+                              className="tc-btn tc-btn-danger"
                               onClick={() =>
                                 handleAdminDeleteListing(rep.target_type, targetId)
                               }
                             >
+                              <Icon name="trash" size={14} />
                               حذف الإعلان المرتبط
                             </button>
                           </div>
@@ -3207,56 +4165,52 @@ export default function App() {
                   )}
                 </section>
 
-                <section style={ui.card}>
-                  <h2 style={ui.h2}>كل عروض السائقين ({adminOffers.length})</h2>
+                <section className="tc-card">
+                  <h2 className="tc-h2">كل عروض السائقين ({adminOffers.length})</h2>
                   {adminOffers.length === 0 ? (
-                    <p style={ui.pMuted}>لا توجد عروض مسجلة.</p>
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      لا توجد عروض مسجلة.
+                    </p>
                   ) : (
                     adminOffers.map((o) => {
                       const expired = new Date(o.expires_at).getTime() <= Date.now();
                       const recurring = isRecurringType(o.recurrence_type);
                       return (
-                        <div key={o.id} style={ui.itemBox}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              flexWrap: 'wrap',
-                              gap: '8px',
-                            }}
-                          >
+                        <div key={o.id} className="tc-listing">
+                          <div className="tc-listing-top">
                             <strong>
                               {o.driver_name}: {o.start_area} ← {o.destination_area}
                             </strong>
-                            <div style={ui.rowWrap}>
+                            <div className="tc-btn-row">
                               <span
-                                style={ui.badge(
-                                  recurring ? '#ede9fe' : '#e0f2fe',
-                                  recurring ? '#5b21b6' : '#075985'
-                                )}
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
                               >
                                 {recurring ? 'ترحيل منتظم' : 'توصيلة'}
                               </span>
                               <span
-                                style={ui.badge(
-                                  expired || o.status === 'closed' ? '#ffe3e3' : '#dcfce7',
-                                  expired || o.status === 'closed' ? '#a81f1f' : '#14532d'
-                                )}
+                                className={`tc-badge ${
+                                  expired || o.status === 'closed'
+                                    ? 'tc-badge-full'
+                                    : 'tc-badge-ok'
+                                }`}
                               >
                                 {expired ? 'منتهي' : o.status}
                               </span>
                             </div>
                           </div>
-                          <div style={{ fontSize: '0.86rem', marginTop: '4px' }}>
-                            التحرك: {formatDateTime(o.departure_time)} • المقاعد:{' '}
+                          <div style={{ fontSize: '0.85rem', color: '#425d60' }}>
+                            الموعد: {formatDateTime(o.departure_time)} • المقاعد:{' '}
                             {o.available_seats}/{o.total_seats}
                           </div>
-                          <div style={{ marginTop: '8px' }}>
+                          <div style={{ marginTop: '10px' }}>
                             <button
                               type="button"
-                              style={ui.dangerBtn}
+                              className="tc-btn tc-btn-danger"
                               onClick={() => handleAdminDeleteListing('offer', o.id)}
                             >
+                              <Icon name="trash" size={14} />
                               حذف العرض
                             </button>
                           </div>
@@ -3266,56 +4220,52 @@ export default function App() {
                   )}
                 </section>
 
-                <section style={ui.card}>
-                  <h2 style={ui.h2}>كل طلبات الطلاب ({adminRequests.length})</h2>
+                <section className="tc-card">
+                  <h2 className="tc-h2">كل طلبات الطلاب ({adminRequests.length})</h2>
                   {adminRequests.length === 0 ? (
-                    <p style={ui.pMuted}>لا توجد طلبات مسجلة.</p>
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      لا توجد طلبات مسجلة.
+                    </p>
                   ) : (
                     adminRequests.map((r) => {
                       const expired = new Date(r.expires_at).getTime() <= Date.now();
                       const recurring = isRecurringType(r.recurrence_type);
                       return (
-                        <div key={r.id} style={ui.itemBox}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              flexWrap: 'wrap',
-                              gap: '8px',
-                            }}
-                          >
+                        <div key={r.id} className="tc-listing">
+                          <div className="tc-listing-top">
                             <strong>
                               {r.passenger_name}: {r.start_area} ← {r.destination_area}
                             </strong>
-                            <div style={ui.rowWrap}>
+                            <div className="tc-btn-row">
                               <span
-                                style={ui.badge(
-                                  recurring ? '#ede9fe' : '#e0f2fe',
-                                  recurring ? '#5b21b6' : '#075985'
-                                )}
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
                               >
                                 {recurring ? 'ترحيل منتظم' : 'توصيلة'}
                               </span>
                               <span
-                                style={ui.badge(
-                                  expired || r.status === 'closed' ? '#ffe3e3' : '#e0f2fe',
-                                  expired || r.status === 'closed' ? '#a81f1f' : '#075985'
-                                )}
+                                className={`tc-badge ${
+                                  expired || r.status === 'closed'
+                                    ? 'tc-badge-full'
+                                    : 'tc-badge-once'
+                                }`}
                               >
                                 {expired ? 'منتهي' : r.status}
                               </span>
                             </div>
                           </div>
-                          <div style={{ fontSize: '0.86rem', marginTop: '4px' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#425d60' }}>
                             الوقت: {formatDateTime(r.preferred_time)} • المقاعد:{' '}
                             {r.seats_needed}
                           </div>
-                          <div style={{ marginTop: '8px' }}>
+                          <div style={{ marginTop: '10px' }}>
                             <button
                               type="button"
-                              style={ui.dangerBtn}
+                              className="tc-btn tc-btn-danger"
                               onClick={() => handleAdminDeleteListing('request', r.id)}
                             >
+                              <Icon name="trash" size={14} />
                               حذف الطلب
                             </button>
                           </div>
@@ -3329,6 +4279,120 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* نافذة البلاغ المنبثقة */}
+      {reportTarget && (
+        <div
+          className="tc-modal-backdrop"
+          onClick={() => {
+            if (!reportLoading) setReportTarget(null);
+          }}
+        >
+          <div className="tc-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="tc-h3" style={{ color: '#b42318' }}>
+              إرسال بلاغ عن محتوى
+            </h3>
+            <p className="tc-muted" style={{ marginBottom: '12px' }}>
+              {reportTarget.label}
+            </p>
+            <form onSubmit={handleSubmitReport}>
+              <div className="tc-field">
+                <label className="tc-label">
+                  سبب البلاغ <span className="tc-req">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="مثال: رقم غير صحيح، إعلان مزعج..."
+                  className="tc-input"
+                  required
+                />
+              </div>
+              <div className="tc-field">
+                <label className="tc-label">تفاصيل إضافية (اختياري)</label>
+                <textarea
+                  rows="3"
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="أضف أي تفاصيل تساعد المشرف..."
+                  className="tc-input"
+                />
+              </div>
+              <div className="tc-btn-row" style={{ marginTop: '14px' }}>
+                <button
+                  type="submit"
+                  className="tc-btn tc-btn-danger"
+                  disabled={reportLoading}
+                >
+                  {reportLoading ? 'جاري الإرسال...' : 'تأكيد إرسال البلاغ'}
+                </button>
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-ghost"
+                  onClick={() => {
+                    setReportTarget(null);
+                    setReportReason('');
+                    setReportDetails('');
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* شريط التنقل السفلي للموبايل */}
+      <nav className="tc-bottom-nav" aria-label="التنقل السفلي للموبايل">
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.HOME ? 'active' : ''}`}
+          onClick={() => openTab(TABS.HOME)}
+        >
+          <Icon name="home" size={20} />
+          <span>الرئيسية</span>
+        </button>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.SEARCH ? 'active' : ''}`}
+          onClick={() => openTab(TABS.SEARCH)}
+        >
+          <Icon name="search" size={20} />
+          <span>البحث</span>
+        </button>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.OFFER ? 'active' : ''}`}
+          onClick={() => {
+            setOfferSubTab('publish');
+            openTab(TABS.OFFER);
+          }}
+        >
+          {activeMyOffersCount > 0 && (
+            <span className="tc-bottom-count">{activeMyOffersCount}</span>
+          )}
+          <Icon name="car" size={20} />
+          <span>أعرض</span>
+        </button>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.REQUEST ? 'active' : ''}`}
+          onClick={() => openTab(TABS.REQUEST)}
+        >
+          <Icon name="hand" size={20} />
+          <span>اطلب</span>
+        </button>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.ADMIN ? 'active' : ''}`}
+          onClick={() => openTab(TABS.ADMIN)}
+        >
+          <Icon name="shield" size={20} />
+          <span>الإدارة</span>
+        </button>
+      </nav>
     </div>
   );
 }
