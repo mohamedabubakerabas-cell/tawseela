@@ -20,7 +20,12 @@ const TABS = {
 const MY_OFFERS_STORAGE_KEY = 'tawseelat_my_offers_v1';
 
 const POPULAR_AREAS = [
-  'السنتر / الجامعات',
+  'مجمع الوسط (السنتر) - البوابة الرئيسية',
+  'مجمع الوسط - كلية الهندسة',
+  'مجمع الوسط - شارع الجامعة',
+  'مجمع شمبات (الزراعة / البيطرة)',
+  'مجمع الطب والعلوم الصحية (القصر)',
+  'كلية التربية - أم درمان',
   'الخرطوم - السوق العربي',
   'الخرطوم - الرياض',
   'الخرطوم - العمارات',
@@ -28,10 +33,10 @@ const POPULAR_AREAS = [
   'الخرطوم - جبرة',
   'الخرطوم - الكلاكلة',
   'بحري - المؤسسة',
-  'بحري - شمبات',
+  'بحري - الحلفايا / كافوري',
   'أم درمان - السوق الشعبي',
   'أم درمان - الثورة',
-  'أم درمان - الموردة',
+  'أم درمان - الموردة / المهندسين',
 ];
 
 const WEEKDAYS = [
@@ -324,14 +329,19 @@ body {
   margin-bottom: 16px;
 }
 
-/* Hero */
+/* Hero with University of Khartoum Background Image Support (/uofk-bg.jpg) */
 .tc-hero {
   position: relative;
   overflow: hidden;
   border-radius: 22px;
-  padding: 24px 20px;
+  padding: 26px 20px;
   margin-bottom: 18px;
-  background: linear-gradient(135deg, #09464d 0%, #0e636a 55%, #168075 100%);
+  background-color: #09464d;
+  background-image:
+    linear-gradient(135deg, rgba(7, 56, 62, 0.84) 0%, rgba(13, 92, 99, 0.76) 55%, rgba(20, 122, 110, 0.80) 100%),
+    url('/uofk-bg.jpg');
+  background-size: cover;
+  background-position: center;
   color: #ffffff;
   box-shadow: 0 12px 28px rgba(11, 79, 86, 0.22);
 }
@@ -348,19 +358,35 @@ body {
   pointer-events: none;
 }
 
+.tc-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e9fffc;
+  margin-bottom: 10px;
+}
+
 .tc-hero-title {
   margin: 0 0 8px;
   font-size: 1.45rem;
   font-weight: 800;
   line-height: 1.35;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
 }
 
 .tc-hero-desc {
   margin: 0 0 16px;
   font-size: 0.92rem;
-  color: #d9f3f0;
+  color: #e2f7f4;
   line-height: 1.7;
-  max-width: 620px;
+  max-width: 630px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
 }
 
 .tc-stats-strip {
@@ -375,8 +401,9 @@ body {
   gap: 7px;
   padding: 7px 13px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(7, 45, 50, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(6px);
   font-size: 0.82rem;
   font-weight: 700;
   color: #ffffff;
@@ -722,7 +749,7 @@ body {
   align-items: center;
 }
 
-/* Listing Cards (Ride Offers & Student Requests) */
+/* Listing Cards */
 .tc-listing {
   background: #ffffff;
   border: 1px solid var(--border);
@@ -1038,7 +1065,7 @@ body {
   }
   .tc-tile-arrow { display: none; }
   .tc-info-grid { grid-template-columns: 1fr 1fr; }
-  .tc-hero { padding: 30px 28px; }
+  .tc-hero { padding: 34px 28px; }
   .tc-hero-title { font-size: 1.7rem; }
 }
 `;
@@ -1163,6 +1190,13 @@ function Icon({ name, size = 18 }) {
           <path d="M3 6h18" />
           <path d="M8 6V4h8v2" />
           <path d="M19 6l-1 14H6L5 6" />
+        </svg>
+      );
+    case 'campus':
+      return (
+        <svg {...common}>
+          <path d="M2 10 12 5l10 5-10 5-10-5Z" />
+          <path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
         </svg>
       );
     default:
@@ -1353,7 +1387,7 @@ function AreaInput({ label, value, onChange, placeholder }) {
         onChange={handleSelect}
         className="tc-input"
       >
-        <option value="">-- اختر منطقة شائعة أو اكتب موقعاً مخصصاً --</option>
+        <option value="">-- اختر مجمعاً أو منطقة أو اكتب موقعاً مخصصاً --</option>
         {POPULAR_AREAS.map((area) => (
           <option key={area} value={area}>
             {area}
@@ -1367,7 +1401,7 @@ function AreaInput({ label, value, onChange, placeholder }) {
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder || 'اكتب اسم المنطقة أو المحطة'}
+            placeholder={placeholder || 'اكتب اسم المنطقة أو البوابة أو الداخلية'}
             className="tc-input"
             required
           />
@@ -1408,7 +1442,7 @@ function RouteTimeline({ start, destination, stops = [] }) {
 export default function App() {
   const [tab, setTab] = useState(TABS.HOME);
   const [offerSubTab, setOfferSubTab] = useState('publish');
-  const [boardSection, setBoardSection] = useState('all'); // 'all' | 'offers' | 'requests'
+  const [boardSection, setBoardSection] = useState('all');
 
   // حالة البحث واللوحة العامة
   const [offers, setOffers] = useState([]);
@@ -2390,11 +2424,11 @@ export default function App() {
         <div className="tc-header-inner">
           <div className="tc-brand" onClick={() => openTab(TABS.HOME)}>
             <div className="tc-logo-box">
-              <Icon name="route" size={22} />
+              <Icon name="campus" size={22} />
             </div>
             <div>
               <h1 className="tc-brand-title">توصيلة السنتر</h1>
-              <p className="tc-brand-sub">مواصلات طلاب الجامعة • توصيلة وترحيل</p>
+              <p className="tc-brand-sub">مواصلات طلاب جامعة الخرطوم • توصيلة وترحيل</p>
             </div>
           </div>
 
@@ -2464,10 +2498,15 @@ export default function App() {
         {tab === TABS.HOME && (
           <>
             <section className="tc-hero">
-              <h2 className="tc-hero-title">مشوارك للجامعة أسهل وأوفر مع زملائك</h2>
+              <div className="tc-hero-kicker">
+                <Icon name="campus" size={15} />
+                <span>مبادرة طلابية لطلاب جامعة الخرطوم</span>
+              </div>
+              <h2 className="tc-hero-title">مشوارك لجامعة الخرطوم أسهل وأوفر مع زملائك</h2>
               <p className="tc-hero-desc">
-                منصة طلابية مجانية تربط أصحاب العربات بالطلاب على نفس المسار — سواء
-                كنت تبحث عن <strong>توصيلة سريعة لليوم</strong> أو{' '}
+                منصة مجانية تربط طلاب جامعة الخرطوم أصحاب العربات بزملائهم على نفس
+                المسار لمجمعات الوسط وشمبات والطب والتربية — سواء لـ{' '}
+                <strong>توصيلة سريعة لليوم</strong> أو{' '}
                 <strong>ترحيل منتظم يومي أو أسبوعي</strong>، بدون تسجيل حساب.
               </p>
               <div className="tc-stats-strip">
@@ -2497,7 +2536,7 @@ export default function App() {
                 <span className="tc-tile-body">
                   <span className="tc-tile-title">أبحث عن توصيلة أو ترحيل</span>
                   <span className="tc-tile-sub">
-                    تصفح عروض السائقين وطلبات الطلاب وفلتر حسب المسار والنوع
+                    تصفح عروض السائقين وطلبات طلاب جامعة الخرطوم وفلتر حسب المسار
                   </span>
                 </span>
                 <span className="tc-tile-arrow">
@@ -2522,7 +2561,7 @@ export default function App() {
                 <span className="tc-tile-body">
                   <span className="tc-tile-title">أعرض توصيلة أو ترحيل (لدي عربة)</span>
                   <span className="tc-tile-sub">
-                    شارك مقاعدك الفارغة وتحكم بها بضغطة زر من جهازك
+                    شارك مقاعدك الفارغة مع زملائك وتحكم بها بضغطة زر من جهازك
                   </span>
                 </span>
                 <span className="tc-tile-arrow">
@@ -2544,7 +2583,7 @@ export default function App() {
                 <span className="tc-tile-body">
                   <span className="tc-tile-title">أطلب توصيلة أو ترحيل</span>
                   <span className="tc-tile-sub">
-                    انشر وجهتك وموعدك ليتواصل معك السائقون مباشرة عبر واتساب
+                    انشر منطقتك ومجمعك الجامعي وموعدك ليتواصل معك السائقون مباشرة
                   </span>
                 </span>
                 <span className="tc-tile-arrow">
@@ -2603,8 +2642,8 @@ export default function App() {
                     <Icon name="repeat" size={14} /> ترحيل منتظم
                   </span>
                   <div style={{ fontSize: '0.85rem', color: '#425d60', lineHeight: 1.6 }}>
-                    للطلاب والسائقين الملتزمين بنفس المسار يومياً أو في أيام محددة؛
-                    يبقى منشوراً لمدة أسبوع أو أسبوعين أو شهر.
+                    لطلاب جامعة الخرطوم والسائقين الملتزمين بنفس المسار يومياً أو في
+                    أيام محددة؛ يبقى منشوراً لمدة أسبوع أو أسبوعين أو شهر.
                   </div>
                 </div>
               </div>
@@ -2672,17 +2711,17 @@ export default function App() {
                     type="text"
                     value={searchStart}
                     onChange={(e) => setSearchStart(e.target.value)}
-                    placeholder="مثال: الرياض، جبرة، شمبات..."
+                    placeholder="مثال: الرياض، جبرة، الثورة، شمبات..."
                     className="tc-input"
                   />
                 </div>
                 <div className="tc-field">
-                  <label className="tc-label">الوجهة</label>
+                  <label className="tc-label">الوجهة (المجمع أو الحي)</label>
                   <input
                     type="text"
                     value={searchDest}
                     onChange={(e) => setSearchDest(e.target.value)}
-                    placeholder="مثال: السنتر، الجامعات..."
+                    placeholder="مثال: السنتر، الهندسة، الطب، شمبات..."
                     className="tc-input"
                   />
                 </div>
@@ -2787,7 +2826,7 @@ export default function App() {
                           offer.recurrence_days
                         )})`
                       : formatDateTime(offer.departure_time);
-                    const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
+                    const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر - جامعة الخرطوم من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
                     const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
                     const telHref = buildTelLink(
                       offer.phone_number || offer.whatsapp_number
@@ -2886,7 +2925,7 @@ export default function App() {
               <section>
                 <h2 className="tc-h2" style={{ marginBottom: '10px' }}>
                   <Icon name="hand" size={20} />
-                  طلبات الطلاب ({filteredRequests.length})
+                  طلبات طلاب جامعة الخرطوم ({filteredRequests.length})
                 </h2>
 
                 {boardLoading && requests.length === 0 ? (
@@ -2900,7 +2939,7 @@ export default function App() {
                       لا توجد طلبات طلاب مطابقة حالياً
                     </div>
                     <p className="tc-muted" style={{ marginBottom: 0 }}>
-                      عند نشر الطلاب لطلبات توصيل أو ترحيل ستظهر هنا مباشرة.
+                      عند نشر طلاب جامعة الخرطوم لطلبات توصيل أو ترحيل ستظهر هنا مباشرة.
                     </p>
                   </div>
                 ) : (
@@ -2913,7 +2952,7 @@ export default function App() {
                           req.recurrence_days
                         )})`
                       : formatDateTime(req.preferred_time);
-                    const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب (${kindText}) الخاص بك في توصيلة السنتر من (${req.start_area}) إلى (${req.destination_area}) — ${timeText}. لدي مقعد متاح على هذا المسار.`;
+                    const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب (${kindText}) الخاص بك في توصيلة السنتر - جامعة الخرطوم من (${req.start_area}) إلى (${req.destination_area}) — ${timeText}. لدي مقعد متاح على هذا المسار.`;
                     const waHref = buildWhatsAppLink(req.whatsapp_number, waText);
                     const telHref = buildTelLink(req.phone_number || req.whatsapp_number);
 
@@ -3029,8 +3068,8 @@ export default function App() {
                   أعرض توصيلة أو ترحيل (لأصحاب العربات)
                 </h2>
                 <p className="tc-muted">
-                  انشر رحلتك ليراها الطلاب، وسيُحفظ إعلانك تلقائياً في «إعلاناتي» للتحكم
-                  بالمقاعد أو الإغلاق بضغطة زر.
+                  انشر رحلتك لطلاب جامعة الخرطوم، وسيُحفظ إعلانك تلقائياً في «إعلاناتي»
+                  للتحكم بالمقاعد أو الإغلاق بضغطة زر.
                 </p>
 
                 {offerError && <div className="tc-alert tc-alert-err">{offerError}</div>}
@@ -3210,7 +3249,7 @@ export default function App() {
                         onChange={(val) =>
                           setOfferForm({ ...offerForm, destination_area: val })
                         }
-                        placeholder="اكتب الوجهة (مثال: السنتر)"
+                        placeholder="اكتب الوجهة (مثال: مجمع الوسط - كلية الهندسة)"
                       />
                     </div>
 
@@ -3657,11 +3696,12 @@ export default function App() {
           <section className="tc-card">
             <h2 className="tc-h2">
               <Icon name="hand" size={20} />
-              اطلب توصيلة أو ترحيل (للطلاب)
+              اطلب توصيلة أو ترحيل (لطلاب جامعة الخرطوم)
             </h2>
             <p className="tc-muted">
               حدد هل تحتاج <strong>توصيلة سريعة لمرة واحدة</strong> أم{' '}
-              <strong>ترحيلاً منتظماً</strong> ليتواصل معك أصحاب العربات على نفس المسار.
+              <strong>ترحيلاً منتظماً</strong> لمجمعك في جامعة الخرطوم ليتواصل معك
+              أصحاب العربات على نفس المسار.
             </p>
 
             {requestError && (
@@ -3821,7 +3861,7 @@ export default function App() {
                     onChange={(val) =>
                       setRequestForm({ ...requestForm, destination_area: val })
                     }
-                    placeholder="اكتب وجهتك"
+                    placeholder="اكتب المجمع أو الكلية أو المنطقة"
                   />
                 </div>
 
@@ -3892,7 +3932,7 @@ export default function App() {
                     onChange={(e) =>
                       setRequestForm({ ...requestForm, notes: e.target.value })
                     }
-                    placeholder="مثال: الانتظار أمام البوابة الرئيسية، أو تفاصيل الرجعة..."
+                    placeholder="مثال: الانتظار أمام بوابة الهندسة، أو تفاصيل الرجعة..."
                     className="tc-input"
                   />
                 </div>
@@ -3926,7 +3966,7 @@ export default function App() {
                     دخول لوحة الإدارة
                   </h2>
                   <p className="tc-muted" style={{ marginBottom: 0 }}>
-                    مخصصة لمشرف الموقع لمتابعة البلاغات وتنظيف الإعلانات.
+                    مخصصة لمشرف توصيلة السنتر — جامعة الخرطوم.
                   </p>
                 </div>
 
