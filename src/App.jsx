@@ -11,7 +11,7 @@ const supabase =
 
 const TABS = {
   HOME: 'home',
-  SEARCH: 'search',
+  ADS: 'ads',
   OFFER: 'offer',
   REQUEST: 'request',
   ADMIN: 'admin',
@@ -233,13 +233,25 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px;
+  padding: 6px 11px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-family: inherit;
   font-size: 0.76rem;
   font-weight: 700;
   color: #e6fffb;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.tc-live-dot-badge:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.tc-live-dot-badge:active {
+  transform: scale(0.96);
 }
 
 .tc-pulse-dot {
@@ -392,21 +404,33 @@ body {
 .tc-stats-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
 }
 
 .tc-stat-chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 13px;
+  padding: 8px 13px;
   border-radius: 12px;
-  background: rgba(7, 45, 50, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(7, 45, 50, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.34);
   backdrop-filter: blur(6px);
-  font-size: 0.82rem;
+  font-family: inherit;
+  font-size: 0.83rem;
   font-weight: 700;
   color: #ffffff;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.12s ease, border-color 0.16s ease;
+}
+
+.tc-stat-chip:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+}
+
+.tc-stat-chip:active {
+  transform: scale(0.97);
 }
 
 /* Home Action Cards */
@@ -1098,6 +1122,15 @@ function Icon({ name, size = 18 }) {
           <path d="m20 20-3.5-3.5" />
         </svg>
       );
+    case 'ads':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M7 9h10" />
+          <path d="M7 13h7" />
+          <path d="M7 17h4" />
+        </svg>
+      );
     case 'car':
       return (
         <svg {...common}>
@@ -1444,7 +1477,7 @@ export default function App() {
   const [offerSubTab, setOfferSubTab] = useState('publish');
   const [boardSection, setBoardSection] = useState('all');
 
-  // حالة البحث واللوحة العامة
+  // حالة الإعلانات والبحث
   const [offers, setOffers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [boardLoading, setBoardLoading] = useState(false);
@@ -1681,7 +1714,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (tab === TABS.SEARCH || tab === TABS.HOME) {
+    if (tab === TABS.ADS || tab === TABS.HOME) {
       fetchPublicListings();
     }
   }, [tab]);
@@ -2000,7 +2033,7 @@ export default function App() {
 
     if (nextStatus === 'closed') {
       const confirmed = window.confirm(
-        'هل تريد إغلاق هذا الإعلان نهائياً؟ سيختفي فوراً من صفحة البحث.'
+        'هل تريد إغلاق هذا الإعلان نهائياً؟ سيختفي فوراً من صفحة الإعلانات.'
       );
       if (!confirmed) return;
     }
@@ -2241,7 +2274,7 @@ export default function App() {
       setRequestSuccess(
         recurring
           ? 'تم نشر طلب الترحيل المنتظم بنجاح! سيبقى ظاهراً للسائقين طوال المدة التي اخترتها.'
-          : 'تم نشر طلب التوصيلة بنجاح! سيظهر الآن لأصحاب العربات في صفحة البحث.'
+          : 'تم نشر طلب التوصيلة بنجاح! سيظهر الآن لأصحاب العربات في صفحة الإعلانات.'
       );
       setRequestForm({
         passenger_name: '',
@@ -2410,10 +2443,16 @@ export default function App() {
 
   const offerIsRecurring = isRecurringType(offerForm.recurrence_type);
   const requestIsRecurring = isRecurringType(requestForm.recurrence_type);
+  const totalLiveAds = filteredOffers.length + filteredRequests.length;
 
   const openTab = (nextTab) => {
     setTab(nextTab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openAds = (section = 'all') => {
+    setBoardSection(section);
+    openTab(TABS.ADS);
   };
 
   return (
@@ -2443,11 +2482,11 @@ export default function App() {
             </button>
             <button
               type="button"
-              className={`tc-nav-pill ${tab === TABS.SEARCH ? 'active' : ''}`}
-              onClick={() => openTab(TABS.SEARCH)}
+              className={`tc-nav-pill ${tab === TABS.ADS ? 'active' : ''}`}
+              onClick={() => openAds('all')}
             >
-              <Icon name="search" size={16} />
-              البحث
+              <Icon name="ads" size={16} />
+              الإعلانات ({totalLiveAds})
             </button>
             <button
               type="button"
@@ -2478,10 +2517,15 @@ export default function App() {
             </button>
           </nav>
 
-          <div className="tc-live-dot-badge">
+          <button
+            type="button"
+            className="tc-live-dot-badge"
+            onClick={() => openAds('all')}
+            title="عرض جميع الإعلانات المتاحة الآن"
+          >
             <span className="tc-pulse-dot" />
-            <span>{filteredOffers.length + filteredRequests.length} متاح</span>
-          </div>
+            <span>{totalLiveAds} إعلان متاح</span>
+          </button>
         </div>
       </header>
 
@@ -2510,14 +2554,24 @@ export default function App() {
                 <strong>ترحيل منتظم يومي أو أسبوعي</strong>، بدون تسجيل حساب.
               </p>
               <div className="tc-stats-strip">
-                <span className="tc-stat-chip">
+                <button
+                  type="button"
+                  className="tc-stat-chip"
+                  onClick={() => openAds('offers')}
+                >
                   <Icon name="car" size={16} />
-                  {filteredOffers.length} عرض سائق متاح الآن
-                </span>
-                <span className="tc-stat-chip">
+                  <span>{filteredOffers.length} عرض سائق متاح الآن</span>
+                  <Icon name="chevronLeft" size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="tc-stat-chip"
+                  onClick={() => openAds('requests')}
+                >
                   <Icon name="hand" size={16} />
-                  {filteredRequests.length} طلب طالب نشط
-                </span>
+                  <span>{filteredRequests.length} طلب طالب نشط</span>
+                  <Icon name="chevronLeft" size={14} />
+                </button>
               </div>
             </section>
 
@@ -2525,18 +2579,18 @@ export default function App() {
               <button
                 type="button"
                 className="tc-action-tile primary"
-                onClick={() => openTab(TABS.SEARCH)}
+                onClick={() => openAds('all')}
               >
                 <span
                   className="tc-tile-icon"
                   style={{ background: '#0b555c', color: '#ffffff' }}
                 >
-                  <Icon name="search" size={24} />
+                  <Icon name="ads" size={24} />
                 </span>
                 <span className="tc-tile-body">
-                  <span className="tc-tile-title">أبحث عن توصيلة أو ترحيل</span>
+                  <span className="tc-tile-title">تصفح الإعلانات ({totalLiveAds})</span>
                   <span className="tc-tile-sub">
-                    تصفح عروض السائقين وطلبات طلاب جامعة الخرطوم وفلتر حسب المسار
+                    استعرض كل عروض السائقين وطلبات طلاب جامعة الخرطوم وفلتر حسب المسار
                   </span>
                 </span>
                 <span className="tc-tile-arrow">
@@ -2651,8 +2705,8 @@ export default function App() {
           </>
         )}
 
-        {/* ======================= البحث ======================= */}
-        {tab === TABS.SEARCH && (
+        {/* ======================= الإعلانات والبحث ======================= */}
+        {tab === TABS.ADS && (
           <>
             <section className="tc-card">
               <div
@@ -2666,8 +2720,8 @@ export default function App() {
                 }}
               >
                 <h2 className="tc-h2" style={{ margin: 0 }}>
-                  <Icon name="search" size={20} />
-                  ابحث عن توصيلة أو ترحيل
+                  <Icon name="ads" size={20} />
+                  الإعلانات المتاحة والبحث
                 </h2>
                 <button
                   type="button"
@@ -2753,7 +2807,7 @@ export default function App() {
                 className={`tc-seg-btn ${boardSection === 'all' ? 'active' : ''}`}
                 onClick={() => setBoardSection('all')}
               >
-                الكل ({filteredOffers.length + filteredRequests.length})
+                الكل ({totalLiveAds})
               </button>
               <button
                 type="button"
@@ -3101,9 +3155,9 @@ export default function App() {
                       <button
                         type="button"
                         className="tc-btn tc-btn-ghost"
-                        onClick={() => openTab(TABS.SEARCH)}
+                        onClick={() => openAds('offers')}
                       >
-                        عرض في البحث
+                        عرض في الإعلانات
                       </button>
                     </div>
                   </div>
@@ -3714,9 +3768,9 @@ export default function App() {
                   <button
                     type="button"
                     className="tc-btn tc-btn-soft"
-                    onClick={() => openTab(TABS.SEARCH)}
+                    onClick={() => openAds('requests')}
                   >
-                    الانتقال لصفحة البحث
+                    عرض في نافذة الإعلانات
                   </button>
                 </div>
               </div>
@@ -4396,11 +4450,14 @@ export default function App() {
         </button>
         <button
           type="button"
-          className={`tc-bottom-btn ${tab === TABS.SEARCH ? 'active' : ''}`}
-          onClick={() => openTab(TABS.SEARCH)}
+          className={`tc-bottom-btn ${tab === TABS.ADS ? 'active' : ''}`}
+          onClick={() => openAds('all')}
         >
-          <Icon name="search" size={20} />
-          <span>البحث</span>
+          {totalLiveAds > 0 && (
+            <span className="tc-bottom-count">{totalLiveAds}</span>
+          )}
+          <Icon name="ads" size={20} />
+          <span>الإعلانات</span>
         </button>
         <button
           type="button"
