@@ -1546,8 +1546,8 @@ const HOME_CSS = `
 .tc-quick-tile:active { transform: scale(0.98); }
 .tc-quick-tile.wide {
   grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 14px;
-  min-height: 84px; padding: 14px 18px; background: #0b555c; color: #ffffff;
-  border-color: #0b555c; text-align: right;
+  min-height: 84px; padding: 14px 18px; background: linear-gradient(135deg, #f08a47 0%, #e8703f 100%); color: #ffffff;
+  border-color: #e8703f; text-align: right;
 }
 .tc-quick-ico {
   width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
@@ -1558,6 +1558,61 @@ const HOME_CSS = `
 .tc-howto summary { cursor: pointer; font-weight: 700; color: #0b555c; }
 `;
 
+
+const THEME_CSS = `
+:root {
+  --bg: #0e5f58;
+  --surface: #fffdf8;
+  --surface-soft: #fbf3e8;
+  --primary-light: #e3f3ee;
+  --accent: #ec7a3c;
+  --accent-soft: #fff0e2;
+  --border: #eadfcf;
+  --border-strong: #d6c5ad;
+  --shadow-sm: 0 4px 14px rgba(4, 44, 48, 0.16);
+  --shadow-md: 0 10px 28px rgba(4, 44, 48, 0.26);
+}
+body { background: #0e5f58; }
+.tc-app { position: relative; }
+.tc-app::before {
+  content: '';
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+  z-index: -1; pointer-events: none;
+  background-image: url("%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M-20 770 C 110 700 150 580 250 530 S 420 370 330 210 S 350 60 430 10' fill='none' stroke='%23b8f0dc' stroke-opacity='.34' stroke-width='3' stroke-dasharray='9 12' stroke-linecap='round'/%3E%3Cpath d='M-30 430 C 80 390 150 310 120 210 S 30 90 150 -20' fill='none' stroke='%23b8f0dc' stroke-opacity='.2' stroke-width='2.5' stroke-dasharray='6 10' stroke-linecap='round'/%3E%3Cpath d='M0 -11 L2.75 -2.75 L11 0 L2.75 2.75 L0 11 L-2.75 2.75 L-11 0 L-2.75 -2.75 Z' transform='translate(60 90)' fill='%23f08a47' fill-opacity='0.8'/%3E%3Cpath d='M0 -8 L2.0 -2.0 L8 0 L2.0 2.0 L0 8 L-2.0 2.0 L-8 0 L-2.0 -2.0 Z' transform='translate(335 60)' fill='%23ffd28a' fill-opacity='0.8'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(210 170)' fill='%23ffffff' fill-opacity='0.55'/%3E%3Cpath d='M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z' transform='translate(370 270)' fill='%23f08a47' fill-opacity='0.7'/%3E%3Cpath d='M0 -7 L1.75 -1.75 L7 0 L1.75 1.75 L0 7 L-1.75 1.75 L-7 0 L-1.75 -1.75 Z' transform='translate(40 300)' fill='%23ffd28a' fill-opacity='0.7'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(300 400)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z' transform='translate(90 520)' fill='%23f08a47' fill-opacity='0.65'/%3E%3Cpath d='M0 -7 L1.75 -1.75 L7 0 L1.75 1.75 L0 7 L-1.75 1.75 L-7 0 L-1.75 -1.75 Z' transform='translate(360 560)' fill='%23ffd28a' fill-opacity='0.7'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(200 640)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -8 L2.0 -2.0 L8 0 L2.0 2.0 L0 8 L-2.0 2.0 L-8 0 L-2.0 -2.0 Z' transform='translate(40 720)' fill='%23ffd28a' fill-opacity='0.6'/%3E%3Cpath d='M0 -11 L2.75 -2.75 L11 0 L2.75 2.75 L0 11 L-2.75 2.75 L-11 0 L-2.75 -2.75 Z' transform='translate(310 740)' fill='%23f08a47' fill-opacity='0.7'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(150 40)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(240 330)' fill='%23ffd28a' fill-opacity='0.6'/%3E%3Ccircle cx='120' cy='380' r='2.5' fill='%23f08a47' fill-opacity='.6'/%3E%3Ccircle cx='270' cy='100' r='2' fill='%23ffffff' fill-opacity='.6'/%3E%3Ccircle cx='20' cy='610' r='2.5' fill='%23ffd28a' fill-opacity='.6'/%3E%3Ccircle cx='380' cy='450' r='2' fill='%23ffffff' fill-opacity='.6'/%3E%3Ccircle cx='180' cy='760' r='2' fill='%23f08a47' fill-opacity='.6'/%3E%3C/svg%3E"), linear-gradient(165deg, #1c8d76 0%, #14715f 40%, #0b4d55 100%);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+}
+.tc-header { border-bottom: 3px solid var(--accent); }
+.tc-hero { border: 1px solid rgba(255, 255, 255, 0.14); }
+.tc-main > section:not(.tc-card) > .tc-h2 { color: #ffffff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }
+.tc-listing { background: var(--surface); border-inline-start: 6px solid var(--accent); }
+.tc-listing.tc-listing-req { border-inline-start-color: #1f9a80; }
+.tc-listing-own {
+  border: 1.5px solid #0d5c63; border-inline-start: 6px solid #0d5c63;
+  background: linear-gradient(180deg, #f3fbf8 0%, var(--surface) 42%);
+}
+.tc-listing-footer { border-top: 2px dashed #e0cfb5; }
+.tc-route-line { border-right: 2px dashed var(--accent); }
+.tc-dot-start { background: #1f9a80; box-shadow: 0 0 0 3px rgba(31, 154, 128, 0.22); }
+.tc-segmented-4 { background: rgba(255, 248, 238, 0.96); }
+.tc-seg-btn.active { background: var(--accent); color: #ffffff; box-shadow: 0 3px 10px rgba(236, 122, 60, 0.4); }
+.tc-bottom-nav { background: rgba(255, 250, 242, 0.97); border-top: 3px solid var(--accent); }
+.tc-bottom-btn.active { color: #d9632b; background: #ffeede; }
+.tc-btn-primary { background: linear-gradient(135deg, #f08a47 0%, #e8703f 100%); box-shadow: 0 6px 16px rgba(232, 112, 63, 0.35); }
+.tc-btn-call { background: #12786a; }
+.tc-btn-call:hover { background: #0d5c63; }
+.tc-btn-soft { background: #e3f3ee; border-color: #bfe3d8; }
+.tc-btn-ghost { background: #fff8ee; }
+.tc-input { border-color: #e0d3c0; }
+.tc-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(236, 122, 60, 0.18); }
+.tc-badge-once { background: #ffe9d6; color: #c4561f; }
+.tc-badge-rec { background: #dff3ec; color: #0b6b5e; }
+.tc-skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.12) 75%);
+  background-size: 200% 100%;
+}
+`;
 
 export default function App() {
   const [tab, setTab] = useState(() => {
@@ -2950,6 +3005,7 @@ export default function App() {
     <div className="tc-app">
       <style>{APP_CSS}</style>
       <style>{HOME_CSS}</style>
+      <style>{THEME_CSS}</style>
 
       <header className="tc-header">
         <div className="tc-header-inner">
@@ -3069,7 +3125,7 @@ export default function App() {
               >
                 <span
                   className="tc-quick-ico"
-                  style={{ background: '#e6f7ed', color: '#15803d' }}
+                  style={{ background: '#dff3ec', color: '#0b6b5e' }}
                 >
                   <Icon name="car" size={26} />
                 </span>
@@ -3083,7 +3139,7 @@ export default function App() {
               >
                 <span
                   className="tc-quick-ico"
-                  style={{ background: '#fef5e7', color: '#c47119' }}
+                  style={{ background: '#ffe9d6', color: '#d9632b' }}
                 >
                   <Icon name="hand" size={26} />
                 </span>
@@ -3569,7 +3625,7 @@ export default function App() {
                     return (
                       <article
                         key={req.id}
-                        className={`tc-listing ${isMine ? 'tc-listing-own' : ''}`}
+                        className={`tc-listing tc-listing-req ${isMine ? 'tc-listing-own' : ''}`}
                       >
                         <div className="tc-listing-top">
                           <div className="tc-btn-row">
