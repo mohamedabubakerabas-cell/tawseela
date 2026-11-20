@@ -17,8 +17,8 @@ const TABS = {
   ADMIN: 'admin',
 };
 
-const MY_OFFERS_KEY = 'tawseelat_my_offers_v1';
-const MY_REQUESTS_KEY = 'tawseelat_my_requests_v1';
+const MY_OFFERS_STORAGE_KEY = 'tawseelat_my_offers_v1';
+const MY_REQUESTS_STORAGE_KEY = 'tawseelat_my_requests_v1';
 
 const POPULAR_AREAS = [
   'مجمع الوسط (السنتر) - البوابة الرئيسية',
@@ -56,150 +56,1073 @@ const RECURRENCE_CHOICES = [
   { value: 'weekdays', label: 'ترحيل منتظم (أيام محددة)' },
 ];
 
-const OFFER_COLS =
-  'id, driver_name, whatsapp_number, phone_number, vehicle_type, start_area, destination_area, intermediate_stops, departure_time, recurrence_type, recurrence_days, recurrence_group_id, total_seats, available_seats, price_per_seat, status, expires_at, created_at';
+const OFFER_PUBLIC_COLUMNS = [
+  'id',
+  'driver_name',
+  'whatsapp_number',
+  'phone_number',
+  'vehicle_type',
+  'start_area',
+  'destination_area',
+  'intermediate_stops',
+  'departure_time',
+  'recurrence_type',
+  'recurrence_days',
+  'recurrence_group_id',
+  'total_seats',
+  'available_seats',
+  'price_per_seat',
+  'status',
+  'expires_at',
+  'created_at',
+].join(', ');
 
-const REQUEST_COLS =
-  'id, passenger_name, whatsapp_number, phone_number, start_area, destination_area, preferred_time, recurrence_type, recurrence_days, seats_needed, notes, status, expires_at, created_at';
+const REQUEST_PUBLIC_COLUMNS = [
+  'id',
+  'passenger_name',
+  'whatsapp_number',
+  'phone_number',
+  'start_area',
+  'destination_area',
+  'preferred_time',
+  'recurrence_type',
+  'recurrence_days',
+  'seats_needed',
+  'notes',
+  'status',
+  'expires_at',
+  'created_at',
+].join(', ');
 
 const APP_CSS = `
 :root {
-  --bg: #f3f6f6; --surface: #ffffff; --soft: #f8fbfb;
-  --primary: #0b555c; --primary-dark: #073e44; --primary-light: #e6f3f2;
-  --accent: #d9822b; --accent-soft: #fef5e7;
-  --text: #0f2629; --muted: #526b6e; --border: #dce7e6; --border-strong: #bdd1cf;
-  --green: #15803d; --green-soft: #e6f7ed; --red: #b42318; --red-soft: #fef0f0;
-  --violet: #5b21b6; --violet-soft: #f1ecfe; --sky: #0369a1; --sky-soft: #e6f4fc;
+  --bg: #f3f6f6;
+  --surface: #ffffff;
+  --surface-soft: #f8fbfb;
+  --primary: #0b555c;
+  --primary-dark: #073e44;
+  --primary-light: #e6f3f2;
+  --accent: #d9822b;
+  --accent-soft: #fef5e7;
+  --text: #0f2629;
+  --text-muted: #526b6e;
+  --border: #dce7e6;
+  --border-strong: #bdd1cf;
+  --green: #15803d;
+  --green-soft: #e6f7ed;
+  --red: #b42318;
+  --red-soft: #fef0f0;
+  --violet: #5b21b6;
+  --violet-soft: #f1ecfe;
+  --sky: #0369a1;
+  --sky-soft: #e6f4fc;
+  --shadow-sm: 0 2px 8px rgba(11, 56, 62, 0.05);
+  --shadow-md: 0 8px 24px rgba(11, 56, 62, 0.08);
+  --radius-lg: 18px;
+  --radius-md: 13px;
+  --radius-sm: 10px;
 }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Cairo', system-ui, -apple-system, sans-serif; direction: rtl; }
-.tc-app { min-height: 100vh; padding-bottom: 92px; }
 
-.tc-header { position: sticky; top: 0; z-index: 30; background: linear-gradient(135deg, #083f45 0%, #0d5c63 55%, #13736b 100%); color: #fff; box-shadow: 0 4px 18px rgba(8,63,69,.22); }
-.tc-header-in { max-width: 920px; margin: 0 auto; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.tc-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-.tc-logo { width: 42px; height: 42px; border-radius: 13px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.tc-brand h1 { margin: 0; font-size: 1.18rem; font-weight: 800; line-height: 1.2; }
-.tc-brand p { margin: 2px 0 0; font-size: .75rem; color: #cbece8; font-weight: 600; }
-.tc-nav { display: none; align-items: center; gap: 6px; }
-.tc-nav-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 11px; border: 1px solid transparent; background: rgba(255,255,255,.1); color: #eef9f8; font: 700 .84rem inherit; cursor: pointer; white-space: nowrap; }
-.tc-nav-btn.active { background: #fff; color: var(--primary-dark); box-shadow: 0 3px 10px rgba(0,0,0,.12); }
-.tc-live-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28); font: 700 .76rem inherit; color: #e6fffb; cursor: pointer; white-space: nowrap; }
-.tc-dot-live { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.28); }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-.tc-bnav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: rgba(255,255,255,.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border); box-shadow: 0 -4px 18px rgba(11,56,62,.08); display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
-.tc-bnav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 4px; border: none; background: transparent; color: var(--muted); font: 700 .7rem inherit; cursor: pointer; border-radius: 10px; position: relative; }
-.tc-bnav-btn.active { color: var(--primary); background: var(--primary-light); }
-.tc-bnav-cnt { position: absolute; top: 2px; left: 16%; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .65rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  direction: rtl;
+}
 
-.tc-main { max-width: 920px; margin: 18px auto 0; padding: 0 14px; }
-.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; box-shadow: 0 2px 8px rgba(11,56,62,.05); margin-bottom: 16px; }
-.tc-hero { position: relative; overflow: hidden; border-radius: 22px; padding: 26px 20px; margin-bottom: 18px; background-color: #09464d; background-image: linear-gradient(135deg, rgba(7,56,62,.78) 0%, rgba(13,92,99,.70) 55%, rgba(20,122,110,.76) 100%), url('/uofk-bg.jpg'); background-size: cover; background-position: center; color: #fff; box-shadow: 0 12px 28px rgba(11,79,86,.22); }
-.tc-kicker { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); font-size: .78rem; font-weight: 700; margin-bottom: 10px; }
-.tc-hero h2 { margin: 0 0 8px; font-size: 1.45rem; font-weight: 800; line-height: 1.35; text-shadow: 0 2px 10px rgba(0,0,0,.25); }
-.tc-hero p { margin: 0 0 16px; font-size: .92rem; color: #e2f7f4; line-height: 1.7; max-width: 630px; }
-.tc-stat-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 12px; background: rgba(7,45,50,.55); border: 1px solid rgba(255,255,255,.35); backdrop-filter: blur(6px); font: 700 .83rem inherit; color: #fff; cursor: pointer; }
+.tc-app {
+  min-height: 100vh;
+  padding-bottom: 92px;
+}
 
-.tc-grid-3 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
-.tc-grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
-.tc-tile { display: flex; align-items: center; gap: 14px; width: 100%; padding: 17px 15px; border-radius: 18px; border: 1px solid var(--border); background: #fff; color: var(--text); text-align: right; font-family: inherit; cursor: pointer; box-shadow: 0 2px 8px rgba(11,56,62,.05); }
-.tc-tile.primary { background: linear-gradient(135deg, #f0faf8 0%, #fff 100%); border-color: #b7dcd8; }
-.tc-tile-ico { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.tc-h2 { margin: 0 0 6px; font-size: 1.12rem; font-weight: 800; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
-.tc-h3 { margin: 0 0 8px; font-size: .98rem; font-weight: 800; color: var(--primary-dark); }
-.tc-muted { margin: 0 0 13px; font-size: .88rem; color: var(--muted); line-height: 1.65; }
+/* Header */
+.tc-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: linear-gradient(135deg, #083f45 0%, #0d5c63 55%, #13736b 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(8, 63, 69, 0.22);
+}
 
-.tc-seg-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 5px; background: #e7f0ef; border-radius: 14px; margin-bottom: 16px; }
-.tc-seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 10px 8px; border: none; border-radius: 10px; background: transparent; color: var(--muted); font: 700 .84rem inherit; cursor: pointer; white-space: nowrap; }
-.tc-seg-btn.active { background: #fff; color: var(--primary-dark); box-shadow: 0 2px 8px rgba(11,56,62,.1); }
-.tc-seg-btn.mine { color: #9a5308; }
-.tc-seg-btn.mine.active { color: var(--primary); }
+.tc-header-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
 
-.tc-sec { padding: 14px; border-radius: 13px; background: var(--soft); border: 1px solid var(--border); margin-bottom: 14px; }
-.tc-sec-title { font-size: .86rem; font-weight: 800; color: var(--primary); margin: 0 0 11px; display: flex; align-items: center; gap: 6px; }
-.tc-field { margin-bottom: 12px; }
-.tc-field:last-child { margin-bottom: 0; }
-.tc-label { display: block; margin-bottom: 6px; font-size: .86rem; font-weight: 700; color: #193b3f; }
-.tc-req { color: var(--red); }
-.tc-input { width: 100%; padding: 10px 12px; border-radius: 11px; border: 1.5px solid #cbdcdc; background: #fff; color: var(--text); font: 400 .94rem inherit; }
-.tc-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(11,85,92,.13); }
-.tc-ltr { direction: ltr; text-align: left; }
+.tc-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  user-select: none;
+}
 
-.tc-chips, .tc-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
-.tc-chip { padding: 8px 13px; border-radius: 999px; border: 1.5px solid #c5dad8; background: #fff; color: #1f4448; font: 700 .83rem inherit; cursor: pointer; }
-.tc-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tc-logo-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(6px);
+}
 
-.tc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 13px; border-radius: 11px; border: 1px solid transparent; font: 700 .86rem inherit; cursor: pointer; text-decoration: none; }
-.tc-btn:disabled { opacity: .55; cursor: not-allowed; }
-.tc-btn-primary { width: 100%; padding: 13px 18px; background: linear-gradient(135deg, #0b555c 0%, #12706b 100%); color: #fff; font-size: .95rem; }
-.tc-btn-soft { background: var(--primary-light); color: var(--primary-dark); border-color: #c3e1df; }
-.tc-btn-wa { background: #16a34a; color: #fff; }
-.tc-btn-call { background: #0d5c63; color: #fff; }
-.tc-btn-warn { background: var(--accent-soft); color: #9a5308; border-color: #f3d2a4; }
-.tc-btn-danger { background: var(--red-soft); color: var(--red); border-color: #f4c2c2; }
-.tc-btn-ghost { background: #fff; color: var(--muted); border-color: var(--border-strong); }
+.tc-brand-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
 
-.tc-item { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 13px; box-shadow: 0 2px 8px rgba(11,56,62,.05); }
-.tc-item.own { border: 1.5px solid #0d5c63; background: linear-gradient(180deg, #f5fbfa 0%, #fff 40%); }
-.tc-item-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 11px; }
-.tc-item-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 11px; border-top: 1px solid #ebf2f2; }
-.tc-price { font-size: .9rem; font-weight: 800; color: var(--primary-dark); background: var(--accent-soft); border: 1px solid #f5d8aa; padding: 4px 10px; border-radius: 10px; }
-.tc-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; }
-.b-own { background: #0b555c; color: #fff; }
-.b-once { background: var(--sky-soft); color: var(--sky); }
-.b-rec { background: var(--violet-soft); color: var(--violet); }
-.b-ok { background: var(--green-soft); color: var(--green); }
-.b-full { background: var(--red-soft); color: var(--red); }
-.b-warn { background: var(--accent-soft); color: #9a5308; }
-.b-neu { background: #edf2f2; color: #385154; }
+.tc-brand-sub {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+  color: #cbece8;
+  font-weight: 600;
+}
 
-.tc-route { background: var(--soft); border: 1px solid #e4efef; border-radius: 13px; padding: 11px 13px; margin-bottom: 11px; }
-.tc-pt { display: flex; align-items: center; gap: 9px; font-size: .95rem; font-weight: 800; }
-.tc-dot-s { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(11,85,92,.18); flex-shrink: 0; }
-.tc-dot-e { width: 10px; height: 10px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 3px rgba(217,130,43,.2); flex-shrink: 0; }
-.tc-line { width: 2px; min-height: 15px; margin: 3px 4px; border-right: 2px dashed #9cc0bc; }
-.tc-stops { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 5px 18px 5px 0; }
-.tc-stop { font-size: .75rem; font-weight: 700; color: var(--muted); background: #fff; border: 1px solid #d7e5e4; padding: 2px 8px; border-radius: 999px; }
-.tc-meta { display: flex; flex-wrap: wrap; gap: 7px 15px; font-size: .85rem; color: #2f4e52; margin-bottom: 11px; }
-.tc-notes { background: #fcfdfd; border-right: 3px solid var(--primary); padding: 8px 11px; border-radius: 8px; font-size: .84rem; color: var(--muted); margin-bottom: 11px; }
+.tc-desktop-nav {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
 
-.tc-stepper { display: inline-flex; align-items: center; gap: 6px; background: var(--soft); border: 1px solid var(--border-strong); border-radius: 11px; padding: 3px; }
-.tc-step { width: 30px; height: 30px; border-radius: 8px; border: none; background: #fff; color: var(--primary-dark); font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-.tc-step:disabled { opacity: .4; cursor: not-allowed; }
+.tc-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eef9f8;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
 
-.tc-alert { padding: 12px 14px; border-radius: 12px; font-size: .89rem; line-height: 1.65; margin-bottom: 14px; }
-.a-ok { background: var(--green-soft); border: 1px solid #96e0b3; color: #11532b; }
-.a-err { background: var(--red-soft); border: 1px solid #f4b8b8; color: #981b1b; }
-.a-info { background: var(--primary-light); border: 1px solid #bcdad7; color: var(--primary-dark); }
-.tc-code { margin-top: 9px; padding: 10px 12px; border-radius: 10px; background: #fff; border: 1.5px dashed #16a34a; font-family: monospace; font-size: .82rem; direction: ltr; text-align: left; word-break: break-all; }
+.tc-nav-pill:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
 
-.tc-empty { text-align: center; padding: 24px 14px; color: var(--muted); }
-.tc-skel { height: 110px; border-radius: 15px; margin-bottom: 12px; background: linear-gradient(90deg,#edf3f3 25%,#f6fafa 50%,#edf3f3 75%); background-size: 200% 100%; animation: sh 1.3s infinite linear; }
-@keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.tc-nav-pill.active {
+  background: #ffffff;
+  color: var(--primary-dark);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
 
-.tc-modal-bg { position: fixed; inset: 0; z-index: 60; background: rgba(10,32,36,.55); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 14px; }
-.tc-modal { width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; background: #fff; border-radius: 18px; padding: 20px 18px; box-shadow: 0 20px 48px rgba(10,32,36,.25); }
-.tc-stats-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-.tc-stat-box { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px 8px; text-align: center; }
-.tc-stat-box strong { display: block; font-size: 1.3rem; color: var(--primary-dark); }
-.tc-stat-box span { font-size: .76rem; color: var(--muted); font-weight: 700; }
+.tc-live-dot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #e6fffb;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
 
-@media (min-width: 560px) { .tc-seg-4 { grid-template-columns: repeat(4, 1fr); } }
+.tc-live-dot-badge:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.tc-live-dot-badge:active {
+  transform: scale(0.96);
+}
+
+.tc-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.28);
+}
+
+/* Mobile Bottom Nav */
+.tc-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(11, 56, 62, 0.08);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+}
+
+.tc-bottom-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 10px;
+  position: relative;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tc-bottom-btn.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.tc-bottom-count {
+  position: absolute;
+  top: 2px;
+  left: 16%;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Container & Cards */
+.tc-main {
+  max-width: 920px;
+  margin: 18px auto 0;
+  padding: 0 14px;
+  animation: tcFadeIn 0.22s ease;
+}
+
+@keyframes tcFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+/* Hero with University of Khartoum Background Image (/uofk-bg.jpg) */
+.tc-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 26px 20px;
+  margin-bottom: 18px;
+  background-color: #09464d;
+  background-image:
+    linear-gradient(135deg, rgba(7, 56, 62, 0.80) 0%, rgba(13, 92, 99, 0.72) 55%, rgba(20, 122, 110, 0.78) 100%),
+    url('/uofk-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(11, 79, 86, 0.22);
+}
+
+.tc-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.tc-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e9fffc;
+  margin-bottom: 10px;
+}
+
+.tc-hero-title {
+  margin: 0 0 8px;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+}
+
+.tc-hero-desc {
+  margin: 0 0 16px;
+  font-size: 0.92rem;
+  color: #e2f7f4;
+  line-height: 1.7;
+  max-width: 630px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+}
+
+.tc-stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.tc-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 12px;
+  background: rgba(7, 45, 50, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(6px);
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.12s ease, border-color 0.16s ease;
+}
+
+.tc-stat-chip:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+}
+
+.tc-stat-chip:active {
+  transform: scale(0.97);
+}
+
+/* Home Action Cards */
+.tc-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tc-action-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: right;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.tc-action-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.tc-action-tile.primary {
+  background: linear-gradient(135deg, #f0faf8 0%, #ffffff 100%);
+  border-color: #b7dcd8;
+}
+
+.tc-tile-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tc-tile-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-tile-title {
+  display: block;
+  font-size: 1.03rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.tc-tile-sub {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tc-tile-arrow {
+  color: var(--primary);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Comparison info cards */
+.tc-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tc-info-mini {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+
+/* Headings & Text */
+.tc-h2 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tc-h3 {
+  margin: 0 0 8px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.tc-muted {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* Forms & Inputs */
+.tc-form-section {
+  padding: 15px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.tc-form-section-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tc-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tc-field {
+  margin-bottom: 12px;
+}
+
+.tc-field:last-child {
+  margin-bottom: 0;
+}
+
+.tc-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #193b3f;
+}
+
+.tc-req {
+  color: var(--red);
+}
+
+.tc-input {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1.5px solid #cbdcdc;
+  background: #ffffff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tc-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3.5px rgba(11, 85, 92, 0.13);
+}
+
+.tc-input-ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Segmented Controls & Chips */
+.tc-segmented-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 5px;
+  background: #e7f0ef;
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.tc-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.tc-seg-btn.active {
+  background: #ffffff;
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(11, 56, 62, 0.1);
+}
+
+.tc-seg-btn.mine-highlight {
+  color: #9a5308;
+}
+
+.tc-seg-btn.mine-highlight.active {
+  background: #ffffff;
+  color: var(--primary);
+}
+
+.tc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.tc-chip {
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1.5px solid #c5dad8;
+  background: #ffffff;
+  color: #1f4448;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tc-chip:hover {
+  border-color: var(--primary);
+}
+
+.tc-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(11, 85, 92, 0.22);
+}
+
+/* Buttons */
+.tc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 15px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.tc-btn:active {
+  transform: scale(0.98);
+}
+
+.tc-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tc-btn-primary {
+  width: 100%;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, #0b555c 0%, #12706b 100%);
+  color: #ffffff;
+  font-size: 0.96rem;
+  box-shadow: 0 5px 14px rgba(11, 85, 92, 0.22);
+}
+
+.tc-btn-primary:hover:not(:disabled) {
+  opacity: 0.95;
+}
+
+.tc-btn-soft {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: #c3e1df;
+}
+
+.tc-btn-soft:hover:not(:disabled) {
+  background: #d8ecea;
+}
+
+.tc-btn-wa {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.22);
+}
+
+.tc-btn-wa:hover {
+  background: #15803d;
+}
+
+.tc-btn-call {
+  background: #0d5c63;
+  color: #ffffff;
+}
+
+.tc-btn-call:hover {
+  background: #09444a;
+}
+
+.tc-btn-warn {
+  background: var(--accent-soft);
+  color: #9a5308;
+  border-color: #f3d2a4;
+}
+
+.tc-btn-danger {
+  background: var(--red-soft);
+  color: var(--red);
+  border-color: #f4c2c2;
+}
+
+.tc-btn-ghost {
+  background: #ffffff;
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+
+.tc-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Listing Cards */
+.tc-listing {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 13px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tc-listing:hover {
+  border-color: #b7d5d2;
+  box-shadow: var(--shadow-md);
+}
+
+.tc-listing-own {
+  border: 1.5px solid #0d5c63;
+  background: linear-gradient(180deg, #f5fbfb 0%, #ffffff 42%);
+}
+
+.tc-listing-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tc-price-tag {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  background: var(--accent-soft);
+  border: 1px solid #f5d8aa;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.tc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.tc-badge-own { background: #0b555c; color: #ffffff; }
+.tc-badge-once { background: var(--sky-soft); color: var(--sky); }
+.tc-badge-rec { background: var(--violet-soft); color: var(--violet); }
+.tc-badge-ok { background: var(--green-soft); color: var(--green); }
+.tc-badge-full { background: var(--red-soft); color: var(--red); }
+.tc-badge-warn { background: var(--accent-soft); color: #9a5308; }
+.tc-badge-neutral { background: #edf2f2; color: #385154; }
+
+/* Route Timeline */
+.tc-route-box {
+  background: var(--surface-soft);
+  border: 1px solid #e4efef;
+  border-radius: 13px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.tc-route-point {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tc-dot-start {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 85, 92, 0.18);
+  flex-shrink: 0;
+}
+
+.tc-dot-end {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 130, 43, 0.2);
+  flex-shrink: 0;
+}
+
+.tc-route-line {
+  width: 2px;
+  min-height: 16px;
+  margin: 3px 4.5px;
+  border-right: 2px dashed #9cc0bc;
+}
+
+.tc-stops-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 20px 6px 0;
+}
+
+.tc-stop-pill {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #ffffff;
+  border: 1px solid #d7e5e4;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.tc-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 0.86rem;
+  color: #2f4e52;
+  margin-bottom: 12px;
+}
+
+.tc-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tc-notes-box {
+  background: #fcfdfd;
+  border-right: 3px solid var(--primary);
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.tc-listing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 11px;
+  border-top: 1px solid #ebf2f2;
+}
+
+/* Alerts & Code box */
+.tc-alert {
+  padding: 13px 15px;
+  border-radius: 13px;
+  font-size: 0.89rem;
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.tc-alert-ok {
+  background: var(--green-soft);
+  border: 1px solid #96e0b3;
+  color: #11532b;
+}
+
+.tc-alert-err {
+  background: var(--red-soft);
+  border: 1px solid #f4b8b8;
+  color: #981b1b;
+}
+
+.tc-alert-info {
+  background: var(--primary-light);
+  border: 1px solid #bcdad7;
+  color: var(--primary-dark);
+}
+
+.tc-code-box {
+  margin-top: 10px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px dashed #16a34a;
+  font-family: monospace;
+  font-size: 0.83rem;
+  direction: ltr;
+  text-align: left;
+  word-break: break-all;
+  color: var(--text);
+}
+
+/* Seat stepper */
+.tc-seat-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  padding: 4px;
+}
+
+.tc-step-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #ffffff;
+  color: var(--primary-dark);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tc-step-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Empty & Skeleton */
+.tc-empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--text-muted);
+}
+
+.tc-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.tc-skeleton {
+  height: 118px;
+  border-radius: 15px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #edf3f3 25%, #f6fafa 50%, #edf3f3 75%);
+  background-size: 200% 100%;
+  animation: tcShimmer 1.3s infinite linear;
+}
+
+@keyframes tcShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Modal */
+.tc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 32, 36, 0.52);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tc-modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px 18px;
+  box-shadow: 0 20px 48px rgba(10, 32, 36, 0.25);
+  animation: tcFadeIn 0.18s ease;
+}
+
+/* Admin Stats */
+.tc-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tc-admin-stat {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 13px 10px;
+  text-align: center;
+}
+
+.tc-admin-stat-num {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.tc-admin-stat-label {
+  font-size: 0.77rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+@media (min-width: 560px) {
+  .tc-segmented-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (min-width: 720px) {
-  .tc-app { padding-bottom: 40px; }
-  .tc-nav { display: flex; }
-  .tc-bnav { display: none; }
+  .tc-app { padding-bottom: 44px; }
+  .tc-desktop-nav { display: flex; }
+  .tc-bottom-nav { display: none; }
   .tc-grid-2 { grid-template-columns: 1fr 1fr; }
-  .tc-grid-3 { grid-template-columns: repeat(3, 1fr); }
-  .tc-tile { flex-direction: column; align-items: flex-start; padding: 19px 17px; }
-  .tc-tile-arr { display: none; }
+  .tc-actions-grid { grid-template-columns: repeat(3, 1fr); }
+  .tc-action-tile {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 18px;
+  }
+  .tc-tile-arrow { display: none; }
+  .tc-info-grid { grid-template-columns: 1fr 1fr; }
   .tc-hero { padding: 34px 28px; }
-  .tc-hero h2 { font-size: 1.68rem; }
+  .tc-hero-title { font-size: 1.7rem; }
 }
 `;
 
-function Icon({ name, size = 17 }) {
-  const p = {
+function Icon({ name, size = 18 }) {
+  const common = {
     width: size,
     height: size,
     viewBox: '0 0 24 24',
@@ -210,92 +1133,170 @@ function Icon({ name, size = 17 }) {
     strokeLinejoin: 'round',
     'aria-hidden': 'true',
   };
-  const map = {
-    home: (
-      <>
-        <path d="M3 10.5 12 3l9 7.5" />
-        <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
-      </>
-    ),
-    ads: (
-      <>
-        <rect x="3" y="4" width="18" height="16" rx="2" />
-        <path d="M7 9h10M7 13h7M7 17h4" />
-      </>
-    ),
-    car: (
-      <>
-        <path d="M5 17h14v-5l-2-5H7l-2 5v5ZM5 12h14" />
-        <circle cx="7.5" cy="17.5" r="1.5" />
-        <circle cx="16.5" cy="17.5" r="1.5" />
-      </>
-    ),
-    hand: (
-      <>
-        <circle cx="12" cy="7" r="3" />
-        <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
-      </>
-    ),
-    shield: <path d="M12 3 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-3Z" />,
-    clock: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </>
-    ),
-    repeat: (
-      <>
-        <path d="M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3" />
-      </>
-    ),
-    whatsapp: (
-      <>
-        <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.5L3 20l1.2-5.1A8.5 8.5 0 1 1 21 11.5Z" />
-        <path d="M9.5 9.5c.3 1.7 2.3 3.7 4 4" />
-      </>
-    ),
-    phone: (
-      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.7 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.4 1.7.6 2.6.7a2 2 0 0 1 1.7 2Z" />
-    ),
-    flag: <path d="M5 21V4m0 0h11l-2 4 2 4H5" />,
-    refresh: <path d="M21 12a9 9 0 1 1-2.6-6.4L21 8m0-5v5h-5" />,
-    left: <path d="m15 18-6-6 6-6" />,
-    copy: (
-      <>
-        <rect x="9" y="9" width="13" height="13" rx="2" />
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-      </>
-    ),
-    edit: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />,
-    check: <path d="M20 6 9 17l-5-5" />,
-    trash: <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6" />,
-    campus: (
-      <>
-        <path d="M2 10 12 5l10 5-10 5-10-5Z" />
-        <path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
-      </>
-    ),
-  };
-  return <svg {...p}>{map[name] || null}</svg>;
+
+  switch (name) {
+    case 'home':
+      return (
+        <svg {...common}>
+          <path d="M3 10.5 12 3l9 7.5" />
+          <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+        </svg>
+      );
+    case 'search':
+      return (
+        <svg {...common}>
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      );
+    case 'ads':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M7 9h10" />
+          <path d="M7 13h7" />
+          <path d="M7 17h4" />
+        </svg>
+      );
+    case 'car':
+      return (
+        <svg {...common}>
+          <path d="M5 17h14v-5l-2-5H7l-2 5v5Z" />
+          <circle cx="7.5" cy="17.5" r="1.5" />
+          <circle cx="16.5" cy="17.5" r="1.5" />
+          <path d="M5 12h14" />
+        </svg>
+      );
+    case 'hand':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="7" r="3" />
+          <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+        </svg>
+      );
+    case 'shield':
+      return (
+        <svg {...common}>
+          <path d="M12 3 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-3Z" />
+        </svg>
+      );
+    case 'clock':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      );
+    case 'repeat':
+      return (
+        <svg {...common}>
+          <path d="M17 2l4 4-4 4" />
+          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+          <path d="M7 22l-4-4 4-4" />
+          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+        </svg>
+      );
+    case 'whatsapp':
+      return (
+        <svg {...common}>
+          <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.5L3 20l1.2-5.1A8.5 8.5 0 1 1 21 11.5Z" />
+          <path d="M9.5 9.5c.3 1.7 2.3 3.7 4 4" />
+        </svg>
+      );
+    case 'phone':
+      return (
+        <svg {...common}>
+          <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.7 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.4 1.7.6 2.6.7a2 2 0 0 1 1.7 2Z" />
+        </svg>
+      );
+    case 'flag':
+      return (
+        <svg {...common}>
+          <path d="M5 21V4" />
+          <path d="M5 4h11l-2 4 2 4H5" />
+        </svg>
+      );
+    case 'refresh':
+      return (
+        <svg {...common}>
+          <path d="M21 12a9 9 0 1 1-2.6-6.4L21 8" />
+          <path d="M21 3v5h-5" />
+        </svg>
+      );
+    case 'chevronLeft':
+      return (
+        <svg {...common}>
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      );
+    case 'copy':
+      return (
+        <svg {...common}>
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      );
+    case 'edit':
+      return (
+        <svg {...common}>
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+        </svg>
+      );
+    case 'check':
+      return (
+        <svg {...common}>
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      );
+    case 'route':
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="19" r="3" />
+          <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+          <circle cx="18" cy="5" r="3" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...common}>
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="M19 6l-1 14H6L5 6" />
+        </svg>
+      );
+    case 'campus':
+      return (
+        <svg {...common}>
+          <path d="M2 10 12 5l10 5-10 5-10-5Z" />
+          <path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
+        </svg>
+      );
+    default:
+      return null;
+  }
 }
 
-const isRecurring = (t) => t === 'daily' || t === 'weekdays';
+function isRecurringType(type) {
+  return type === 'daily' || type === 'weekdays';
+}
 
-function loadList(key) {
+function loadStorageList(key) {
   try {
     const raw = window.localStorage.getItem(key);
-    const parsed = raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-function saveList(key, list) {
+function saveStorageList(key, list) {
   try {
     window.localStorage.setItem(key, JSON.stringify(list));
   } catch {
-    // ignore storage errors
+    // تجاهل الخطأ إذا كان التخزين المحلي مقيداً
   }
 }
 
@@ -303,34 +1304,44 @@ function generateUuid() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  const b = new Uint8Array(16);
-  crypto.getRandomValues(b);
-  b[6] = (b[6] & 0x0f) | 0x40;
-  b[8] = (b[8] & 0x3f) | 0x80;
-  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(
+    16,
+    20
+  )}-${hex.slice(20)}`;
 }
 
-function normalizeSudan(raw) {
-  let d = String(raw || '').replace(/\D/g, '');
-  if (!d) return '';
-  if (d.startsWith('00249')) d = d.slice(2);
-  else if (d.startsWith('0')) d = '249' + d.slice(1);
-  else if (d.length === 9 && d.startsWith('9')) d = '249' + d;
-  return d;
+function normalizeSudanNumber(raw) {
+  if (!raw) return '';
+  let digits = String(raw).replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('00249')) {
+    digits = digits.slice(2);
+  } else if (digits.startsWith('0')) {
+    digits = '249' + digits.slice(1);
+  } else if (digits.length === 9 && digits.startsWith('9')) {
+    digits = '249' + digits;
+  }
+  return digits;
 }
 
-const waLink = (phone, msg) => {
-  const n = normalizeSudan(phone);
-  return n ? `https://wa.me/${n}?text=${encodeURIComponent(msg || '')}` : '';
-};
+function buildWhatsAppLink(rawPhone, message) {
+  const num = normalizeSudanNumber(rawPhone);
+  if (!num) return '';
+  const encoded = encodeURIComponent(message || '');
+  return `https://wa.me/${num}${encoded ? `?text=${encoded}` : ''}`;
+}
 
-const telLink = (phone) => {
-  const n = normalizeSudan(phone);
-  return n ? `tel:+${n}` : '';
-};
+function buildTelLink(rawPhone) {
+  const num = normalizeSudanNumber(rawPhone);
+  return num ? `tel:+${num}` : '';
+}
 
-function fmtDateTime(iso) {
+function formatDateTime(iso) {
   if (!iso) return 'غير محدد';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -353,65 +1364,97 @@ function fmtDateTime(iso) {
   }
 }
 
-function fmtTime(iso) {
+function formatTimeOnly(iso) {
+  if (!iso) return 'غير محدد';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
+  if (Number.isNaN(d.getTime())) return iso;
   try {
-    return d.toLocaleTimeString('ar-SD', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('ar-SD', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   } catch {
-    return d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('ar-EG', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 }
 
-function toInputDateTime(val) {
-  const d = val instanceof Date ? val : new Date(val);
-  const safe = Number.isNaN(d.getTime()) ? new Date(Date.now() + 3600000) : d;
+function toDatetimeLocalValue(dateObj) {
+  const d = dateObj instanceof Date ? dateObj : new Date(dateObj);
+  if (Number.isNaN(d.getTime())) {
+    return toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000));
+  }
   const pad = (n) => String(n).padStart(2, '0');
-  return `${safe.getFullYear()}-${pad(safe.getMonth() + 1)}-${pad(safe.getDate())}T${pad(
-    safe.getHours()
-  )}:${pad(safe.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+    d.getDate()
+  )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function fmtRec(type, days) {
+function formatRecurrence(type, days) {
   if (type === 'daily') return 'يومياً';
   if (type === 'weekdays') {
-    const m = Object.fromEntries(WEEKDAYS.map((w) => [w.key, w.label]));
-    return `أيام: ${Array.isArray(days) && days.length ? days.map((k) => m[k] || k).join('، ') : 'محددة'}`;
+    const namesMap = Object.fromEntries(WEEKDAYS.map((w) => [w.key, w.label]));
+    const labels =
+      Array.isArray(days) && days.length > 0
+        ? days.map((k) => namesMap[k] || k).join('، ')
+        : 'أيام محددة';
+    return `أيام: ${labels}`;
   }
   return 'مرة واحدة';
 }
 
-function sortKey(iso, recType) {
-  const base = new Date(iso).getTime();
+function getEffectiveSortTimestamp(isoStr, recurrenceType) {
+  const base = new Date(isoStr).getTime();
   if (Number.isNaN(base)) return Number.MAX_SAFE_INTEGER;
   const now = Date.now();
-  if (!isRecurring(recType) || base >= now) return base;
-  const o = new Date(base);
-  const c = new Date(now);
-  c.setHours(o.getHours(), o.getMinutes(), 0, 0);
-  if (c.getTime() < now) c.setDate(c.getDate() + 1);
-  return c.getTime();
+  if (!isRecurringType(recurrenceType) || base >= now) {
+    return base;
+  }
+  const orig = new Date(base);
+  const candidate = new Date(now);
+  candidate.setHours(orig.getHours(), orig.getMinutes(), 0, 0);
+  if (candidate.getTime() < now) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
+  return candidate.getTime();
 }
 
-function parseCode(raw) {
-  const s = String(raw || '').trim();
-  const i = s.indexOf('_');
-  if (i === -1) return null;
-  const itemId = s.slice(0, i).trim();
-  const manageToken = s.slice(i + 1).trim();
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId) || !manageToken) {
-    return null;
-  }
+function parseManageCode(rawCode) {
+  const cleaned = String(rawCode || '').trim();
+  const idx = cleaned.indexOf('_');
+  if (idx === -1) return null;
+  const itemId = cleaned.slice(0, idx).trim();
+  const manageToken = cleaned.slice(idx + 1).trim();
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(itemId) || !manageToken) return null;
   return { itemId, manageToken };
 }
 
 function AreaInput({ label, value, onChange, placeholder }) {
-  const [custom, setCustom] = useState(Boolean(value) && !POPULAR_AREAS.includes(value));
+  const isPreset = POPULAR_AREAS.includes(value);
+  const [customMode, setCustomMode] = useState(Boolean(value) && !isPreset);
 
   useEffect(() => {
-    if (value && !POPULAR_AREAS.includes(value)) setCustom(true);
-    else if (POPULAR_AREAS.includes(value)) setCustom(false);
+    if (value && !POPULAR_AREAS.includes(value)) {
+      setCustomMode(true);
+    } else if (POPULAR_AREAS.includes(value)) {
+      setCustomMode(false);
+    }
   }, [value]);
+
+  const handleSelect = (e) => {
+    const val = e.target.value;
+    if (val === '__custom__') {
+      setCustomMode(true);
+      onChange('');
+    } else {
+      setCustomMode(false);
+      onChange(val);
+    }
+  };
 
   return (
     <div className="tc-field">
@@ -419,62 +1462,57 @@ function AreaInput({ label, value, onChange, placeholder }) {
         {label} <span className="tc-req">*</span>
       </label>
       <select
+        value={customMode ? '__custom__' : value}
+        onChange={handleSelect}
         className="tc-input"
-        value={custom ? '__custom__' : value}
-        onChange={(e) => {
-          if (e.target.value === '__custom__') {
-            setCustom(true);
-            onChange('');
-          } else {
-            setCustom(false);
-            onChange(e.target.value);
-          }
-        }}
       >
-        <option value="">-- اختر مجمعاً أو منطقة أو موقعاً مخصصاً --</option>
-        {POPULAR_AREAS.map((a) => (
-          <option key={a} value={a}>
-            {a}
+        <option value="">-- اختر مجمعاً أو منطقة أو اكتب موقعاً مخصصاً --</option>
+        {POPULAR_AREAS.map((area) => (
+          <option key={area} value={area}>
+            {area}
           </option>
         ))}
         <option value="__custom__">موقع آخر (كتابة يدوية)...</option>
       </select>
-      {custom && (
-        <input
-          type="text"
-          className="tc-input"
-          style={{ marginTop: 8 }}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder || 'اكتب اسم المنطقة أو البوابة أو الداخلية'}
-          required
-        />
+      {customMode && (
+        <div style={{ marginTop: '8px' }}>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder || 'اكتب اسم المنطقة أو البوابة أو الداخلية'}
+            className="tc-input"
+            required
+          />
+        </div>
       )}
     </div>
   );
 }
 
-function RouteBox({ start, dest, stops = [] }) {
+function RouteTimeline({ start, destination, stops = [] }) {
   return (
-    <div className="tc-route">
-      <div className="tc-pt">
-        <span className="tc-dot-s" />
+    <div className="tc-route-box">
+      <div className="tc-route-point">
+        <span className="tc-dot-start" />
         <span>{start}</span>
       </div>
-      <div className="tc-line" />
+      <div className="tc-route-line" />
       {Array.isArray(stops) && stops.length > 0 && (
-        <div className="tc-stops">
-          <span style={{ fontSize: '.74rem', color: '#526b6e', fontWeight: 700 }}>يمر بـ:</span>
+        <div className="tc-stops-wrap">
+          <span style={{ fontSize: '0.75rem', color: '#526b6e', fontWeight: 700 }}>
+            يمر بـ:
+          </span>
           {stops.map((st, idx) => (
-            <span key={`${st}-${idx}`} className="tc-stop">
+            <span key={`${st}-${idx}`} className="tc-stop-pill">
               {st}
             </span>
           ))}
         </div>
       )}
-      <div className="tc-pt">
-        <span className="tc-dot-e" />
-        <span>{dest}</span>
+      <div className="tc-route-point">
+        <span className="tc-dot-end" />
+        <span>{destination}</span>
       </div>
     </div>
   );
@@ -482,39 +1520,50 @@ function RouteBox({ start, dest, stops = [] }) {
 
 export default function App() {
   const [tab, setTab] = useState(TABS.HOME);
-  const [section, setSection] = useState('all'); // 'all' | 'offers' | 'requests' | 'mine'
+  const [boardSection, setBoardSection] = useState('all'); // 'all' | 'offers' | 'requests' | 'mine'
 
+  // حالة الإعلانات والبحث
   const [offers, setOffers] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [loadingBoard, setLoadingBoard] = useState(false);
-  const [boardErr, setBoardErr] = useState('');
-  const [qStart, setQStart] = useState('');
-  const [qDest, setQDest] = useState('');
-  const [qKind, setQKind] = useState('all');
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardError, setBoardError] = useState('');
+  const [searchStart, setSearchStart] = useState('');
+  const [searchDest, setSearchDest] = useState('');
+  const [searchTripKind, setSearchTripKind] = useState('all');
 
-  const [myOffers, setMyOffers] = useState(() => loadList(MY_OFFERS_KEY));
-  const [myRequests, setMyRequests] = useState(() => loadList(MY_REQUESTS_KEY));
-  const [busyId, setBusyId] = useState('');
-  const [ownerMsg, setOwnerMsg] = useState({ type: '', text: '' });
+  // إعلاناتي المحفوظة محلياً (عروض + طلبات)
+  const [myOffers, setMyOffers] = useState(() => loadStorageList(MY_OFFERS_STORAGE_KEY));
+  const [myRequests, setMyRequests] = useState(() =>
+    loadStorageList(MY_REQUESTS_STORAGE_KEY)
+  );
+  const [busyItemId, setBusyItemId] = useState('');
+  const [ownerFeedback, setOwnerFeedback] = useState({ type: '', text: '' });
   const [copiedId, setCopiedId] = useState('');
 
+  // نافذة تعديل الإعلان (عرض سائق أو طلب طالب)
   const [editModal, setEditModal] = useState(null);
-  const [editSaving, setEditSaving] = useState(false);
-  const [editErr, setEditErr] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState('');
 
+  // إدارة يدوية بالرمز من جهاز آخر
   const [manualKind, setManualKind] = useState('offer');
   const [manualCode, setManualCode] = useState('');
   const [manualSeats, setManualSeats] = useState(1);
-  const [manualBusy, setManualBusy] = useState(false);
-  const [manualMsg, setManualMsg] = useState({ type: '', text: '' });
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualFeedback, setManualFeedback] = useState({ type: '', text: '' });
 
+  // حالة الإبلاغ
   const [reportTarget, setReportTarget] = useState(null);
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
-  const [reportBusy, setReportBusy] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
   const [reportMsg, setReportMsg] = useState({ type: '', text: '' });
 
-  const defaultTime = useMemo(() => toInputDateTime(new Date(Date.now() + 3600000)), []);
+  // نموذج عرض السائق
+  const initialFutureTime = useMemo(
+    () => toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000)),
+    []
+  );
 
   const [offerForm, setOfferForm] = useState({
     driver_name: '',
@@ -523,314 +1572,524 @@ export default function App() {
     vehicle_type: '',
     start_area: '',
     destination_area: '',
-    stops_text: '',
-    departure_time: defaultTime,
+    intermediate_stops_input: '',
+    departure_time: initialFutureTime,
     recurrence_type: 'once',
     recurrence_days: [],
     total_seats: 4,
     available_seats: 3,
     price_per_seat: 0,
-    exp_hours: 3,
-    rec_days: 14,
+    expires_after_hours: 3,
+    recurring_valid_days: 14,
   });
-  const [offerBusy, setOfferBusy] = useState(false);
-  const [offerErr, setOfferErr] = useState('');
+  const [offerSubmitting, setOfferSubmitting] = useState(false);
+  const [offerError, setOfferError] = useState('');
   const [savedOfferCode, setSavedOfferCode] = useState('');
 
-  const [reqForm, setReqForm] = useState({
+  // نموذج طلب توصيلة / ترحيل للطالب
+  const [requestForm, setRequestForm] = useState({
     passenger_name: '',
     whatsapp_number: '',
     phone_number: '',
     start_area: '',
     destination_area: '',
-    preferred_time: defaultTime,
+    preferred_time: initialFutureTime,
     recurrence_type: 'once',
     recurrence_days: [],
     seats_needed: 1,
     notes: '',
-    exp_hours: 3,
-    rec_days: 14,
+    expires_after_hours: 3,
+    recurring_valid_days: 14,
   });
-  const [reqBusy, setReqBusy] = useState(false);
-  const [reqErr, setReqErr] = useState('');
-  const [savedReqCode, setSavedReqCode] = useState('');
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState('');
+  const [savedRequestCode, setSavedRequestCode] = useState('');
 
+  // تبويب الإدارة
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingAdmin, setCheckingAdmin] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginBusy, setLoginBusy] = useState(false);
-  const [loginErr, setLoginErr] = useState('');
+  const [adminCheckLoading, setAdminCheckLoading] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
   const [adminReports, setAdminReports] = useState([]);
   const [adminOffers, setAdminOffers] = useState([]);
   const [adminRequests, setAdminRequests] = useState([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminMsg, setAdminMsg] = useState({ type: '', text: '' });
+  const [adminDataLoading, setAdminDataLoading] = useState(false);
+  const [adminFeedback, setAdminFeedback] = useState({ type: '', text: '' });
 
-  const setAndSaveOffers = (fn) =>
+  const persistMyOffers = (updater) => {
     setMyOffers((prev) => {
-      const next = typeof fn === 'function' ? fn(prev) : fn;
-      saveList(MY_OFFERS_KEY, next);
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveStorageList(MY_OFFERS_STORAGE_KEY, next);
       return next;
     });
+  };
 
-  const setAndSaveRequests = (fn) =>
+  const persistMyRequests = (updater) => {
     setMyRequests((prev) => {
-      const next = typeof fn === 'function' ? fn(prev) : fn;
-      saveList(MY_REQUESTS_KEY, next);
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveStorageList(MY_REQUESTS_STORAGE_KEY, next);
       return next;
     });
+  };
 
-  const myOffersMap = useMemo(() => Object.fromEntries(myOffers.map((x) => [x.id, x])), [myOffers]);
-  const myRequestsMap = useMemo(() => Object.fromEntries(myRequests.map((x) => [x.id, x])), [myRequests]);
+  const myOffersById = useMemo(
+    () => Object.fromEntries(myOffers.map((item) => [item.id, item])),
+    [myOffers]
+  );
 
-  const fetchBoard = async () => {
+  const myRequestsById = useMemo(
+    () => Object.fromEntries(myRequests.map((item) => [item.id, item])),
+    [myRequests]
+  );
+
+  const fetchPublicListings = async () => {
     if (!supabase) {
-      setBoardErr('متغيرات البيئة غير مضبوطة (VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY).');
+      setBoardError(
+        'متغيرات البيئة غير مضبوطة (VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY).'
+      );
       return;
     }
-    setLoadingBoard(true);
-    setBoardErr('');
+    setBoardLoading(true);
+    setBoardError('');
     try {
       const nowIso = new Date().toISOString();
-      const [oRes, rRes] = await Promise.all([
+      const [offersRes, requestsRes] = await Promise.all([
         supabase
           .from('ride_offers')
-          .select(OFFER_COLS)
+          .select(OFFER_PUBLIC_COLUMNS)
           .gt('expires_at', nowIso)
           .in('status', ['active', 'full'])
           .order('departure_time', { ascending: true })
           .order('created_at', { ascending: false }),
         supabase
           .from('ride_requests')
-          .select(REQUEST_COLS)
+          .select(REQUEST_PUBLIC_COLUMNS)
           .gt('expires_at', nowIso)
           .eq('status', 'active')
           .order('preferred_time', { ascending: true })
           .order('created_at', { ascending: false }),
       ]);
-      if (oRes.error) throw oRes.error;
-      if (rRes.error) throw rRes.error;
 
-      const liveO = oRes.data || [];
-      const liveR = rRes.data || [];
-      setOffers(liveO);
-      setRequests(liveR);
+      if (offersRes.error) throw offersRes.error;
+      if (requestsRes.error) throw requestsRes.error;
 
-      if (liveO.length) {
-        const m = Object.fromEntries(liveO.map((o) => [o.id, o]));
-        setAndSaveOffers((prev) =>
-          prev.map((x) => (m[x.id] ? { ...x, ...m[x.id] } : x))
+      const liveOffers = offersRes.data || [];
+      const liveRequests = requestsRes.data || [];
+      setOffers(liveOffers);
+      setRequests(liveRequests);
+
+      if (liveOffers.length > 0) {
+        const liveMap = Object.fromEntries(liveOffers.map((o) => [o.id, o]));
+        persistMyOffers((prev) =>
+          prev.map((item) => {
+            const match = liveMap[item.id];
+            if (!match) return item;
+            return {
+              ...item,
+              vehicle_type: match.vehicle_type,
+              start_area: match.start_area,
+              destination_area: match.destination_area,
+              intermediate_stops: match.intermediate_stops || [],
+              departure_time: match.departure_time,
+              total_seats: match.total_seats,
+              available_seats: match.available_seats,
+              price_per_seat: match.price_per_seat,
+              status: match.status,
+              expires_at: match.expires_at,
+              recurrence_type: match.recurrence_type,
+              recurrence_days: match.recurrence_days,
+            };
+          })
         );
       }
-      if (liveR.length) {
-        const m = Object.fromEntries(liveR.map((r) => [r.id, r]));
-        setAndSaveRequests((prev) =>
-          prev.map((x) => (m[x.id] ? { ...x, ...m[x.id] } : x))
+
+      if (liveRequests.length > 0) {
+        const liveReqMap = Object.fromEntries(liveRequests.map((r) => [r.id, r]));
+        persistMyRequests((prev) =>
+          prev.map((item) => {
+            const match = liveReqMap[item.id];
+            if (!match) return item;
+            return {
+              ...item,
+              start_area: match.start_area,
+              destination_area: match.destination_area,
+              preferred_time: match.preferred_time,
+              seats_needed: match.seats_needed,
+              notes: match.notes || '',
+              status: match.status,
+              expires_at: match.expires_at,
+              recurrence_type: match.recurrence_type,
+              recurrence_days: match.recurrence_days,
+            };
+          })
         );
       }
     } catch (err) {
-      setBoardErr(err?.message || 'تعذر تحميل الإعلانات حالياً.');
+      setBoardError(
+        err?.message || 'تعذر تحميل الإعلانات حالياً. تأكد من اتصالك بالإنترنت.'
+      );
     } finally {
-      setLoadingBoard(false);
+      setBoardLoading(false);
     }
   };
 
-  const checkAdmin = async (s) => {
-    if (!supabase || !s?.user?.id) {
+  const verifyAdminRole = async (nextSession) => {
+    if (!supabase || !nextSession?.user?.id) {
       setIsAdmin(false);
       return;
     }
-    setCheckingAdmin(true);
+    setAdminCheckLoading(true);
     try {
       const { data, error } = await supabase
         .from('admin_users')
         .select('user_id')
-        .eq('user_id', s.user.id)
+        .eq('user_id', nextSession.user.id)
         .maybeSingle();
+
       if (error) throw error;
-      setIsAdmin(Boolean(data?.user_id));
+      setIsAdmin(Boolean(data && data.user_id));
     } catch {
       setIsAdmin(false);
     } finally {
-      setCheckingAdmin(false);
+      setAdminCheckLoading(false);
     }
   };
 
-  const fetchAdmin = async () => {
+  const fetchAdminDashboard = async () => {
     if (!supabase || !isAdmin) return;
-    setAdminLoading(true);
+    setAdminDataLoading(true);
     try {
-      const [rep, off, req] = await Promise.all([
+      const [repRes, offRes, reqRes] = await Promise.all([
         supabase
           .from('reports')
           .select('id, target_type, offer_id, request_id, reason, details, status, created_at')
           .order('created_at', { ascending: false }),
-        supabase.from('ride_offers').select(OFFER_COLS).order('created_at', { ascending: false }),
-        supabase.from('ride_requests').select(REQUEST_COLS).order('created_at', { ascending: false }),
+        supabase
+          .from('ride_offers')
+          .select(OFFER_PUBLIC_COLUMNS)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('ride_requests')
+          .select(REQUEST_PUBLIC_COLUMNS)
+          .order('created_at', { ascending: false }),
       ]);
-      if (rep.error) throw rep.error;
-      if (off.error) throw off.error;
-      if (req.error) throw req.error;
-      setAdminReports(rep.data || []);
-      setAdminOffers(off.data || []);
-      setAdminRequests(req.data || []);
+
+      if (repRes.error) throw repRes.error;
+      if (offRes.error) throw offRes.error;
+      if (reqRes.error) throw reqRes.error;
+
+      setAdminReports(repRes.data || []);
+      setAdminOffers(offRes.data || []);
+      setAdminRequests(reqRes.data || []);
     } catch (err) {
-      setAdminMsg({ type: 'err', text: err?.message || 'تعذر تحميل لوحة الإدارة.' });
+      setAdminFeedback({
+        type: 'error',
+        text: err?.message || 'تعذر تحميل بيانات لوحة الإدارة.',
+      });
     } finally {
-      setAdminLoading(false);
+      setAdminDataLoading(false);
     }
   };
 
   useEffect(() => {
     if (!supabase) return undefined;
     supabase.auth.getSession().then(({ data }) => {
-      const cur = data?.session || null;
-      setSession(cur);
-      checkAdmin(cur);
+      const current = data?.session || null;
+      setSession(current);
+      verifyAdminRole(current);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_ev, next) => {
-      setSession(next);
-      checkAdmin(next);
+
+    const { data: authSub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      verifyAdminRole(nextSession);
     });
-    return () => sub?.subscription?.unsubscribe();
+
+    return () => {
+      authSub?.subscription?.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
-    if (tab === TABS.HOME || tab === TABS.ADS) fetchBoard();
+    if (tab === TABS.ADS || tab === TABS.HOME) {
+      fetchPublicListings();
+    }
   }, [tab]);
 
   useEffect(() => {
-    if (tab === TABS.ADMIN && session && isAdmin) fetchAdmin();
+    if (tab === TABS.ADMIN && session && isAdmin) {
+      fetchAdminDashboard();
+    }
   }, [tab, session, isAdmin]);
 
   const filteredOffers = useMemo(() => {
-    const s = qStart.trim().toLowerCase();
-    const d = qDest.trim().toLowerCase();
-    const now = Date.now();
+    const startQ = searchStart.trim().toLowerCase();
+    const destQ = searchDest.trim().toLowerCase();
+    const nowMs = Date.now();
     return offers
-      .filter((o) => new Date(o.expires_at).getTime() > now && (o.status === 'active' || o.status === 'full'))
-      .filter((o) => (qKind === 'once' ? !isRecurring(o.recurrence_type) : qKind === 'recurring' ? isRecurring(o.recurrence_type) : true))
+      .filter((o) => new Date(o.expires_at).getTime() > nowMs)
+      .filter((o) => o.status === 'active' || o.status === 'full')
       .filter((o) => {
-        const stops = (o.intermediate_stops || []).join(' ');
+        const recurring = isRecurringType(o.recurrence_type);
+        if (searchTripKind === 'once' && recurring) return false;
+        if (searchTripKind === 'recurring' && !recurring) return false;
+        return true;
+      })
+      .filter((o) => {
+        const stopsText = Array.isArray(o.intermediate_stops)
+          ? o.intermediate_stops.join(' ')
+          : '';
+        const startHaystack = `${o.start_area || ''} ${stopsText}`.toLowerCase();
+        const destHaystack = `${o.destination_area || ''} ${stopsText}`.toLowerCase();
         return (
-          (!s || `${o.start_area} ${stops}`.toLowerCase().includes(s)) &&
-          (!d || `${o.destination_area} ${stops}`.toLowerCase().includes(d))
+          (!startQ || startHaystack.includes(startQ)) &&
+          (!destQ || destHaystack.includes(destQ))
         );
       })
-      .sort((a, b) => sortKey(a.departure_time, a.recurrence_type) - sortKey(b.departure_time, b.recurrence_type) || new Date(b.created_at) - new Date(a.created_at));
-  }, [offers, qStart, qDest, qKind]);
+      .sort((a, b) => {
+        const depDiff =
+          getEffectiveSortTimestamp(a.departure_time, a.recurrence_type) -
+          getEffectiveSortTimestamp(b.departure_time, b.recurrence_type);
+        if (depDiff !== 0) return depDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+  }, [offers, searchStart, searchDest, searchTripKind]);
 
   const filteredRequests = useMemo(() => {
-    const s = qStart.trim().toLowerCase();
-    const d = qDest.trim().toLowerCase();
-    const now = Date.now();
+    const startQ = searchStart.trim().toLowerCase();
+    const destQ = searchDest.trim().toLowerCase();
+    const nowMs = Date.now();
     return requests
-      .filter((r) => new Date(r.expires_at).getTime() > now && r.status === 'active')
-      .filter((r) => (qKind === 'once' ? !isRecurring(r.recurrence_type) : qKind === 'recurring' ? isRecurring(r.recurrence_type) : true))
-      .filter((r) => (!s || (r.start_area || '').toLowerCase().includes(s)) && (!d || (r.destination_area || '').toLowerCase().includes(d)))
-      .sort((a, b) => sortKey(a.preferred_time, a.recurrence_type) - sortKey(b.preferred_time, b.recurrence_type) || new Date(b.created_at) - new Date(a.created_at));
-  }, [requests, qStart, qDest, qKind]);
+      .filter((r) => new Date(r.expires_at).getTime() > nowMs)
+      .filter((r) => r.status === 'active')
+      .filter((r) => {
+        const recurring = isRecurringType(r.recurrence_type);
+        if (searchTripKind === 'once' && recurring) return false;
+        if (searchTripKind === 'recurring' && !recurring) return false;
+        return true;
+      })
+      .filter((r) => {
+        const okStart = !startQ || (r.start_area || '').toLowerCase().includes(startQ);
+        const okDest = !destQ || (r.destination_area || '').toLowerCase().includes(destQ);
+        return okStart && okDest;
+      })
+      .sort((a, b) => {
+        const timeDiff =
+          getEffectiveSortTimestamp(a.preferred_time, a.recurrence_type) -
+          getEffectiveSortTimestamp(b.preferred_time, b.recurrence_type);
+        if (timeDiff !== 0) return timeDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+  }, [requests, searchStart, searchDest, searchTripKind]);
 
   const totalLiveAds = filteredOffers.length + filteredRequests.length;
-  const totalMyAds = myOffers.length + myRequests.length;
-  const adminOffersMap = useMemo(() => Object.fromEntries(adminOffers.map((o) => [o.id, o])), [adminOffers]);
-  const adminRequestsMap = useMemo(() => Object.fromEntries(adminRequests.map((r) => [r.id, r])), [adminRequests]);
+  const totalMyAdsCount = myOffers.length + myRequests.length;
 
-  const openTab = (t) => {
-    setTab(t);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const pendingReportsCount = useMemo(
+    () => adminReports.filter((r) => r.status === 'pending').length,
+    [adminReports]
+  );
 
-  const openAds = (sec = 'all') => {
-    setSection(sec);
-    openTab(TABS.ADS);
-  };
+  const adminOffersMap = useMemo(
+    () => Object.fromEntries(adminOffers.map((o) => [o.id, o])),
+    [adminOffers]
+  );
 
-  const copyText = async (txt, id) => {
-    if (!txt) return;
+  const adminRequestsMap = useMemo(
+    () => Object.fromEntries(adminRequests.map((r) => [r.id, r])),
+    [adminRequests]
+  );
+
+  const handleCopyText = async (text, key) => {
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(txt);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(''), 2000);
+      await navigator.clipboard.writeText(text);
+      setCopiedId(key);
+      setTimeout(() => setCopiedId(''), 2200);
     } catch {
       setCopiedId('');
     }
   };
 
-  // ==================== نشر عرض سائق ====================
-  const publishOffer = async (e) => {
+  const toggleOfferRecurrenceDay = (dayKey) => {
+    setOfferForm((prev) => {
+      const exists = prev.recurrence_days.includes(dayKey);
+      return {
+        ...prev,
+        recurrence_days: exists
+          ? prev.recurrence_days.filter((k) => k !== dayKey)
+          : [...prev.recurrence_days, dayKey],
+      };
+    });
+  };
+
+  const toggleRequestRecurrenceDay = (dayKey) => {
+    setRequestForm((prev) => {
+      const exists = prev.recurrence_days.includes(dayKey);
+      return {
+        ...prev,
+        recurrence_days: exists
+          ? prev.recurrence_days.filter((k) => k !== dayKey)
+          : [...prev.recurrence_days, dayKey],
+      };
+    });
+  };
+
+  const handlePublishOffer = async (e) => {
     e.preventDefault();
-    setOfferErr('');
+    setOfferError('');
     setSavedOfferCode('');
-    if (!supabase) return setOfferErr('إعدادات قاعدة البيانات غير مكتملة.');
 
-    const name = offerForm.driver_name.trim();
-    const wa = offerForm.whatsapp_number.trim();
+    if (!supabase) {
+      setOfferError('إعدادات الاتصال بقاعدة البيانات غير مكتملة.');
+      return;
+    }
+
+    const driverName = offerForm.driver_name.trim();
+    const whatsapp = offerForm.whatsapp_number.trim();
     const phone = offerForm.phone_number.trim();
-    const vehicle = offerForm.vehicle_type.trim();
-    const startA = offerForm.start_area.trim();
-    const destA = offerForm.destination_area.trim();
-    const total = parseInt(offerForm.total_seats, 10);
-    const avail = parseInt(offerForm.available_seats, 10);
-    const price = Number(offerForm.price_per_seat);
-    const dep = new Date(offerForm.departure_time);
-    const rec = isRecurring(offerForm.recurrence_type);
+    const vehicleType = offerForm.vehicle_type.trim();
+    const startArea = offerForm.start_area.trim();
+    const destArea = offerForm.destination_area.trim();
+    const totalSeats = parseInt(offerForm.total_seats, 10);
+    const availableSeats = parseInt(offerForm.available_seats, 10);
+    const pricePerSeat = Number(offerForm.price_per_seat);
+    const recurring = isRecurringType(offerForm.recurrence_type);
 
-    if (name.length < 2 || vehicle.length < 2 || startA.length < 2 || destA.length < 2) {
-      return setOfferErr('يرجى التأكد من ملء الاسم ونوع العربة والانطلاق والوجهة.');
+    if (driverName.length < 2) {
+      setOfferError('يرجى إدخال اسم السائق (حرفان على الأقل).');
+      return;
     }
-    if (wa.length < 7) return setOfferErr('يرجى إدخال رقم واتساب صحيح (7 أرقام على الأقل).');
-    if (Number.isNaN(dep.getTime()) || dep.getTime() <= Date.now()) {
-      return setOfferErr('يجب أن يكون موعد التحرك في المستقبل.');
+    if (whatsapp.length < 7) {
+      setOfferError('يرجى إدخال رقم واتساب صحيح (7 أرقام على الأقل).');
+      return;
     }
-    if (Number.isNaN(total) || total < 1 || total > 50 || Number.isNaN(avail) || avail < 0 || avail > total) {
-      return setOfferErr('تحقق من عدد المقاعد الإجمالي والمتاح.');
+    if (vehicleType.length < 2) {
+      setOfferError('يرجى تحديد نوع العربة (حرفان على الأقل).');
+      return;
     }
-    if (Number.isNaN(price) || price < 0) return setOfferErr('السعر يجب أن يكون صفراً أو أكبر.');
-    if (offerForm.recurrence_type === 'weekdays' && offerForm.recurrence_days.length === 0) {
-      return setOfferErr('اختر يوماً واحداً على الأقل للترحيل الأسبوعي.');
+    if (startArea.length < 2 || destArea.length < 2) {
+      setOfferError('يرجى تحديد منطقة الانطلاق والوجهة بشكل صحيح.');
+      return;
+    }
+    if (!offerForm.departure_time) {
+      setOfferError('يرجى تحديد موعد التحرك.');
+      return;
     }
 
-    const stops = offerForm.stops_text.split(/[,،\n]+/).map((s) => s.trim()).filter(Boolean);
-    const exp = new Date(
-      dep.getTime() + (rec ? Math.max(1, Number(offerForm.rec_days) || 14) * 86400000 : Math.max(1, Number(offerForm.exp_hours) || 3) * 3600000)
-    );
-    const id = generateUuid();
-    const token = generateUuid();
+    const depDate = new Date(offerForm.departure_time);
+    if (Number.isNaN(depDate.getTime()) || depDate.getTime() <= Date.now()) {
+      setOfferError('يجب أن يكون موعد التحرك في المستقبل.');
+      return;
+    }
+
+    if (Number.isNaN(totalSeats) || totalSeats < 1 || totalSeats > 50) {
+      setOfferError('إجمالي المقاعد يجب أن يكون بين 1 و 50.');
+      return;
+    }
+    if (
+      Number.isNaN(availableSeats) ||
+      availableSeats < 0 ||
+      availableSeats > 50 ||
+      availableSeats > totalSeats
+    ) {
+      setOfferError('المقاعد المتاحة يجب أن تكون بين 0 وإجمالي المقاعد.');
+      return;
+    }
+    if (Number.isNaN(pricePerSeat) || pricePerSeat < 0) {
+      setOfferError('السعر للمقعد يجب أن يكون صفراً أو أكبر.');
+      return;
+    }
+    if (
+      offerForm.recurrence_type === 'weekdays' &&
+      offerForm.recurrence_days.length === 0
+    ) {
+      setOfferError('يرجى اختيار يوم واحد على الأقل للترحيل المنتظم.');
+      return;
+    }
+
+    const stopsArray = offerForm.intermediate_stops_input
+      .split(/[,،\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const expiresDate = recurring
+      ? new Date(
+          depDate.getTime() +
+            Math.max(1, Number(offerForm.recurring_valid_days) || 14) *
+              24 *
+              60 *
+              60 *
+              1000
+        )
+      : new Date(
+          depDate.getTime() +
+            Math.max(1, Number(offerForm.expires_after_hours) || 3) *
+              60 *
+              60 *
+              1000
+        );
+
+    const generatedId = generateUuid();
+    const generatedToken = generateUuid();
 
     const payload = {
-      id,
-      driver_name: name,
-      whatsapp_number: wa,
+      id: generatedId,
+      driver_name: driverName,
+      whatsapp_number: whatsapp,
       phone_number: phone || null,
-      vehicle_type: vehicle,
-      start_area: startA,
-      destination_area: destA,
-      intermediate_stops: stops,
-      departure_time: dep.toISOString(),
+      vehicle_type: vehicleType,
+      start_area: startArea,
+      destination_area: destArea,
+      intermediate_stops: stopsArray,
+      departure_time: depDate.toISOString(),
       recurrence_type: offerForm.recurrence_type,
-      recurrence_days: offerForm.recurrence_type === 'weekdays' ? offerForm.recurrence_days : [],
-      recurrence_group_id: rec ? generateUuid() : null,
-      total_seats: total,
-      available_seats: avail,
-      price_per_seat: price,
+      recurrence_days:
+        offerForm.recurrence_type === 'weekdays' ? offerForm.recurrence_days : [],
+      recurrence_group_id: recurring ? generateUuid() : null,
+      total_seats: totalSeats,
+      available_seats: availableSeats,
+      price_per_seat: pricePerSeat,
       status: 'active',
-      expires_at: exp.toISOString(),
-      manage_token: token,
+      expires_at: expiresDate.toISOString(),
+      manage_token: generatedToken,
     };
 
-    setOfferBusy(true);
+    setOfferSubmitting(true);
     try {
       const { error } = await supabase.from('ride_offers').insert(payload);
       if (error) throw error;
-      const code = `${id}_${token}`;
-      setSavedOfferCode(code);
-      setAndSaveOffers((prev) => [
-        { ...payload, manageToken: token, manageCode: code, status: avail === 0 ? 'full' : 'active', created_at: new Date().toISOString() },
+
+      const combinedCode = `${generatedId}_${generatedToken}`;
+      setSavedOfferCode(combinedCode);
+
+      persistMyOffers((prev) => [
+        {
+          id: generatedId,
+          manageToken: generatedToken,
+          manageCode: combinedCode,
+          driver_name: driverName,
+          vehicle_type: vehicleType,
+          start_area: startArea,
+          destination_area: destArea,
+          intermediate_stops: stopsArray,
+          departure_time: depDate.toISOString(),
+          recurrence_type: offerForm.recurrence_type,
+          recurrence_days:
+            offerForm.recurrence_type === 'weekdays' ? offerForm.recurrence_days : [],
+          expires_at: expiresDate.toISOString(),
+          total_seats: totalSeats,
+          available_seats: availableSeats,
+          price_per_seat: pricePerSeat,
+          status: availableSeats === 0 ? 'full' : 'active',
+          created_at: new Date().toISOString(),
+        },
         ...prev,
       ]);
+
       setOfferForm({
         driver_name: '',
         whatsapp_number: '',
@@ -838,464 +2097,798 @@ export default function App() {
         vehicle_type: '',
         start_area: '',
         destination_area: '',
-        stops_text: '',
-        departure_time: toInputDateTime(new Date(Date.now() + 3600000)),
+        intermediate_stops_input: '',
+        departure_time: toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000)),
         recurrence_type: 'once',
         recurrence_days: [],
         total_seats: 4,
         available_seats: 3,
         price_per_seat: 0,
-        exp_hours: 3,
-        rec_days: 14,
+        expires_after_hours: 3,
+        recurring_valid_days: 14,
       });
     } catch (err) {
-      setOfferErr(err?.message || 'حدث خطأ أثناء نشر العرض.');
+      setOfferError(err?.message || 'حدث خطأ أثناء نشر العرض.');
     } finally {
-      setOfferBusy(false);
+      setOfferSubmitting(false);
     }
   };
 
-  // ==================== نشر طلب طالب ====================
-  const publishRequest = async (e) => {
+  const handlePublishRequest = async (e) => {
     e.preventDefault();
-    setReqErr('');
-    setSavedReqCode('');
-    if (!supabase) return setReqErr('إعدادات قاعدة البيانات غير مكتملة.');
+    setRequestError('');
+    setSavedRequestCode('');
 
-    const name = reqForm.passenger_name.trim();
-    const wa = reqForm.whatsapp_number.trim();
-    const phone = reqForm.phone_number.trim();
-    const startA = reqForm.start_area.trim();
-    const destA = reqForm.destination_area.trim();
-    const seats = parseInt(reqForm.seats_needed, 10);
-    const notes = reqForm.notes.trim();
-    const pref = new Date(reqForm.preferred_time);
-    const rec = isRecurring(reqForm.recurrence_type);
-
-    if (name.length < 2 || startA.length < 2 || destA.length < 2) {
-      return setReqErr('يرجى إدخال الاسم ومنطقة الانطلاق والوجهة.');
-    }
-    if (wa.length < 7) return setReqErr('يرجى إدخال رقم واتساب صحيح (7 أرقام على الأقل).');
-    if (Number.isNaN(pref.getTime()) || pref.getTime() <= Date.now()) {
-      return setReqErr('يجب أن يكون وقت التحرك في المستقبل.');
-    }
-    if (Number.isNaN(seats) || seats < 1 || seats > 20) return setReqErr('عدد المقاعد بين 1 و 20.');
-    if (reqForm.recurrence_type === 'weekdays' && reqForm.recurrence_days.length === 0) {
-      return setReqErr('اختر يوماً واحداً على الأقل لطلب الترحيل الأسبوعي.');
+    if (!supabase) {
+      setRequestError('إعدادات الاتصال بقاعدة البيانات غير مكتملة.');
+      return;
     }
 
-    const exp = new Date(
-      pref.getTime() + (rec ? Math.max(1, Number(reqForm.rec_days) || 14) * 86400000 : Math.max(1, Number(reqForm.exp_hours) || 3) * 3600000)
-    );
-    const id = generateUuid();
-    const token = generateUuid();
+    const passengerName = requestForm.passenger_name.trim();
+    const whatsapp = requestForm.whatsapp_number.trim();
+    const phone = requestForm.phone_number.trim();
+    const startArea = requestForm.start_area.trim();
+    const destArea = requestForm.destination_area.trim();
+    const seatsNeeded = parseInt(requestForm.seats_needed, 10);
+    const notes = requestForm.notes.trim();
+    const recurring = isRecurringType(requestForm.recurrence_type);
+
+    if (passengerName.length < 2) {
+      setRequestError('يرجى إدخال الاسم (حرفان على الأقل).');
+      return;
+    }
+    if (whatsapp.length < 7) {
+      setRequestError('يرجى إدخال رقم واتساب صحيح (7 أرقام على الأقل).');
+      return;
+    }
+    if (startArea.length < 2 || destArea.length < 2) {
+      setRequestError('يرجى تحديد منطقة الانطلاق والوجهة بشكل صحيح.');
+      return;
+    }
+    if (!requestForm.preferred_time) {
+      setRequestError('يرجى تحديد وقت التحرك.');
+      return;
+    }
+
+    const prefDate = new Date(requestForm.preferred_time);
+    if (Number.isNaN(prefDate.getTime()) || prefDate.getTime() <= Date.now()) {
+      setRequestError('يجب أن يكون وقت التحرك في المستقبل.');
+      return;
+    }
+
+    if (Number.isNaN(seatsNeeded) || seatsNeeded < 1 || seatsNeeded > 20) {
+      setRequestError('عدد المقاعد المطلوبة يجب أن يكون بين 1 و 20.');
+      return;
+    }
+
+    if (
+      requestForm.recurrence_type === 'weekdays' &&
+      requestForm.recurrence_days.length === 0
+    ) {
+      setRequestError('يرجى اختيار يوم واحد على الأقل لطلب الترحيل المنتظم.');
+      return;
+    }
+
+    const expiresDate = recurring
+      ? new Date(
+          prefDate.getTime() +
+            Math.max(1, Number(requestForm.recurring_valid_days) || 14) *
+              24 *
+              60 *
+              60 *
+              1000
+        )
+      : new Date(
+          prefDate.getTime() +
+            Math.max(1, Number(requestForm.expires_after_hours) || 3) *
+              60 *
+              60 *
+              1000
+        );
+
+    const generatedId = generateUuid();
+    const generatedToken = generateUuid();
 
     const payload = {
-      id,
-      passenger_name: name,
-      whatsapp_number: wa,
+      id: generatedId,
+      passenger_name: passengerName,
+      whatsapp_number: whatsapp,
       phone_number: phone || null,
-      start_area: startA,
-      destination_area: destA,
-      preferred_time: pref.toISOString(),
-      recurrence_type: reqForm.recurrence_type,
-      recurrence_days: reqForm.recurrence_type === 'weekdays' ? reqForm.recurrence_days : [],
-      seats_needed: seats,
+      start_area: startArea,
+      destination_area: destArea,
+      preferred_time: prefDate.toISOString(),
+      recurrence_type: requestForm.recurrence_type,
+      recurrence_days:
+        requestForm.recurrence_type === 'weekdays' ? requestForm.recurrence_days : [],
+      seats_needed: seatsNeeded,
       notes: notes || null,
       status: 'active',
-      expires_at: exp.toISOString(),
-      manage_token: token,
+      expires_at: expiresDate.toISOString(),
+      manage_token: generatedToken,
     };
 
-    setReqBusy(true);
+    setRequestSubmitting(true);
     try {
       const { error } = await supabase.from('ride_requests').insert(payload);
       if (error) throw error;
-      const code = `${id}_${token}`;
-      setSavedReqCode(code);
-      setAndSaveRequests((prev) => [
-        { ...payload, manageToken: token, manageCode: code, notes, created_at: new Date().toISOString() },
+
+      const combinedCode = `${generatedId}_${generatedToken}`;
+      setSavedRequestCode(combinedCode);
+
+      persistMyRequests((prev) => [
+        {
+          id: generatedId,
+          manageToken: generatedToken,
+          manageCode: combinedCode,
+          passenger_name: passengerName,
+          start_area: startArea,
+          destination_area: destArea,
+          preferred_time: prefDate.toISOString(),
+          recurrence_type: requestForm.recurrence_type,
+          recurrence_days:
+            requestForm.recurrence_type === 'weekdays' ? requestForm.recurrence_days : [],
+          seats_needed: seatsNeeded,
+          notes,
+          status: 'active',
+          expires_at: expiresDate.toISOString(),
+          created_at: new Date().toISOString(),
+        },
         ...prev,
       ]);
-      setReqForm({
+
+      setRequestForm({
         passenger_name: '',
         whatsapp_number: '',
         phone_number: '',
         start_area: '',
         destination_area: '',
-        preferred_time: toInputDateTime(new Date(Date.now() + 3600000)),
+        preferred_time: toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000)),
         recurrence_type: 'once',
         recurrence_days: [],
         seats_needed: 1,
         notes: '',
-        exp_hours: 3,
-        rec_days: 14,
+        expires_after_hours: 3,
+        recurring_valid_days: 14,
       });
     } catch (err) {
-      setReqErr(err?.message || 'حدث خطأ أثناء نشر الطلب.');
+      setRequestError(err?.message || 'حدث خطأ أثناء نشر الطلب.');
     } finally {
-      setReqBusy(false);
+      setRequestSubmitting(false);
     }
   };
 
-  // ==================== إدارة إعلاناتي (عروض وطلبات) ====================
-  const manageOwnOffer = async (item, nextSeats, nextStatus) => {
-    if (!supabase || !item) return;
-    if (nextStatus === 'closed' && !window.confirm('هل تريد إغلاق هذا العرض؟ سيختفي من قائمة الإعلانات.')) return;
-    const total = Math.max(1, Number(item.total_seats) || 1);
-    const seats = nextStatus === 'full' || nextStatus === 'closed' ? 0 : Math.max(0, Math.min(total, Number(nextSeats) || 0));
-    const status = nextStatus === 'closed' ? 'closed' : seats === 0 || nextStatus === 'full' ? 'full' : 'active';
+  const handleOwnOfferSeatsOrStatus = async (ownItem, nextSeats, nextStatus) => {
+    setOwnerFeedback({ type: '', text: '' });
+    if (!supabase || !ownItem) return;
 
-    setOwnerMsg({ type: '', text: '' });
-    setBusyId(item.id);
+    if (nextStatus === 'closed') {
+      const confirmed = window.confirm(
+        'هل تريد إغلاق هذا العرض؟ سيختفي فوراً من قائمة الإعلانات.'
+      );
+      if (!confirmed) return;
+    }
+
+    const total = Math.max(1, Number(ownItem.total_seats) || 1);
+    const clampedSeats =
+      nextStatus === 'full' || nextStatus === 'closed'
+        ? 0
+        : Math.max(0, Math.min(total, Number(nextSeats) || 0));
+
+    const effectiveStatus =
+      nextStatus === 'closed'
+        ? 'closed'
+        : clampedSeats === 0 || nextStatus === 'full'
+        ? 'full'
+        : 'active';
+
+    setBusyItemId(ownItem.id);
     try {
       const { data, error } = await supabase.rpc('driver_manage_offer', {
-        p_offer_id: item.id,
-        p_manage_token: item.manageToken,
-        p_available_seats: seats,
-        p_status: status,
+        p_offer_id: ownItem.id,
+        p_manage_token: ownItem.manageToken,
+        p_available_seats: clampedSeats,
+        p_status: effectiveStatus,
       });
-      if (error) throw error;
-      if (!data) return setOwnerMsg({ type: 'err', text: 'تعذر التحديث؛ ربما حُذف الإعلان سابقاً.' });
 
-      setAndSaveOffers((prev) => prev.map((x) => (x.id === item.id ? { ...x, available_seats: seats, status } : x)));
-      setOwnerMsg({
+      if (error) throw error;
+      if (!data) {
+        setOwnerFeedback({
+          type: 'error',
+          text: 'تعذر تحديث الإعلان؛ ربما تم حذفه سابقاً أو انتهت صلاحيته.',
+        });
+        return;
+      }
+
+      persistMyOffers((prev) =>
+        prev.map((entry) =>
+          entry.id === ownItem.id
+            ? { ...entry, available_seats: clampedSeats, status: effectiveStatus }
+            : entry
+        )
+      );
+
+      setOwnerFeedback({
         type: 'ok',
-        text: status === 'closed' ? 'تم إغلاق عرضك بنجاح.' : status === 'full' ? 'تم تعليم الرحلة كمكتملة.' : `تم تحديث المقاعد إلى ${seats} من ${total}.`,
+        text:
+          effectiveStatus === 'closed'
+            ? 'تم إغلاق عرضك بنجاح ولن يظهر للباحثين.'
+            : effectiveStatus === 'full'
+            ? 'تم تعليم رحلتك كمكتملة (0 مقاعد متاحة).'
+            : `تم تحديث المقاعد المتاحة إلى ${clampedSeats} من ${total}.`,
       });
-      fetchBoard();
+      fetchPublicListings();
     } catch (err) {
-      setOwnerMsg({ type: 'err', text: err?.message || 'حدث خطأ أثناء التحديث.' });
+      setOwnerFeedback({
+        type: 'error',
+        text: err?.message || 'حدث خطأ أثناء تحديث الإعلان.',
+      });
     } finally {
-      setBusyId('');
+      setBusyItemId('');
     }
   };
 
-  const deleteOwnOffer = async (item) => {
-    if (!supabase || !item) return;
-    if (!window.confirm('هل أنت متأكد من حذف عرضك نهائياً من الموقع؟')) return;
-    setOwnerMsg({ type: '', text: '' });
-    setBusyId(item.id);
+  const handleOwnOfferDelete = async (ownItem) => {
+    if (!supabase || !ownItem) return;
+    const confirmed = window.confirm(
+      'هل أنت متأكد من حذف هذا العرض نهائياً من الموقع؟ لا يمكن التراجع عن الحذف.'
+    );
+    if (!confirmed) return;
+
+    setOwnerFeedback({ type: '', text: '' });
+    setBusyItemId(ownItem.id);
     try {
       const { data, error } = await supabase.rpc('driver_delete_offer', {
-        p_offer_id: item.id,
-        p_manage_token: item.manageToken,
+        p_offer_id: ownItem.id,
+        p_manage_token: ownItem.manageToken,
       });
       if (error) throw error;
-      setAndSaveOffers((prev) => prev.filter((x) => x.id !== item.id));
-      setOwnerMsg({ type: 'ok', text: data ? 'تم حذف عرضك نهائياً.' : 'أُزيلت البطاقة من جهازك.' });
-      fetchBoard();
+
+      persistMyOffers((prev) => prev.filter((item) => item.id !== ownItem.id));
+      setOwnerFeedback({
+        type: 'ok',
+        text: data
+          ? 'تم حذف عرضك نهائياً من الموقع.'
+          : 'كان العرض محذوفاً مسبقاً وتمت إزالته من جهازك.',
+      });
+      fetchPublicListings();
     } catch (err) {
-      setOwnerMsg({ type: 'err', text: err?.message || 'تعذر حذف العرض.' });
+      setOwnerFeedback({
+        type: 'error',
+        text: err?.message || 'حدث خطأ أثناء حذف العرض.',
+      });
     } finally {
-      setBusyId('');
+      setBusyItemId('');
     }
   };
 
-  const manageOwnRequest = async (req, nextStatus) => {
-    if (!supabase || !req) return;
-    if (nextStatus === 'closed' && !window.confirm('هل تريد إغلاق طلبك (لقيت توصيلة)؟')) return;
-    setOwnerMsg({ type: '', text: '' });
-    setBusyId(req.id);
+  const handleOwnRequestStatus = async (ownReq, nextStatus) => {
+    if (!supabase || !ownReq) return;
+    if (nextStatus === 'closed') {
+      const confirmed = window.confirm(
+        'هل تريد إغلاق طلبك (لقيت توصيلة)؟ سيختفي فوراً من قائمة الإعلانات.'
+      );
+      if (!confirmed) return;
+    }
+
+    setOwnerFeedback({ type: '', text: '' });
+    setBusyItemId(ownReq.id);
     try {
       const { data, error } = await supabase.rpc('passenger_manage_request', {
-        p_request_id: req.id,
-        p_manage_token: req.manageToken,
+        p_request_id: ownReq.id,
+        p_manage_token: ownReq.manageToken,
         p_status: nextStatus,
       });
       if (error) throw error;
-      if (!data) return setOwnerMsg({ type: 'err', text: 'تعذر تحديث الطلب؛ ربما حُذف سابقاً.' });
+      if (!data) {
+        setOwnerFeedback({
+          type: 'error',
+          text: 'تعذر تحديث حالة الطلب؛ ربما تم حذفه سابقاً.',
+        });
+        return;
+      }
 
-      setAndSaveRequests((prev) => prev.map((x) => (x.id === req.id ? { ...x, status: nextStatus } : x)));
-      setOwnerMsg({
+      persistMyRequests((prev) =>
+        prev.map((item) =>
+          item.id === ownReq.id ? { ...item, status: nextStatus } : item
+        )
+      );
+      setOwnerFeedback({
         type: 'ok',
-        text: nextStatus === 'closed' ? 'تم إغلاق طلبك (لقيت توصيلة) ولن يظهر في الإعلانات.' : 'تمت إعادة تفعيل طلبك بنجاح.',
+        text:
+          nextStatus === 'closed'
+            ? 'تم إغلاق طلبك بنجاح (لقيت توصيلة).'
+            : 'تمت إعادة تفعيل طلبك بنجاح.',
       });
-      fetchBoard();
+      fetchPublicListings();
     } catch (err) {
-      setOwnerMsg({ type: 'err', text: err?.message || 'حدث خطأ أثناء تحديث الطلب.' });
+      setOwnerFeedback({
+        type: 'error',
+        text: err?.message || 'حدث خطأ أثناء تحديث الطلب.',
+      });
     } finally {
-      setBusyId('');
+      setBusyItemId('');
     }
   };
 
-  const deleteOwnRequest = async (req) => {
-    if (!supabase || !req) return;
-    if (!window.confirm('هل أنت متأكد من حذف طلبك نهائياً من الموقع؟')) return;
-    setOwnerMsg({ type: '', text: '' });
-    setBusyId(req.id);
+  const handleOwnRequestDelete = async (ownReq) => {
+    if (!supabase || !ownReq) return;
+    const confirmed = window.confirm(
+      'هل أنت متأكد من حذف هذا الطلب نهائياً من الموقع؟ لا يمكن التراجع عن الحذف.'
+    );
+    if (!confirmed) return;
+
+    setOwnerFeedback({ type: '', text: '' });
+    setBusyItemId(ownReq.id);
     try {
       const { data, error } = await supabase.rpc('passenger_delete_request', {
-        p_request_id: req.id,
-        p_manage_token: req.manageToken,
+        p_request_id: ownReq.id,
+        p_manage_token: ownReq.manageToken,
       });
       if (error) throw error;
-      setAndSaveRequests((prev) => prev.filter((x) => x.id !== req.id));
-      setOwnerMsg({ type: 'ok', text: data ? 'تم حذف طلبك نهائياً.' : 'أُزيلت البطاقة من جهازك.' });
-      fetchBoard();
+
+      persistMyRequests((prev) => prev.filter((item) => item.id !== ownReq.id));
+      setOwnerFeedback({
+        type: 'ok',
+        text: data
+          ? 'تم حذف طلبك نهائياً من الموقع.'
+          : 'كان الطلب محذوفاً مسبقاً وتمت إزالته من جهازك.',
+      });
+      fetchPublicListings();
     } catch (err) {
-      setOwnerMsg({ type: 'err', text: err?.message || 'تعذر حذف الطلب.' });
+      setOwnerFeedback({
+        type: 'error',
+        text: err?.message || 'حدث خطأ أثناء حذف الطلب.',
+      });
     } finally {
-      setBusyId('');
+      setBusyItemId('');
     }
   };
 
-  const openEditOffer = (own, live) => {
-    const s = live || own;
-    setEditErr('');
+  const openEditOfferModal = (ownItem, liveSource) => {
+    const src = liveSource || ownItem;
+    setEditError('');
     setEditModal({
       kind: 'offer',
-      id: own.id,
-      manageToken: own.manageToken,
-      recurrence_type: s.recurrence_type || 'once',
-      vehicle_type: s.vehicle_type || '',
-      start_area: s.start_area || '',
-      destination_area: s.destination_area || '',
-      stops_text: Array.isArray(s.intermediate_stops) ? s.intermediate_stops.join('، ') : '',
-      departure_time: toInputDateTime(s.departure_time),
-      total_seats: Number(s.total_seats) || 4,
-      available_seats: Number(s.available_seats) || 0,
-      price_per_seat: Number(s.price_per_seat) || 0,
+      id: ownItem.id,
+      manageToken: ownItem.manageToken,
+      recurrence_type: src.recurrence_type || 'once',
+      vehicle_type: src.vehicle_type || '',
+      start_area: src.start_area || '',
+      destination_area: src.destination_area || '',
+      intermediate_stops_input: Array.isArray(src.intermediate_stops)
+        ? src.intermediate_stops.join('، ')
+        : '',
+      departure_time: toDatetimeLocalValue(src.departure_time),
+      total_seats: Number(src.total_seats) || 4,
+      available_seats: Number(src.available_seats) || 0,
+      price_per_seat: Number(src.price_per_seat) || 0,
     });
   };
 
-  const openEditRequest = (own, live) => {
-    const s = live || own;
-    setEditErr('');
+  const openEditRequestModal = (ownReq, liveSource) => {
+    const src = liveSource || ownReq;
+    setEditError('');
     setEditModal({
       kind: 'request',
-      id: own.id,
-      manageToken: own.manageToken,
-      recurrence_type: s.recurrence_type || 'once',
-      start_area: s.start_area || '',
-      destination_area: s.destination_area || '',
-      preferred_time: toInputDateTime(s.preferred_time),
-      seats_needed: Number(s.seats_needed) || 1,
-      notes: s.notes || '',
+      id: ownReq.id,
+      manageToken: ownReq.manageToken,
+      recurrence_type: src.recurrence_type || 'once',
+      start_area: src.start_area || '',
+      destination_area: src.destination_area || '',
+      preferred_time: toDatetimeLocalValue(src.preferred_time),
+      seats_needed: Number(src.seats_needed) || 1,
+      notes: src.notes || '',
     });
   };
 
-  const saveEdit = async (e) => {
+  const handleSaveEditModal = async (e) => {
     e.preventDefault();
     if (!supabase || !editModal) return;
-    setEditErr('');
-    const rec = isRecurring(editModal.recurrence_type);
+    setEditError('');
 
     if (editModal.kind === 'offer') {
-      const v = editModal.vehicle_type.trim();
-      const sa = editModal.start_area.trim();
-      const da = editModal.destination_area.trim();
-      const tot = parseInt(editModal.total_seats, 10);
-      const av = parseInt(editModal.available_seats, 10);
-      const pr = Number(editModal.price_per_seat);
-      const dep = new Date(editModal.departure_time);
-      if (v.length < 2 || sa.length < 2 || da.length < 2 || Number.isNaN(dep.getTime())) {
-        return setEditErr('يرجى التأكد من صحة البيانات والموعد.');
-      }
-      if (tot < 1 || tot > 50 || av < 0 || av > tot || pr < 0) {
-        return setEditErr('تحقق من قيم المقاعد والسعر.');
-      }
-      const stops = editModal.stops_text.split(/[,،\n]+/).map((x) => x.trim()).filter(Boolean);
-      const expIso = new Date(Math.max(dep.getTime() + (rec ? 14 * 86400000 : 3 * 3600000), Date.now() + 7200000)).toISOString();
+      const vehicle = editModal.vehicle_type.trim();
+      const startA = editModal.start_area.trim();
+      const destA = editModal.destination_area.trim();
+      const totalS = parseInt(editModal.total_seats, 10);
+      const availS = parseInt(editModal.available_seats, 10);
+      const price = Number(editModal.price_per_seat);
+      const depDate = new Date(editModal.departure_time);
 
-      setEditSaving(true);
+      if (vehicle.length < 2 || startA.length < 2 || destA.length < 2) {
+        setEditError('يرجى التأكد من ملء نوع العربة ومنطقة الانطلاق والوجهة.');
+        return;
+      }
+      if (Number.isNaN(depDate.getTime())) {
+        setEditError('يرجى إدخال موعد تحرك صحيح.');
+        return;
+      }
+      if (Number.isNaN(totalS) || totalS < 1 || totalS > 50) {
+        setEditError('إجمالي المقاعد يجب أن يكون بين 1 و 50.');
+        return;
+      }
+      if (Number.isNaN(availS) || availS < 0 || availS > totalS) {
+        setEditError('المقاعد المتاحة يجب أن تكون بين 0 وإجمالي المقاعد.');
+        return;
+      }
+      if (Number.isNaN(price) || price < 0) {
+        setEditError('السعر يجب أن يكون صفراً أو أكبر.');
+        return;
+      }
+
+      const stopsArr = editModal.intermediate_stops_input
+        .split(/[,،\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const recurring = isRecurringType(editModal.recurrence_type);
+      const baseExpiry = recurring
+        ? depDate.getTime() + 14 * 24 * 60 * 60 * 1000
+        : depDate.getTime() + 3 * 60 * 60 * 1000;
+      const safeExpiryIso = new Date(
+        Math.max(baseExpiry, Date.now() + 2 * 60 * 60 * 1000)
+      ).toISOString();
+
+      setEditSubmitting(true);
       try {
         const { data, error } = await supabase.rpc('driver_update_offer', {
           p_offer_id: editModal.id,
           p_manage_token: editModal.manageToken,
-          p_vehicle_type: v,
-          p_start_area: sa,
-          p_destination_area: da,
-          p_intermediate_stops: stops,
-          p_departure_time: dep.toISOString(),
-          p_total_seats: tot,
-          p_available_seats: av,
-          p_price_per_seat: pr,
-          p_expires_at: expIso,
+          p_vehicle_type: vehicle,
+          p_start_area: startA,
+          p_destination_area: destA,
+          p_intermediate_stops: stopsArr,
+          p_departure_time: depDate.toISOString(),
+          p_total_seats: totalS,
+          p_available_seats: availS,
+          p_price_per_seat: price,
+          p_expires_at: safeExpiryIso,
         });
         if (error) throw error;
-        if (!data) return setEditErr('تعذر حفظ التعديلات.');
-        setAndSaveOffers((prev) =>
-          prev.map((x) =>
-            x.id === editModal.id
-              ? { ...x, vehicle_type: v, start_area: sa, destination_area: da, intermediate_stops: stops, departure_time: dep.toISOString(), total_seats: tot, available_seats: av, price_per_seat: pr, status: av === 0 ? 'full' : 'active', expires_at: expIso }
-              : x
+        if (!data) {
+          setEditError('تعذر حفظ التعديلات؛ ربما تم حذف الإعلان سابقاً.');
+          return;
+        }
+
+        persistMyOffers((prev) =>
+          prev.map((item) =>
+            item.id === editModal.id
+              ? {
+                  ...item,
+                  vehicle_type: vehicle,
+                  start_area: startA,
+                  destination_area: destA,
+                  intermediate_stops: stopsArr,
+                  departure_time: depDate.toISOString(),
+                  total_seats: totalS,
+                  available_seats: availS,
+                  price_per_seat: price,
+                  status: availS === 0 ? 'full' : 'active',
+                  expires_at: safeExpiryIso,
+                }
+              : item
           )
         );
-        setOwnerMsg({ type: 'ok', text: 'تم تحديث عرضك بنجاح.' });
+        setOwnerFeedback({ type: 'ok', text: 'تم تحديث بيانات عرضك بنجاح.' });
         setEditModal(null);
-        fetchBoard();
+        fetchPublicListings();
       } catch (err) {
-        setEditErr(err?.message || 'حدث خطأ أثناء الحفظ.');
+        setEditError(err?.message || 'حدث خطأ أثناء حفظ التعديلات.');
       } finally {
-        setEditSaving(false);
+        setEditSubmitting(false);
       }
       return;
     }
 
-    const sa = editModal.start_area.trim();
-    const da = editModal.destination_area.trim();
-    const seats = parseInt(editModal.seats_needed, 10);
-    const notes = editModal.notes.trim();
-    const pref = new Date(editModal.preferred_time);
-    if (sa.length < 2 || da.length < 2 || Number.isNaN(pref.getTime()) || seats < 1 || seats > 20) {
-      return setEditErr('يرجى التأكد من صحة البيانات والموعد والمقاعد.');
-    }
-    const expIso = new Date(Math.max(pref.getTime() + (rec ? 14 * 86400000 : 3 * 3600000), Date.now() + 7200000)).toISOString();
+    const startA = editModal.start_area.trim();
+    const destA = editModal.destination_area.trim();
+    const seatsN = parseInt(editModal.seats_needed, 10);
+    const notesText = editModal.notes.trim();
+    const prefDate = new Date(editModal.preferred_time);
 
-    setEditSaving(true);
+    if (startA.length < 2 || destA.length < 2) {
+      setEditError('يرجى تحديد منطقة الانطلاق والوجهة بشكل صحيح.');
+      return;
+    }
+    if (Number.isNaN(prefDate.getTime())) {
+      setEditError('يرجى إدخال وقت تحرك صحيح.');
+      return;
+    }
+    if (Number.isNaN(seatsN) || seatsN < 1 || seatsN > 20) {
+      setEditError('عدد المقاعد المطلوبة يجب أن يكون بين 1 و 20.');
+      return;
+    }
+
+    const recurring = isRecurringType(editModal.recurrence_type);
+    const baseExpiry = recurring
+      ? prefDate.getTime() + 14 * 24 * 60 * 60 * 1000
+      : prefDate.getTime() + 3 * 60 * 60 * 1000;
+    const safeExpiryIso = new Date(
+      Math.max(baseExpiry, Date.now() + 2 * 60 * 60 * 1000)
+    ).toISOString();
+
+    setEditSubmitting(true);
     try {
       const { data, error } = await supabase.rpc('passenger_update_request', {
         p_request_id: editModal.id,
         p_manage_token: editModal.manageToken,
-        p_start_area: sa,
-        p_destination_area: da,
-        p_preferred_time: pref.toISOString(),
-        p_seats_needed: seats,
-        p_notes: notes || null,
-        p_expires_at: expIso,
+        p_start_area: startA,
+        p_destination_area: destA,
+        p_preferred_time: prefDate.toISOString(),
+        p_seats_needed: seatsN,
+        p_notes: notesText || null,
+        p_expires_at: safeExpiryIso,
       });
       if (error) throw error;
-      if (!data) return setEditErr('تعذر حفظ التعديلات.');
-      setAndSaveRequests((prev) =>
-        prev.map((x) =>
-          x.id === editModal.id
-            ? { ...x, start_area: sa, destination_area: da, preferred_time: pref.toISOString(), seats_needed: seats, notes, status: 'active', expires_at: expIso }
-            : x
+      if (!data) {
+        setEditError('تعذر حفظ التعديلات؛ ربما تم حذف الطلب سابقاً.');
+        return;
+      }
+
+      persistMyRequests((prev) =>
+        prev.map((item) =>
+          item.id === editModal.id
+            ? {
+                ...item,
+                start_area: startA,
+                destination_area: destA,
+                preferred_time: prefDate.toISOString(),
+                seats_needed: seatsN,
+                notes: notesText,
+                status: 'active',
+                expires_at: safeExpiryIso,
+              }
+            : item
         )
       );
-      setOwnerMsg({ type: 'ok', text: 'تم تحديث طلبك بنجاح.' });
+      setOwnerFeedback({ type: 'ok', text: 'تم تحديث بيانات طلبك بنجاح.' });
       setEditModal(null);
-      fetchBoard();
+      fetchPublicListings();
     } catch (err) {
-      setEditErr(err?.message || 'حدث خطأ أثناء الحفظ.');
+      setEditError(err?.message || 'حدث خطأ أثناء حفظ التعديلات.');
     } finally {
-      setEditSaving(false);
+      setEditSubmitting(false);
     }
   };
 
-  const runManual = async (action) => {
-    setManualMsg({ type: '', text: '' });
-    const parsed = parseCode(manualCode);
-    if (!parsed) return setManualMsg({ type: 'err', text: 'صيغة الرمز غير صحيحة (يجب أن يحتوي على الشرطة السفلية _).' });
-    if (action === 'delete' && !window.confirm('هل أنت متأكد من الحذف النهائي؟')) return;
+  const handleManualAction = async (action) => {
+    setManualFeedback({ type: '', text: '' });
+    if (!supabase) return;
+    const parsed = parseManageCode(manualCode);
+    if (!parsed) {
+      setManualFeedback({
+        type: 'error',
+        text: 'صيغة الرمز غير صحيحة. الصق الرمز كاملاً كما ظهر عند النشر (مع الشرطة السفلية _).',
+      });
+      return;
+    }
 
-    setManualBusy(true);
+    if (action === 'delete') {
+      const ok = window.confirm('هل أنت متأكد من حذف هذا الإعلان نهائياً؟');
+      if (!ok) return;
+    }
+
+    setManualLoading(true);
     try {
-      let ok = false;
+      let okResult = false;
       if (manualKind === 'offer') {
         if (action === 'delete') {
-          const { data, error } = await supabase.rpc('driver_delete_offer', { p_offer_id: parsed.itemId, p_manage_token: parsed.manageToken });
+          const { data, error } = await supabase.rpc('driver_delete_offer', {
+            p_offer_id: parsed.itemId,
+            p_manage_token: parsed.manageToken,
+          });
           if (error) throw error;
-          ok = Boolean(data);
-          if (ok) setAndSaveOffers((p) => p.filter((x) => x.id !== parsed.itemId));
+          okResult = Boolean(data);
+          if (okResult) {
+            persistMyOffers((prev) => prev.filter((o) => o.id !== parsed.itemId));
+          }
         } else {
+          const seatsNum =
+            action === 'active' ? Math.max(0, parseInt(manualSeats, 10) || 0) : 0;
           const { data, error } = await supabase.rpc('driver_manage_offer', {
             p_offer_id: parsed.itemId,
             p_manage_token: parsed.manageToken,
-            p_available_seats: action === 'active' ? Math.max(0, parseInt(manualSeats, 10) || 0) : 0,
+            p_available_seats: seatsNum,
             p_status: action,
           });
           if (error) throw error;
-          ok = Boolean(data);
+          okResult = Boolean(data);
         }
       } else if (action === 'delete') {
-        const { data, error } = await supabase.rpc('passenger_delete_request', { p_request_id: parsed.itemId, p_manage_token: parsed.manageToken });
+        const { data, error } = await supabase.rpc('passenger_delete_request', {
+          p_request_id: parsed.itemId,
+          p_manage_token: parsed.manageToken,
+        });
         if (error) throw error;
-        ok = Boolean(data);
-        if (ok) setAndSaveRequests((p) => p.filter((x) => x.id !== parsed.itemId));
+        okResult = Boolean(data);
+        if (okResult) {
+          persistMyRequests((prev) => prev.filter((r) => r.id !== parsed.itemId));
+        }
       } else {
-        const { data, error } = await supabase.rpc('passenger_manage_request', { p_request_id: parsed.itemId, p_manage_token: parsed.manageToken, p_status: 'closed' });
+        const { data, error } = await supabase.rpc('passenger_manage_request', {
+          p_request_id: parsed.itemId,
+          p_manage_token: parsed.manageToken,
+          p_status: 'closed',
+        });
         if (error) throw error;
-        ok = Boolean(data);
+        okResult = Boolean(data);
       }
-      if (!ok) return setManualMsg({ type: 'err', text: 'الرمز غير صحيح أو الإعلان غير موجود.' });
-      setManualMsg({ type: 'ok', text: 'تم تنفيذ الإجراء بنجاح.' });
-      fetchBoard();
+
+      if (!okResult) {
+        setManualFeedback({
+          type: 'error',
+          text: 'لم يتم العثور على الإعلان أو أن الرمز لا يطابق النوع المختار.',
+        });
+        return;
+      }
+
+      setManualFeedback({ type: 'ok', text: 'تم تنفيذ الإجراء بنجاح.' });
+      fetchPublicListings();
     } catch (err) {
-      setManualMsg({ type: 'err', text: err?.message || 'حدث خطأ.' });
+      setManualFeedback({
+        type: 'error',
+        text: err?.message || 'حدث خطأ أثناء تنفيذ العملية.',
+      });
     } finally {
-      setManualBusy(false);
+      setManualLoading(false);
     }
   };
 
-  const submitReport = async (e) => {
+  const handleSubmitReport = async (e) => {
     e.preventDefault();
     if (!supabase || !reportTarget) return;
-    if (reportReason.trim().length < 2) return setReportMsg({ type: 'err', text: 'اكتب سبب البلاغ (حرفان على الأقل).' });
-    setReportBusy(true);
+    const reason = reportReason.trim();
+    if (reason.length < 2) {
+      setReportMsg({ type: 'error', text: 'يرجى كتابة سبب البلاغ (حرفان على الأقل).' });
+      return;
+    }
+
+    const payload = {
+      target_type: reportTarget.type,
+      offer_id: reportTarget.type === 'offer' ? reportTarget.id : null,
+      request_id: reportTarget.type === 'request' ? reportTarget.id : null,
+      reason,
+      details: reportDetails.trim() || null,
+      status: 'pending',
+    };
+
+    setReportLoading(true);
+    setReportMsg({ type: '', text: '' });
     try {
-      const { error } = await supabase.from('reports').insert({
-        target_type: reportTarget.type,
-        offer_id: reportTarget.type === 'offer' ? reportTarget.id : null,
-        request_id: reportTarget.type === 'request' ? reportTarget.id : null,
-        reason: reportReason.trim(),
-        details: reportDetails.trim() || null,
-        status: 'pending',
-      });
+      const { error } = await supabase.from('reports').insert(payload);
       if (error) throw error;
-      setReportMsg({ type: 'ok', text: 'تم إرسال البلاغ بنجاح وسيراجعه المشرف.' });
-      setReportTarget(null);
+
+      setReportMsg({
+        type: 'ok',
+        text: 'تم استلام البلاغ بنجاح وسيقوم المشرف بمراجعته.',
+      });
       setReportReason('');
       setReportDetails('');
+      setReportTarget(null);
     } catch (err) {
-      setReportMsg({ type: 'err', text: err?.message || 'تعذر إرسال البلاغ.' });
+      setReportMsg({
+        type: 'error',
+        text: err?.message || 'تعذر إرسال البلاغ حالياً.',
+      });
     } finally {
-      setReportBusy(false);
+      setReportLoading(false);
     }
   };
 
-  const adminLogin = async (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
-    setLoginErr('');
-    setLoginBusy(true);
+    setLoginError('');
+    if (!supabase) {
+      setLoginError('إعدادات Supabase غير مكتملة.');
+      return;
+    }
+    setLoginLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail.trim(),
+        password: loginPassword,
+      });
       if (error) throw error;
-      setPassword('');
+      setLoginPassword('');
     } catch (err) {
-      setLoginErr(err?.message || 'بيانات الدخول غير صحيحة.');
+      setLoginError(err?.message || 'بيانات الدخول غير صحيحة.');
     } finally {
-      setLoginBusy(false);
+      setLoginLoading(false);
     }
   };
 
-  const adminLogout = async () => {
+  const handleAdminLogout = async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
     setIsAdmin(false);
     setAdminReports([]);
     setAdminOffers([]);
     setAdminRequests([]);
+    setAdminFeedback({ type: '', text: '' });
   };
 
-  const updateReportStatus = async (id, status) => {
-    const { error } = await supabase.from('reports').update({ status }).eq('id', id);
-    if (error) setAdminMsg({ type: 'err', text: error.message });
-    else {
-      setAdminMsg({ type: 'ok', text: 'تم تحديث حالة البلاغ.' });
-      fetchAdmin();
+  const handleUpdateReportStatus = async (reportId, nextStatus) => {
+    if (!supabase) return;
+    setAdminFeedback({ type: '', text: '' });
+    try {
+      const { error } = await supabase
+        .from('reports')
+        .update({ status: nextStatus })
+        .eq('id', reportId);
+      if (error) throw error;
+
+      setAdminFeedback({
+        type: 'ok',
+        text:
+          nextStatus === 'reviewed'
+            ? 'تم تحديث حالة البلاغ إلى (تمت المراجعة).'
+            : 'تم تحديث حالة البلاغ إلى (تم التجاهل).',
+      });
+      fetchAdminDashboard();
+    } catch (err) {
+      setAdminFeedback({
+        type: 'error',
+        text: err?.message || 'تعذر تحديث حالة البلاغ.',
+      });
     }
   };
 
-  const adminDelete = async (type, id) => {
-    if (!id || !window.confirm('حذف هذا الإعلان نهائياً؟')) return;
-    const { error } = await supabase.from(type === 'offer' ? 'ride_offers' : 'ride_requests').delete().eq('id', id);
-    if (error) setAdminMsg({ type: 'err', text: error.message });
-    else {
-      setAdminMsg({ type: 'ok', text: 'تم الحذف بنجاح.' });
-      fetchAdmin();
-      fetchBoard();
+  const handleAdminDeleteListing = async (targetType, targetId) => {
+    if (!supabase || !targetId) return;
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا الإعلان نهائياً؟');
+    if (!confirmed) return;
+
+    setAdminFeedback({ type: '', text: '' });
+    try {
+      const tableName = targetType === 'offer' ? 'ride_offers' : 'ride_requests';
+      const { error } = await supabase.from(tableName).delete().eq('id', targetId);
+      if (error) throw error;
+
+      setAdminFeedback({ type: 'ok', text: 'تم حذف الإعلان بنجاح.' });
+      fetchAdminDashboard();
+      fetchPublicListings();
+    } catch (err) {
+      setAdminFeedback({
+        type: 'error',
+        text: err?.message || 'تعذر حذف الإعلان.',
+      });
     }
   };
 
-  const deleteExpired = async () => {
-    const { data, error } = await supabase.rpc('admin_delete_expired_ads');
-    if (error) setAdminMsg({ type: 'err', text: error.message });
-    else {
-      setAdminMsg({ type: 'ok', text: `تم حذف ${data?.deleted_offers ?? 0} عرض و ${data?.deleted_requests ?? 0} طلب منتهي.` });
-      fetchAdmin();
-      fetchBoard();
+  const handleDeleteExpiredAds = async () => {
+    if (!supabase) return;
+    setAdminFeedback({ type: '', text: '' });
+    try {
+      const { data, error } = await supabase.rpc('admin_delete_expired_ads');
+      if (error) throw error;
+
+      const deletedOffers = data?.deleted_offers ?? 0;
+      const deletedRequests = data?.deleted_requests ?? 0;
+      setAdminFeedback({
+        type: 'ok',
+        text: `تم تنظيف المنتهي بنجاح: حذف ${deletedOffers} عرض سائق و ${deletedRequests} طلب طالب.`,
+      });
+      fetchAdminDashboard();
+      fetchPublicListings();
+    } catch (err) {
+      setAdminFeedback({
+        type: 'error',
+        text: err?.message || 'تعذر حذف الإعلانات المنتهية.',
+      });
     }
+  };
+
+  const offerIsRecurring = isRecurringType(offerForm.recurrence_type);
+  const requestIsRecurring = isRecurringType(requestForm.recurrence_type);
+
+  const openTab = (nextTab) => {
+    setTab(nextTab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openAds = (section = 'all') => {
+    setBoardSection(section);
+    openTab(TABS.ADS);
   };
 
   return (
@@ -1303,234 +2896,620 @@ export default function App() {
       <style>{APP_CSS}</style>
 
       <header className="tc-header">
-        <div className="tc-header-in">
+        <div className="tc-header-inner">
           <div className="tc-brand" onClick={() => openTab(TABS.HOME)}>
-            <div className="tc-logo"><Icon name="campus" size={22} /></div>
+            <div className="tc-logo-box">
+              <Icon name="campus" size={22} />
+            </div>
             <div>
-              <h1>توصيلة السنتر</h1>
-              <p>مواصلات طلاب جامعة الخرطوم • توصيلة وترحيل</p>
+              <h1 className="tc-brand-title">توصيلة السنتر</h1>
+              <p className="tc-brand-sub">مواصلات طلاب جامعة الخرطوم • توصيلة وترحيل</p>
             </div>
           </div>
 
-          <nav className="tc-nav">
-            <button type="button" className={`tc-nav-btn ${tab === TABS.HOME ? 'active' : ''}`} onClick={() => openTab(TABS.HOME)}>
-              <Icon name="home" size={16} /> الرئيسية
+          <nav className="tc-desktop-nav" aria-label="التنقل الرئيسي">
+            <button
+              type="button"
+              className={`tc-nav-pill ${tab === TABS.HOME ? 'active' : ''}`}
+              onClick={() => openTab(TABS.HOME)}
+            >
+              <Icon name="home" size={16} />
+              الرئيسية
             </button>
-            <button type="button" className={`tc-nav-btn ${tab === TABS.ADS ? 'active' : ''}`} onClick={() => openAds('all')}>
-              <Icon name="ads" size={16} /> الإعلانات ({totalLiveAds})
+            <button
+              type="button"
+              className={`tc-nav-pill ${tab === TABS.ADS ? 'active' : ''}`}
+              onClick={() => openAds('all')}
+            >
+              <Icon name="ads" size={16} />
+              الإعلانات ({totalLiveAds})
             </button>
-            <button type="button" className={`tc-nav-btn ${tab === TABS.OFFER ? 'active' : ''}`} onClick={() => openTab(TABS.OFFER)}>
-              <Icon name="car" size={16} /> أعرض مشواراً
+            <button
+              type="button"
+              className={`tc-nav-pill ${tab === TABS.OFFER ? 'active' : ''}`}
+              onClick={() => openTab(TABS.OFFER)}
+            >
+              <Icon name="car" size={16} />
+              أعرض مشواراً
             </button>
-            <button type="button" className={`tc-nav-btn ${tab === TABS.REQUEST ? 'active' : ''}`} onClick={() => openTab(TABS.REQUEST)}>
-              <Icon name="hand" size={16} /> اطلب توصيلة
+            <button
+              type="button"
+              className={`tc-nav-pill ${tab === TABS.REQUEST ? 'active' : ''}`}
+              onClick={() => openTab(TABS.REQUEST)}
+            >
+              <Icon name="hand" size={16} />
+              اطلب توصيلة
             </button>
-            <button type="button" className={`tc-nav-btn ${tab === TABS.ADMIN ? 'active' : ''}`} onClick={() => openTab(TABS.ADMIN)}>
-              <Icon name="shield" size={16} /> الإدارة
+            <button
+              type="button"
+              className={`tc-nav-pill ${tab === TABS.ADMIN ? 'active' : ''}`}
+              onClick={() => openTab(TABS.ADMIN)}
+            >
+              <Icon name="shield" size={16} />
+              الإدارة
             </button>
           </nav>
 
-          <button type="button" className="tc-live-btn" onClick={() => openAds('all')}>
-            <span className="tc-dot-live" />
-            <span>{totalLiveAds} متاح</span>
+          <button
+            type="button"
+            className="tc-live-dot-badge"
+            onClick={() => openAds('all')}
+            title="عرض جميع الإعلانات المتاحة الآن"
+          >
+            <span className="tc-pulse-dot" />
+            <span>{totalLiveAds} إعلان متاح</span>
           </button>
         </div>
       </header>
 
       <main className="tc-main">
         {!supabase && (
-          <div className="tc-alert a-err">
-            تنبيه: متغيرات <code>VITE_SUPABASE_URL</code> و <code>VITE_SUPABASE_ANON_KEY</code> غير مضبوطة.
+          <div className="tc-alert tc-alert-err">
+            تنبيه إعداد: لم يتم العثور على <code>VITE_SUPABASE_URL</code> أو{' '}
+            <code>VITE_SUPABASE_ANON_KEY</code>. أضفهما في إعدادات الاستضافة أو ملف{' '}
+            <code>.env</code> ثم أعد النشر.
           </div>
         )}
 
-        {/* ==================== الرئيسية ==================== */}
+        {/* ======================= الرئيسية ======================= */}
         {tab === TABS.HOME && (
           <>
             <section className="tc-hero">
-              <div className="tc-kicker"><Icon name="campus" size={15} /> مبادرة طلابية لطلاب جامعة الخرطوم</div>
-              <h2>مشوارك لجامعة الخرطوم أسهل وأوفر مع زملائك</h2>
-              <p>
-                منصة مجانية تربط طلاب جامعة الخرطوم أصحاب العربات بزملائهم على نفس المسار
-                لمجمعات الوسط وشمبات والطب والتربية — سواء لـ <strong>توصيلة سريعة</strong> أو{' '}
-                <strong>ترحيل منتظم</strong> بدون إنشاء حساب.
+              <div className="tc-hero-kicker">
+                <Icon name="campus" size={15} />
+                <span>مبادرة طلابية لطلاب جامعة الخرطوم</span>
+              </div>
+              <h2 className="tc-hero-title">مشوارك لجامعة الخرطوم أسهل وأوفر مع زملائك</h2>
+              <p className="tc-hero-desc">
+                منصة مجانية تربط طلاب جامعة الخرطوم أصحاب العربات بزملائهم على نفس
+                المسار لمجمعات الوسط وشمبات والطب والتربية — سواء لـ{' '}
+                <strong>توصيلة سريعة لليوم</strong> أو{' '}
+                <strong>ترحيل منتظم يومي أو أسبوعي</strong>، بدون تسجيل حساب.
               </p>
-              <div className="tc-row">
-                <button type="button" className="tc-stat-btn" onClick={() => openAds('offers')}>
-                  <Icon name="car" size={16} /> {filteredOffers.length} عرض سائق متاح <Icon name="left" size={14} />
+              <div className="tc-stats-strip">
+                <button
+                  type="button"
+                  className="tc-stat-chip"
+                  onClick={() => openAds('offers')}
+                >
+                  <Icon name="car" size={16} />
+                  <span>{filteredOffers.length} عرض سائق متاح الآن</span>
+                  <Icon name="chevronLeft" size={14} />
                 </button>
-                <button type="button" className="tc-stat-btn" onClick={() => openAds('requests')}>
-                  <Icon name="hand" size={16} /> {filteredRequests.length} طلب طالب نشط <Icon name="left" size={14} />
+                <button
+                  type="button"
+                  className="tc-stat-chip"
+                  onClick={() => openAds('requests')}
+                >
+                  <Icon name="hand" size={16} />
+                  <span>{filteredRequests.length} طلب طالب نشط</span>
+                  <Icon name="chevronLeft" size={14} />
                 </button>
               </div>
             </section>
 
-            {totalMyAds > 0 && (
-              <section className="tc-card" style={{ borderColor: '#0d5c63', background: 'linear-gradient(135deg,#eef7f6,#fff)', padding: '14px 16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            {totalMyAdsCount > 0 && (
+              <section
+                className="tc-card"
+                style={{
+                  padding: '15px 16px',
+                  borderColor: '#0d5c63',
+                  background: 'linear-gradient(135deg, #eef7f6 0%, #ffffff 100%)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <div>
-                    <strong style={{ color: '#073e44' }}>لديك {totalMyAds} إعلان على هذا الجهاز ({myOffers.length} عرض • {myRequests.length} طلب)</strong>
-                    <div style={{ fontSize: '.82rem', color: '#425d60' }}>عدّل بياناتها أو أغلقها أو احذفها نهائياً بضغطة زر.</div>
+                    <strong style={{ color: '#073e44', fontSize: '0.96rem' }}>
+                      لديك {totalMyAdsCount} إعلان محفوظ على هذا الجهاز ({myOffers.length}{' '}
+                      عرض • {myRequests.length} طلب)
+                    </strong>
+                    <div style={{ fontSize: '0.82rem', color: '#526b6e', marginTop: '2px' }}>
+                      عدّل بياناتها أو أغلقها أو احذفها نهائياً بضغطة زر.
+                    </div>
                   </div>
-                  <button type="button" className="tc-btn tc-btn-call" onClick={() => openAds('mine')}>
-                    <Icon name="edit" size={15} /> إدارة إعلاناتي
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-call"
+                    onClick={() => openAds('mine')}
+                  >
+                    <Icon name="edit" size={15} />
+                    إدارة إعلاناتي
                   </button>
                 </div>
               </section>
             )}
 
-            <section className="tc-grid-3">
-              <button type="button" className="tc-tile primary" onClick={() => openAds('all')}>
-                <span className="tc-tile-ico" style={{ background: '#0b555c', color: '#fff' }}><Icon name="ads" size={23} /></span>
-                <span style={{ flex: 1 }}>
-                  <strong style={{ display: 'block', marginBottom: 3 }}>تصفح الإعلانات ({totalLiveAds})</strong>
-                  <span style={{ fontSize: '.83rem', color: '#526b6e' }}>استعرض عروض السائقين وطلبات الطلاب أو أدر إعلاناتك</span>
+            <section className="tc-actions-grid">
+              <button
+                type="button"
+                className="tc-action-tile primary"
+                onClick={() => openAds('all')}
+              >
+                <span
+                  className="tc-tile-icon"
+                  style={{ background: '#0b555c', color: '#ffffff' }}
+                >
+                  <Icon name="ads" size={24} />
                 </span>
-                <span className="tc-tile-arr"><Icon name="left" size={19} /></span>
+                <span className="tc-tile-body">
+                  <span className="tc-tile-title">تصفح الإعلانات ({totalLiveAds})</span>
+                  <span className="tc-tile-sub">
+                    استعرض عروض السائقين وطلبات طلاب جامعة الخرطوم أو أدر إعلاناتك
+                  </span>
+                </span>
+                <span className="tc-tile-arrow">
+                  <Icon name="chevronLeft" size={20} />
+                </span>
               </button>
 
-              <button type="button" className="tc-tile" onClick={() => openTab(TABS.OFFER)}>
-                <span className="tc-tile-ico" style={{ background: '#e6f7ed', color: '#15803d' }}><Icon name="car" size={23} /></span>
-                <span style={{ flex: 1 }}>
-                  <strong style={{ display: 'block', marginBottom: 3 }}>أعرض توصيلة أو ترحيل</strong>
-                  <span style={{ fontSize: '.83rem', color: '#526b6e' }}>لأصحاب العربات — شارك مقاعدك وتحكم بإعلانك مباشرة</span>
+              <button
+                type="button"
+                className="tc-action-tile"
+                onClick={() => openTab(TABS.OFFER)}
+              >
+                <span
+                  className="tc-tile-icon"
+                  style={{ background: '#e6f7ed', color: '#15803d' }}
+                >
+                  <Icon name="car" size={24} />
                 </span>
-                <span className="tc-tile-arr"><Icon name="left" size={19} /></span>
+                <span className="tc-tile-body">
+                  <span className="tc-tile-title">أعرض توصيلة أو ترحيل (لدي عربة)</span>
+                  <span className="tc-tile-sub">
+                    شارك مقاعدك الفارغة مع زملائك وتحكم بها بضغطة زر من جهازك
+                  </span>
+                </span>
+                <span className="tc-tile-arrow">
+                  <Icon name="chevronLeft" size={20} />
+                </span>
               </button>
 
-              <button type="button" className="tc-tile" onClick={() => openTab(TABS.REQUEST)}>
-                <span className="tc-tile-ico" style={{ background: '#fef5e7', color: '#c47119' }}><Icon name="hand" size={23} /></span>
-                <span style={{ flex: 1 }}>
-                  <strong style={{ display: 'block', marginBottom: 3 }}>أطلب توصيلة أو ترحيل</strong>
-                  <span style={{ fontSize: '.83rem', color: '#526b6e' }}>انشر مسارك ليتواصل معك السائقون وأغلقه فور إيجاد توصيلة</span>
+              <button
+                type="button"
+                className="tc-action-tile"
+                onClick={() => openTab(TABS.REQUEST)}
+              >
+                <span
+                  className="tc-tile-icon"
+                  style={{ background: '#fef5e7', color: '#c47119' }}
+                >
+                  <Icon name="hand" size={24} />
                 </span>
-                <span className="tc-tile-arr"><Icon name="left" size={19} /></span>
+                <span className="tc-tile-body">
+                  <span className="tc-tile-title">أطلب توصيلة أو ترحيل</span>
+                  <span className="tc-tile-sub">
+                    انشر منطقتك ومجمعك الجامعي وموعدك ليتواصل معك السائقون مباشرة
+                  </span>
+                </span>
+                <span className="tc-tile-arrow">
+                  <Icon name="chevronLeft" size={20} />
+                </span>
               </button>
+            </section>
+
+            <section className="tc-card">
+              <h3 className="tc-h3">توصيلة سريعة أم ترحيل منتظم؟</h3>
+              <div className="tc-info-grid">
+                <div className="tc-info-mini">
+                  <span className="tc-badge tc-badge-once" style={{ flexShrink: 0 }}>
+                    <Icon name="clock" size={14} /> توصيلة
+                  </span>
+                  <div style={{ fontSize: '0.85rem', color: '#425d60', lineHeight: 1.6 }}>
+                    لمشوار لمرة واحدة اليوم أو غداً؛ يختفي الإعلان تلقائياً بعد بضع
+                    ساعات من وقت التحرك لتبقى القائمة حديثة.
+                  </div>
+                </div>
+                <div className="tc-info-mini">
+                  <span className="tc-badge tc-badge-rec" style={{ flexShrink: 0 }}>
+                    <Icon name="repeat" size={14} /> ترحيل منتظم
+                  </span>
+                  <div style={{ fontSize: '0.85rem', color: '#425d60', lineHeight: 1.6 }}>
+                    لطلاب جامعة الخرطوم والسائقين الملتزمين بنفس المسار يومياً أو في
+                    أيام محددة؛ يبقى منشوراً لمدة أسبوع أو أسبوعين أو شهر.
+                  </div>
+                </div>
+              </div>
             </section>
           </>
         )}
 
-        {/* ==================== الإعلانات وإعلاناتي ==================== */}
+        {/* ======================= الإعلانات + إعلاناتي ======================= */}
         {tab === TABS.ADS && (
           <>
-            <div className="tc-seg-4">
-              <button type="button" className={`tc-seg-btn ${section === 'all' ? 'active' : ''}`} onClick={() => setSection('all')}>
+            <div className="tc-segmented-4">
+              <button
+                type="button"
+                className={`tc-seg-btn ${boardSection === 'all' ? 'active' : ''}`}
+                onClick={() => setBoardSection('all')}
+              >
                 الكل ({totalLiveAds})
               </button>
-              <button type="button" className={`tc-seg-btn ${section === 'offers' ? 'active' : ''}`} onClick={() => setSection('offers')}>
+              <button
+                type="button"
+                className={`tc-seg-btn ${boardSection === 'offers' ? 'active' : ''}`}
+                onClick={() => setBoardSection('offers')}
+              >
                 عروض السائقين ({filteredOffers.length})
               </button>
-              <button type="button" className={`tc-seg-btn ${section === 'requests' ? 'active' : ''}`} onClick={() => setSection('requests')}>
+              <button
+                type="button"
+                className={`tc-seg-btn ${boardSection === 'requests' ? 'active' : ''}`}
+                onClick={() => setBoardSection('requests')}
+              >
                 طلبات الطلاب ({filteredRequests.length})
               </button>
-              <button type="button" className={`tc-seg-btn mine ${section === 'mine' ? 'active' : ''}`} onClick={() => setSection('mine')}>
-                إعلاناتي ({totalMyAds})
+              <button
+                type="button"
+                className={`tc-seg-btn mine-highlight ${
+                  boardSection === 'mine' ? 'active' : ''
+                }`}
+                onClick={() => setBoardSection('mine')}
+              >
+                إعلاناتي ({totalMyAdsCount})
               </button>
             </div>
 
-            {section !== 'mine' && (
+            {boardSection !== 'mine' && (
               <section className="tc-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                  <h2 className="tc-h2" style={{ margin: 0 }}><Icon name="ads" size={19} /> الإعلانات المتاحة والبحث</h2>
-                  <button type="button" className="tc-btn tc-btn-soft" onClick={fetchBoard} disabled={loadingBoard}>
-                    <Icon name="refresh" size={15} /> {loadingBoard ? 'تحديث...' : 'تحديث'}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <h2 className="tc-h2" style={{ margin: 0 }}>
+                    <Icon name="ads" size={20} />
+                    الإعلانات المتاحة والبحث
+                  </h2>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-soft"
+                    onClick={fetchPublicListings}
+                    disabled={boardLoading}
+                  >
+                    <Icon name="refresh" size={15} />
+                    {boardLoading ? 'جاري التحديث...' : 'تحديث'}
                   </button>
                 </div>
-                <div className="tc-chips" style={{ marginBottom: 12 }}>
-                  {[['all', 'الكل'], ['once', 'توصيلة لمرة واحدة'], ['recurring', 'ترحيل منتظم']].map(([k, l]) => (
-                    <button key={k} type="button" className={`tc-chip ${qKind === k ? 'active' : ''}`} onClick={() => setQKind(k)}>
-                      {l}
-                    </button>
-                  ))}
+
+                <div className="tc-chips" style={{ marginBottom: '13px' }}>
+                  <button
+                    type="button"
+                    className={`tc-chip ${searchTripKind === 'all' ? 'active' : ''}`}
+                    onClick={() => setSearchTripKind('all')}
+                  >
+                    الكل
+                  </button>
+                  <button
+                    type="button"
+                    className={`tc-chip ${searchTripKind === 'once' ? 'active' : ''}`}
+                    onClick={() => setSearchTripKind('once')}
+                  >
+                    توصيلة لمرة واحدة
+                  </button>
+                  <button
+                    type="button"
+                    className={`tc-chip ${searchTripKind === 'recurring' ? 'active' : ''}`}
+                    onClick={() => setSearchTripKind('recurring')}
+                  >
+                    ترحيل منتظم
+                  </button>
                 </div>
+
                 <div className="tc-grid-2">
                   <div className="tc-field">
-                    <label className="tc-label">الانطلاق أو محطة بالمسار</label>
-                    <input type="text" className="tc-input" value={qStart} onChange={(e) => setQStart(e.target.value)} placeholder="مثال: الرياض، جبرة، الثورة..." />
+                    <label className="tc-label">منطقة الانطلاق أو محطة بالمسار</label>
+                    <input
+                      type="text"
+                      value={searchStart}
+                      onChange={(e) => setSearchStart(e.target.value)}
+                      placeholder="مثال: الرياض، جبرة، الثورة، شمبات..."
+                      className="tc-input"
+                    />
                   </div>
                   <div className="tc-field">
                     <label className="tc-label">الوجهة (المجمع أو الحي)</label>
-                    <input type="text" className="tc-input" value={qDest} onChange={(e) => setQDest(e.target.value)} placeholder="مثال: السنتر، الهندسة، شمبات..." />
+                    <input
+                      type="text"
+                      value={searchDest}
+                      onChange={(e) => setSearchDest(e.target.value)}
+                      placeholder="مثال: السنتر، الهندسة، الطب، شمبات..."
+                      className="tc-input"
+                    />
                   </div>
                 </div>
-                {(qStart || qDest || qKind !== 'all') && (
-                  <button type="button" className="tc-btn tc-btn-ghost" style={{ marginTop: 10 }} onClick={() => { setQStart(''); setQDest(''); setQKind('all'); }}>
-                    مسح الفلاتر
-                  </button>
+
+                {(searchStart || searchDest || searchTripKind !== 'all') && (
+                  <div style={{ marginTop: '12px' }}>
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-ghost"
+                      onClick={() => {
+                        setSearchStart('');
+                        setSearchDest('');
+                        setSearchTripKind('all');
+                      }}
+                    >
+                      مسح كل الفلاتر
+                    </button>
+                  </div>
                 )}
               </section>
             )}
 
-            {boardErr && <div className="tc-alert a-err">{boardErr}</div>}
-            {ownerMsg.text && <div className={`tc-alert ${ownerMsg.type === 'ok' ? 'a-ok' : 'a-err'}`}>{ownerMsg.text}</div>}
-            {reportMsg.text && <div className={`tc-alert ${reportMsg.type === 'ok' ? 'a-ok' : 'a-err'}`}>{reportMsg.text}</div>}
+            {boardError && <div className="tc-alert tc-alert-err">{boardError}</div>}
 
-            {(section === 'all' || section === 'offers') && (
-              <section style={{ marginBottom: 18 }}>
-                <h2 className="tc-h2"><Icon name="car" size={19} /> عروض السائقين ({filteredOffers.length})</h2>
-                {loadingBoard && !offers.length ? (
-                  <div className="tc-skel" />
-                ) : !filteredOffers.length ? (
-                  <div className="tc-card tc-empty">لا توجد عروض سائقين مطابقة حالياً.</div>
+            {ownerFeedback.text && (
+              <div
+                className={`tc-alert ${
+                  ownerFeedback.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                }`}
+              >
+                {ownerFeedback.text}
+              </div>
+            )}
+
+            {reportMsg.text && (
+              <div
+                className={`tc-alert ${
+                  reportMsg.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                }`}
+              >
+                {reportMsg.text}
+              </div>
+            )}
+
+            {(boardSection === 'all' || boardSection === 'offers') && (
+              <section style={{ marginBottom: '20px' }}>
+                <h2 className="tc-h2" style={{ marginBottom: '10px' }}>
+                  <Icon name="car" size={20} />
+                  عروض السائقين ({filteredOffers.length})
+                </h2>
+
+                {boardLoading && offers.length === 0 ? (
+                  <>
+                    <div className="tc-skeleton" />
+                    <div className="tc-skeleton" />
+                  </>
+                ) : filteredOffers.length === 0 ? (
+                  <div className="tc-card tc-empty">
+                    <div className="tc-empty-icon">
+                      <Icon name="car" size={24} />
+                    </div>
+                    <div style={{ fontWeight: 700, marginBottom: '6px' }}>
+                      لا توجد عروض سائقين مطابقة حالياً
+                    </div>
+                    <p className="tc-muted" style={{ marginBottom: '12px' }}>
+                      يمكنك مسح الفلاتر أو نشر طلبك ليتواصل معك السائقون على نفس المسار.
+                    </p>
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-soft"
+                      onClick={() => openTab(TABS.REQUEST)}
+                    >
+                      انشر طلب توصيلة / ترحيل
+                    </button>
+                  </div>
                 ) : (
-                  filteredOffers.map((o) => {
-                    const own = myOffersMap[o.id];
-                    const mine = Boolean(own);
-                    const busy = busyId === o.id;
-                    const seats = Number(o.available_seats) || 0;
-                    const tot = Math.max(1, Number(o.total_seats) || 1);
-                    const full = o.status === 'full' || seats <= 0;
-                    const rec = isRecurring(o.recurrence_type);
-                    const tTxt = rec ? `الساعة ${fmtTime(o.departure_time)} (${fmtRec(o.recurrence_type, o.recurrence_days)})` : fmtDateTime(o.departure_time);
-                    const msg = `السلام عليكم كابتن ${o.driver_name}، شاهدت عرضك في توصيلة السنتر من (${o.start_area}) إلى (${o.destination_area}) — ${tTxt}. هل يوجد مقعد متاح؟`;
+                  filteredOffers.map((offer) => {
+                    const ownItem = myOffersById[offer.id];
+                    const isMine = Boolean(ownItem);
+                    const isBusy = busyItemId === offer.id;
+                    const currentSeats = Number(offer.available_seats) || 0;
+                    const totalSeats = Math.max(1, Number(offer.total_seats) || 1);
+                    const isFull = offer.status === 'full' || currentSeats <= 0;
+                    const recurring = isRecurringType(offer.recurrence_type);
+                    const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
+                    const timeText = recurring
+                      ? `الساعة ${formatTimeOnly(offer.departure_time)} (${formatRecurrence(
+                          offer.recurrence_type,
+                          offer.recurrence_days
+                        )})`
+                      : formatDateTime(offer.departure_time);
+                    const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر - جامعة الخرطوم من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
+                    const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
+                    const telHref = buildTelLink(
+                      offer.phone_number || offer.whatsapp_number
+                    );
 
                     return (
-                      <article key={o.id} className={`tc-item ${mine ? 'own' : ''}`}>
-                        <div className="tc-item-top">
-                          <div className="tc-row">
-                            {mine && <span className="tc-badge b-own">إعلانك</span>}
-                            <span className={`tc-badge ${rec ? 'b-rec' : 'b-once'}`}>{rec ? 'ترحيل منتظم' : 'توصيلة'}</span>
-                            <span className={`tc-badge ${full ? 'b-full' : 'b-ok'}`}>{full ? 'مكتمل (0)' : `متاح ${seats} من ${tot}`}</span>
+                      <article
+                        key={offer.id}
+                        className={`tc-listing ${isMine ? 'tc-listing-own' : ''}`}
+                      >
+                        <div className="tc-listing-top">
+                          <div className="tc-btn-row">
+                            {isMine && (
+                              <span className="tc-badge tc-badge-own">إعلانك</span>
+                            )}
+                            <span
+                              className={`tc-badge ${
+                                recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                              }`}
+                            >
+                              <Icon name={recurring ? 'repeat' : 'clock'} size={13} />
+                              {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
+                            </span>
+                            <span
+                              className={`tc-badge ${
+                                isFull ? 'tc-badge-full' : 'tc-badge-ok'
+                              }`}
+                            >
+                              {isFull
+                                ? 'مكتمل (0 مقاعد)'
+                                : `متاح ${currentSeats} من ${totalSeats}`}
+                            </span>
                           </div>
-                          <span className="tc-price">{Number(o.price_per_seat) > 0 ? `${Number(o.price_per_seat).toLocaleString()} ج.س` : 'مجاناً / بالاتفاق'}</span>
+                          <span className="tc-price-tag">
+                            {Number(offer.price_per_seat) > 0
+                              ? `${Number(offer.price_per_seat).toLocaleString()} ج.س`
+                              : 'مجاناً / بالاتفاق'}
+                          </span>
                         </div>
-                        <RouteBox start={o.start_area} dest={o.destination_area} stops={o.intermediate_stops} />
-                        <div className="tc-meta">
-                          <span><strong>{o.driver_name}</strong> • {o.vehicle_type}</span>
-                          <span><Icon name="clock" size={14} /> {tTxt}</span>
+
+                        <RouteTimeline
+                          start={offer.start_area}
+                          destination={offer.destination_area}
+                          stops={offer.intermediate_stops}
+                        />
+
+                        <div className="tc-meta-grid">
+                          <span className="tc-meta-item">
+                            <Icon name="car" size={15} />
+                            <strong>{offer.driver_name}</strong> • {offer.vehicle_type}
+                          </span>
+                          <span className="tc-meta-item">
+                            <Icon name="clock" size={15} />
+                            {timeText}
+                          </span>
                         </div>
-                        <div className="tc-item-foot">
-                          {mine ? (
+
+                        <div className="tc-listing-footer">
+                          {isMine ? (
                             <>
-                              <div className="tc-row">
-                                <div className="tc-stepper">
-                                  <button type="button" className="tc-step" disabled={busy || seats <= 0} onClick={() => manageOwnOffer(own, seats - 1, seats - 1 <= 0 ? 'full' : 'active')}>−</button>
-                                  <span style={{ minWidth: 22, textAlign: 'center', fontWeight: 800 }}>{seats}</span>
-                                  <button type="button" className="tc-step" disabled={busy || seats >= tot} onClick={() => manageOwnOffer(own, seats + 1, 'active')}>+</button>
+                              <div className="tc-btn-row">
+                                <div className="tc-seat-stepper">
+                                  <button
+                                    type="button"
+                                    className="tc-step-btn"
+                                    disabled={isBusy || currentSeats <= 0}
+                                    onClick={() =>
+                                      handleOwnOfferSeatsOrStatus(
+                                        ownItem,
+                                        currentSeats - 1,
+                                        currentSeats - 1 <= 0 ? 'full' : 'active'
+                                      )
+                                    }
+                                    aria-label="إنقاص مقعد"
+                                  >
+                                    −
+                                  </button>
+                                  <span
+                                    style={{
+                                      minWidth: '24px',
+                                      textAlign: 'center',
+                                      fontWeight: 800,
+                                      fontSize: '0.9rem',
+                                    }}
+                                  >
+                                    {currentSeats}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="tc-step-btn"
+                                    disabled={isBusy || currentSeats >= totalSeats}
+                                    onClick={() =>
+                                      handleOwnOfferSeatsOrStatus(
+                                        ownItem,
+                                        currentSeats + 1,
+                                        'active'
+                                      )
+                                    }
+                                    aria-label="زيادة مقعد"
+                                  >
+                                    +
+                                  </button>
                                 </div>
-                                <button type="button" className="tc-btn tc-btn-soft" disabled={busy} onClick={() => openEditOffer(own, o)}>
-                                  <Icon name="edit" size={14} /> تعديل
+
+                                <button
+                                  type="button"
+                                  className="tc-btn tc-btn-soft"
+                                  disabled={isBusy}
+                                  onClick={() => openEditOfferModal(ownItem, offer)}
+                                >
+                                  <Icon name="edit" size={14} />
+                                  تعديل
                                 </button>
-                                <button type="button" className="tc-btn tc-btn-warn" disabled={busy || full} onClick={() => manageOwnOffer(own, 0, 'full')}>
+
+                                <button
+                                  type="button"
+                                  className="tc-btn tc-btn-warn"
+                                  disabled={isBusy || isFull}
+                                  onClick={() =>
+                                    handleOwnOfferSeatsOrStatus(ownItem, 0, 'full')
+                                  }
+                                >
                                   اكتملت
                                 </button>
                               </div>
-                              <button type="button" className="tc-btn tc-btn-danger" disabled={busy} onClick={() => deleteOwnOffer(own)}>
-                                <Icon name="trash" size={14} /> حذف
+
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-danger"
+                                disabled={isBusy}
+                                onClick={() => handleOwnOfferDelete(ownItem)}
+                              >
+                                <Icon name="trash" size={14} />
+                                حذف
                               </button>
                             </>
                           ) : (
                             <>
-                              <div className="tc-row">
-                                <a href={waLink(o.whatsapp_number, msg)} target="_blank" rel="noopener noreferrer" className="tc-btn tc-btn-wa">
-                                  <Icon name="whatsapp" size={15} /> واتساب
-                                </a>
-                                <a href={telLink(o.phone_number || o.whatsapp_number)} className="tc-btn tc-btn-call">
-                                  <Icon name="phone" size={14} /> اتصال
-                                </a>
+                              <div className="tc-btn-row">
+                                {waHref && (
+                                  <a
+                                    href={waHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="tc-btn tc-btn-wa"
+                                  >
+                                    <Icon name="whatsapp" size={16} />
+                                    واتساب
+                                  </a>
+                                )}
+                                {telHref && (
+                                  <a href={telHref} className="tc-btn tc-btn-call">
+                                    <Icon name="phone" size={15} />
+                                    اتصال
+                                  </a>
+                                )}
                               </div>
-                              <button type="button" className="tc-btn tc-btn-ghost" onClick={() => setReportTarget({ type: 'offer', id: o.id, label: `عرض ${o.driver_name} (${o.start_area} ← ${o.destination_area})` })}>
-                                <Icon name="flag" size={14} /> إبلاغ
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-ghost"
+                                onClick={() => {
+                                  setReportMsg({ type: '', text: '' });
+                                  setReportTarget({
+                                    type: 'offer',
+                                    id: offer.id,
+                                    label: `عرض السائق ${offer.driver_name} (${offer.start_area} ← ${offer.destination_area})`,
+                                  });
+                                }}
+                              >
+                                <Icon name="flag" size={14} />
+                                إبلاغ
                               </button>
                             </>
                           )}
@@ -1542,64 +3521,156 @@ export default function App() {
               </section>
             )}
 
-            {(section === 'all' || section === 'requests') && (
+            {(boardSection === 'all' || boardSection === 'requests') && (
               <section>
-                <h2 className="tc-h2"><Icon name="hand" size={19} /> طلبات طلاب جامعة الخرطوم ({filteredRequests.length})</h2>
-                {loadingBoard && !requests.length ? (
-                  <div className="tc-skel" />
-                ) : !filteredRequests.length ? (
-                  <div className="tc-card tc-empty">لا توجد طلبات طلاب مطابقة حالياً.</div>
+                <h2 className="tc-h2" style={{ marginBottom: '10px' }}>
+                  <Icon name="hand" size={20} />
+                  طلبات طلاب جامعة الخرطوم ({filteredRequests.length})
+                </h2>
+
+                {boardLoading && requests.length === 0 ? (
+                  <div className="tc-skeleton" />
+                ) : filteredRequests.length === 0 ? (
+                  <div className="tc-card tc-empty">
+                    <div className="tc-empty-icon">
+                      <Icon name="hand" size={24} />
+                    </div>
+                    <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                      لا توجد طلبات طلاب مطابقة حالياً
+                    </div>
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      عند نشر طلاب جامعة الخرطوم لطلبات توصيل أو ترحيل ستظهر هنا مباشرة.
+                    </p>
+                  </div>
                 ) : (
-                  filteredRequests.map((r) => {
-                    const own = myRequestsMap[r.id];
-                    const mine = Boolean(own);
-                    const busy = busyId === r.id;
-                    const rec = isRecurring(r.recurrence_type);
-                    const tTxt = rec ? `الساعة ${fmtTime(r.preferred_time)} (${fmtRec(r.recurrence_type, r.recurrence_days)})` : fmtDateTime(r.preferred_time);
-                    const msg = `السلام عليكم ${r.passenger_name}، شاهدت طلبك في توصيلة السنتر من (${r.start_area}) إلى (${r.destination_area}) — ${tTxt}. لدي مقعد متاح على هذا المسار.`;
+                  filteredRequests.map((req) => {
+                    const ownReq = myRequestsById[req.id];
+                    const isMine = Boolean(ownReq);
+                    const isBusy = busyItemId === req.id;
+                    const recurring = isRecurringType(req.recurrence_type);
+                    const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
+                    const timeText = recurring
+                      ? `الساعة ${formatTimeOnly(req.preferred_time)} (${formatRecurrence(
+                          req.recurrence_type,
+                          req.recurrence_days
+                        )})`
+                      : formatDateTime(req.preferred_time);
+                    const waText = `السلام عليكم ${req.passenger_name}، شاهدت طلب (${kindText}) الخاص بك في توصيلة السنتر - جامعة الخرطوم من (${req.start_area}) إلى (${req.destination_area}) — ${timeText}. لدي مقعد متاح على هذا المسار.`;
+                    const waHref = buildWhatsAppLink(req.whatsapp_number, waText);
+                    const telHref = buildTelLink(req.phone_number || req.whatsapp_number);
 
                     return (
-                      <article key={r.id} className={`tc-item ${mine ? 'own' : ''}`}>
-                        <div className="tc-item-top">
-                          <div className="tc-row">
-                            {mine && <span className="tc-badge b-own">إعلانك</span>}
-                            <span className={`tc-badge ${rec ? 'b-rec' : 'b-once'}`}>{rec ? 'ترحيل منتظم' : 'توصيلة'}</span>
-                            <span className="tc-badge b-neu">مطلوب {r.seats_needed} مقعد</span>
+                      <article
+                        key={req.id}
+                        className={`tc-listing ${isMine ? 'tc-listing-own' : ''}`}
+                      >
+                        <div className="tc-listing-top">
+                          <div className="tc-btn-row">
+                            {isMine && (
+                              <span className="tc-badge tc-badge-own">إعلانك</span>
+                            )}
+                            <span
+                              className={`tc-badge ${
+                                recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                              }`}
+                            >
+                              <Icon name={recurring ? 'repeat' : 'clock'} size={13} />
+                              {recurring ? 'ترحيل منتظم' : 'توصيلة لمرة واحدة'}
+                            </span>
+                            <span className="tc-badge tc-badge-neutral">
+                              مطلوب {req.seats_needed} مقعد
+                            </span>
                           </div>
                         </div>
-                        <RouteBox start={r.start_area} dest={r.destination_area} />
-                        <div className="tc-meta">
-                          <span><strong>{r.passenger_name}</strong></span>
-                          <span><Icon name="clock" size={14} /> {tTxt}</span>
+
+                        <RouteTimeline
+                          start={req.start_area}
+                          destination={req.destination_area}
+                        />
+
+                        <div className="tc-meta-grid">
+                          <span className="tc-meta-item">
+                            <Icon name="hand" size={15} />
+                            <strong>{req.passenger_name}</strong>
+                          </span>
+                          <span className="tc-meta-item">
+                            <Icon name="clock" size={15} />
+                            {timeText}
+                          </span>
                         </div>
-                        {r.notes && <div className="tc-notes">{r.notes}</div>}
-                        <div className="tc-item-foot">
-                          {mine ? (
+
+                        {req.notes && (
+                          <div className="tc-notes-box">{req.notes}</div>
+                        )}
+
+                        <div className="tc-listing-footer">
+                          {isMine ? (
                             <>
-                              <div className="tc-row">
-                                <button type="button" className="tc-btn tc-btn-soft" disabled={busy} onClick={() => openEditRequest(own, r)}>
-                                  <Icon name="edit" size={14} /> تعديل
+                              <div className="tc-btn-row">
+                                <button
+                                  type="button"
+                                  className="tc-btn tc-btn-soft"
+                                  disabled={isBusy}
+                                  onClick={() => openEditRequestModal(ownReq, req)}
+                                >
+                                  <Icon name="edit" size={14} />
+                                  تعديل
                                 </button>
-                                <button type="button" className="tc-btn tc-btn-warn" disabled={busy} onClick={() => manageOwnRequest(own, 'closed')}>
-                                  <Icon name="check" size={14} /> لقيت توصيلة (إغلاق)
+                                <button
+                                  type="button"
+                                  className="tc-btn tc-btn-warn"
+                                  disabled={isBusy}
+                                  onClick={() => handleOwnRequestStatus(ownReq, 'closed')}
+                                >
+                                  <Icon name="check" size={14} />
+                                  لقيت توصيلة (إغلاق)
                                 </button>
                               </div>
-                              <button type="button" className="tc-btn tc-btn-danger" disabled={busy} onClick={() => deleteOwnRequest(own)}>
-                                <Icon name="trash" size={14} /> حذف
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-danger"
+                                disabled={isBusy}
+                                onClick={() => handleOwnRequestDelete(ownReq)}
+                              >
+                                <Icon name="trash" size={14} />
+                                حذف
                               </button>
                             </>
                           ) : (
                             <>
-                              <div className="tc-row">
-                                <a href={waLink(r.whatsapp_number, msg)} target="_blank" rel="noopener noreferrer" className="tc-btn tc-btn-wa">
-                                  <Icon name="whatsapp" size={15} /> واتساب
-                                </a>
-                                <a href={telLink(r.phone_number || r.whatsapp_number)} className="tc-btn tc-btn-call">
-                                  <Icon name="phone" size={14} /> اتصال
-                                </a>
+                              <div className="tc-btn-row">
+                                {waHref && (
+                                  <a
+                                    href={waHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="tc-btn tc-btn-wa"
+                                  >
+                                    <Icon name="whatsapp" size={16} />
+                                    واتساب
+                                  </a>
+                                )}
+                                {telHref && (
+                                  <a href={telHref} className="tc-btn tc-btn-call">
+                                    <Icon name="phone" size={15} />
+                                    اتصال
+                                  </a>
+                                )}
                               </div>
-                              <button type="button" className="tc-btn tc-btn-ghost" onClick={() => setReportTarget({ type: 'request', id: r.id, label: `طلب ${r.passenger_name} (${r.start_area} ← ${r.destination_area})` })}>
-                                <Icon name="flag" size={14} /> إبلاغ
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-ghost"
+                                onClick={() => {
+                                  setReportMsg({ type: '', text: '' });
+                                  setReportTarget({
+                                    type: 'request',
+                                    id: req.id,
+                                    label: `طلب الطالب ${req.passenger_name} (${req.start_area} ← ${req.destination_area})`,
+                                  });
+                                }}
+                              >
+                                <Icon name="flag" size={14} />
+                                إبلاغ
                               </button>
                             </>
                           )}
@@ -1611,68 +3682,217 @@ export default function App() {
               </section>
             )}
 
-            {section === 'mine' && (
+            {boardSection === 'mine' && (
               <>
                 <section className="tc-card">
-                  <h2 className="tc-h2"><Icon name="edit" size={19} /> إعلاناتي المنشورة من هذا الجهاز ({totalMyAds})</h2>
-                  <div className="tc-alert a-info" style={{ marginBottom: 0 }}>
-                    تجمع هذه القائمة كل <strong>عروضك كسائق</strong> و<strong>طلباتك كطالب</strong> المنشورة من متصفحك الحالي لتعديلها أو إغلاقها أو حذفها نهائياً.
+                  <h2 className="tc-h2">
+                    <Icon name="edit" size={20} />
+                    إعلاناتي المحفوظة على هذا الجهاز ({totalMyAdsCount})
+                  </h2>
+                  <div className="tc-alert tc-alert-info" style={{ marginBottom: 0 }}>
+                    تجمع هذه القائمة كل <strong>عروضك كسائق</strong> و
+                    <strong>طلباتك كطالب</strong> المنشورة من متصفحك الحالي لتعديلها أو
+                    إغلاقها أو حذفها نهائياً بضغطة زر.
                   </div>
                 </section>
 
                 <section className="tc-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 className="tc-h3" style={{ margin: 0 }}>عروضي كسائق ({myOffers.length})</h3>
-                    <button type="button" className="tc-btn tc-btn-soft" onClick={() => openTab(TABS.OFFER)}>+ عرض جديد</button>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <h3 className="tc-h3" style={{ margin: 0 }}>
+                      عروضي كسائق ({myOffers.length})
+                    </h3>
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-soft"
+                      onClick={() => openTab(TABS.OFFER)}
+                    >
+                      + نشر عرض جديد
+                    </button>
                   </div>
-                  {!myOffers.length ? (
-                    <p className="tc-muted" style={{ marginBottom: 0 }}>لا توجد عروض محفوظة على هذا الجهاز بعد.</p>
+
+                  {myOffers.length === 0 ? (
+                    <div className="tc-empty">
+                      <div className="tc-empty-icon">
+                        <Icon name="car" size={24} />
+                      </div>
+                      <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                        لا توجد عروض سائق محفوظة على هذا الجهاز بعد
+                      </div>
+                      <p className="tc-muted" style={{ marginBottom: 0 }}>
+                        بمجرد نشر عرض جديد سيظهر هنا تلقائياً بأزرار التعديل والحذف.
+                      </p>
+                    </div>
                   ) : (
                     myOffers.map((item) => {
-                      const exp = item.expires_at && new Date(item.expires_at).getTime() <= Date.now();
-                      const closed = item.status === 'closed';
-                      const seats = Number(item.available_seats) || 0;
-                      const tot = Math.max(1, Number(item.total_seats) || 1);
-                      const busy = busyId === item.id;
-                      const rec = isRecurring(item.recurrence_type);
+                      const isExpired =
+                        item.expires_at &&
+                        new Date(item.expires_at).getTime() <= Date.now();
+                      const isClosed = item.status === 'closed';
+                      const currentSeats = Number(item.available_seats) || 0;
+                      const totalSeats = Math.max(1, Number(item.total_seats) || 1);
+                      const isFull = item.status === 'full' || currentSeats <= 0;
+                      const recurring = isRecurringType(item.recurrence_type);
+                      const isBusy = busyItemId === item.id;
 
                       return (
-                        <article key={item.id} className="tc-item own">
-                          <div className="tc-item-top">
-                            <div className="tc-row">
-                              <span className={`tc-badge ${rec ? 'b-rec' : 'b-once'}`}>{rec ? 'ترحيل منتظم' : 'توصيلة'}</span>
-                              <span className={`tc-badge ${closed ? 'b-neu' : exp ? 'b-full' : seats <= 0 ? 'b-warn' : 'b-ok'}`}>
-                                {closed ? 'مغلق' : exp ? 'منتهي' : seats <= 0 ? 'مكتمل' : `متاح ${seats} من ${tot}`}
+                        <article key={item.id} className="tc-listing tc-listing-own">
+                          <div className="tc-listing-top">
+                            <div className="tc-btn-row">
+                              <span
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
+                              </span>
+                              <span
+                                className={`tc-badge ${
+                                  isClosed
+                                    ? 'tc-badge-neutral'
+                                    : isExpired
+                                    ? 'tc-badge-full'
+                                    : isFull
+                                    ? 'tc-badge-warn'
+                                    : 'tc-badge-ok'
+                                }`}
+                              >
+                                {isClosed
+                                  ? 'مغلق'
+                                  : isExpired
+                                  ? 'منتهي الوقت'
+                                  : isFull
+                                  ? 'مكتمل (0 مقاعد)'
+                                  : `متاح ${currentSeats} من ${totalSeats}`}
                               </span>
                             </div>
-                            <span className="tc-price">{Number(item.price_per_seat) > 0 ? `${Number(item.price_per_seat).toLocaleString()} ج.س` : 'مجاناً / بالاتفاق'}</span>
+                            <span className="tc-price-tag">
+                              {Number(item.price_per_seat) > 0
+                                ? `${Number(item.price_per_seat).toLocaleString()} ج.س`
+                                : 'مجاناً / بالاتفاق'}
+                            </span>
                           </div>
-                          <RouteBox start={item.start_area} dest={item.destination_area} stops={item.intermediate_stops} />
-                          <div className="tc-meta">
-                            <span>{item.vehicle_type}</span>
-                            <span>{rec ? `${fmtTime(item.departure_time)} (${fmtRec(item.recurrence_type, item.recurrence_days)})` : fmtDateTime(item.departure_time)}</span>
+
+                          <RouteTimeline
+                            start={item.start_area}
+                            destination={item.destination_area}
+                            stops={item.intermediate_stops}
+                          />
+
+                          <div className="tc-meta-grid">
+                            <span className="tc-meta-item">
+                              <Icon name="clock" size={15} />
+                              {recurring
+                                ? `${formatTimeOnly(
+                                    item.departure_time
+                                  )} (${formatRecurrence(
+                                    item.recurrence_type,
+                                    item.recurrence_days
+                                  )})`
+                                : formatDateTime(item.departure_time)}
+                            </span>
+                            <span className="tc-meta-item">
+                              <Icon name="car" size={15} />
+                              {item.vehicle_type}
+                            </span>
                           </div>
-                          <div className="tc-item-foot">
-                            <div className="tc-row">
-                              {!closed && !exp && (
-                                <div className="tc-stepper">
-                                  <button type="button" className="tc-step" disabled={busy || seats <= 0} onClick={() => manageOwnOffer(item, seats - 1, seats - 1 <= 0 ? 'full' : 'active')}>−</button>
-                                  <span style={{ minWidth: 22, textAlign: 'center', fontWeight: 800 }}>{seats}</span>
-                                  <button type="button" className="tc-step" disabled={busy || seats >= tot} onClick={() => manageOwnOffer(item, seats + 1, 'active')}>+</button>
+
+                          <div className="tc-listing-footer">
+                            <div className="tc-btn-row">
+                              {!isClosed && !isExpired && (
+                                <div className="tc-seat-stepper">
+                                  <button
+                                    type="button"
+                                    className="tc-step-btn"
+                                    disabled={isBusy || currentSeats <= 0}
+                                    onClick={() =>
+                                      handleOwnOfferSeatsOrStatus(
+                                        item,
+                                        currentSeats - 1,
+                                        currentSeats - 1 <= 0 ? 'full' : 'active'
+                                      )
+                                    }
+                                    aria-label="إنقاص مقعد"
+                                  >
+                                    −
+                                  </button>
+                                  <span
+                                    style={{
+                                      minWidth: '24px',
+                                      textAlign: 'center',
+                                      fontWeight: 800,
+                                      fontSize: '0.9rem',
+                                    }}
+                                  >
+                                    {currentSeats}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="tc-step-btn"
+                                    disabled={isBusy || currentSeats >= totalSeats}
+                                    onClick={() =>
+                                      handleOwnOfferSeatsOrStatus(
+                                        item,
+                                        currentSeats + 1,
+                                        'active'
+                                      )
+                                    }
+                                    aria-label="زيادة مقعد"
+                                  >
+                                    +
+                                  </button>
                                 </div>
                               )}
-                              <button type="button" className="tc-btn tc-btn-soft" disabled={busy} onClick={() => openEditOffer(item)}>
-                                <Icon name="edit" size={14} /> تعديل
+
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-soft"
+                                disabled={isBusy}
+                                onClick={() => openEditOfferModal(item)}
+                              >
+                                <Icon name="edit" size={14} />
+                                تعديل
                               </button>
-                              {!closed && !exp && (
-                                <button type="button" className="tc-btn tc-btn-warn" disabled={busy} onClick={() => manageOwnOffer(item, 0, 'closed')}>إغلاق</button>
+
+                              {!isClosed && !isExpired && (
+                                <button
+                                  type="button"
+                                  className="tc-btn tc-btn-warn"
+                                  disabled={isBusy}
+                                  onClick={() =>
+                                    handleOwnOfferSeatsOrStatus(item, 0, 'closed')
+                                  }
+                                >
+                                  إغلاق
+                                </button>
                               )}
-                              <button type="button" className="tc-btn tc-btn-danger" disabled={busy} onClick={() => deleteOwnOffer(item)}>
-                                <Icon name="trash" size={14} /> حذف نهائياً
+
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-danger"
+                                disabled={isBusy}
+                                onClick={() => handleOwnOfferDelete(item)}
+                              >
+                                <Icon name="trash" size={14} />
+                                حذف نهائياً
                               </button>
                             </div>
-                            <button type="button" className="tc-btn tc-btn-ghost" onClick={() => copyText(item.manageCode, item.id)}>
-                              <Icon name="copy" size={14} /> {copiedId === item.id ? 'نُسخ ✓' : 'الرمز'}
+
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-ghost"
+                              onClick={() => handleCopyText(item.manageCode, item.id)}
+                            >
+                              <Icon name="copy" size={14} />
+                              {copiedId === item.id ? 'نُسخ ✓' : 'الرمز'}
                             </button>
                           </div>
                         </article>
@@ -1682,57 +3902,155 @@ export default function App() {
                 </section>
 
                 <section className="tc-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 className="tc-h3" style={{ margin: 0 }}>طلباتي كطالب ({myRequests.length})</h3>
-                    <button type="button" className="tc-btn tc-btn-soft" onClick={() => openTab(TABS.REQUEST)}>+ طلب جديد</button>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <h3 className="tc-h3" style={{ margin: 0 }}>
+                      طلباتي كطالب ({myRequests.length})
+                    </h3>
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-soft"
+                      onClick={() => openTab(TABS.REQUEST)}
+                    >
+                      + نشر طلب جديد
+                    </button>
                   </div>
-                  {!myRequests.length ? (
-                    <p className="tc-muted" style={{ marginBottom: 0 }}>لا توجد طلبات محفوظة على هذا الجهاز بعد.</p>
+
+                  {myRequests.length === 0 ? (
+                    <div className="tc-empty">
+                      <div className="tc-empty-icon">
+                        <Icon name="hand" size={24} />
+                      </div>
+                      <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                        لا توجد طلبات محفوظة على هذا الجهاز بعد
+                      </div>
+                      <p className="tc-muted" style={{ marginBottom: 0 }}>
+                        عند نشر طلب توصيلة أو ترحيل سيظهر هنا لتعديله أو إغلاقه أو حذفه.
+                      </p>
+                    </div>
                   ) : (
                     myRequests.map((req) => {
-                      const exp = req.expires_at && new Date(req.expires_at).getTime() <= Date.now();
-                      const closed = req.status === 'closed';
-                      const busy = busyId === req.id;
-                      const rec = isRecurring(req.recurrence_type);
+                      const isExpired =
+                        req.expires_at &&
+                        new Date(req.expires_at).getTime() <= Date.now();
+                      const isClosed = req.status === 'closed';
+                      const recurring = isRecurringType(req.recurrence_type);
+                      const isBusy = busyItemId === req.id;
 
                       return (
-                        <article key={req.id} className="tc-item own">
-                          <div className="tc-item-top">
-                            <div className="tc-row">
-                              <span className={`tc-badge ${rec ? 'b-rec' : 'b-once'}`}>{rec ? 'ترحيل منتظم' : 'توصيلة'}</span>
-                              <span className={`tc-badge ${closed ? 'b-neu' : exp ? 'b-full' : 'b-ok'}`}>
-                                {closed ? 'مغلق (لقيت توصيلة)' : exp ? 'منتهي' : 'نشط'}
+                        <article key={req.id} className="tc-listing tc-listing-own">
+                          <div className="tc-listing-top">
+                            <div className="tc-btn-row">
+                              <span
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
                               </span>
-                              <span className="tc-badge b-neu">{req.seats_needed} مقعد</span>
+                              <span
+                                className={`tc-badge ${
+                                  isClosed
+                                    ? 'tc-badge-neutral'
+                                    : isExpired
+                                    ? 'tc-badge-full'
+                                    : 'tc-badge-ok'
+                                }`}
+                              >
+                                {isClosed
+                                  ? 'مغلق (لقيت توصيلة)'
+                                  : isExpired
+                                  ? 'منتهي الوقت'
+                                  : 'نشط'}
+                              </span>
+                              <span className="tc-badge tc-badge-neutral">
+                                مطلوب {req.seats_needed} مقعد
+                              </span>
                             </div>
                           </div>
-                          <RouteBox start={req.start_area} dest={req.destination_area} />
-                          <div className="tc-meta">
-                            <span>{rec ? `${fmtTime(req.preferred_time)} (${fmtRec(req.recurrence_type, req.recurrence_days)})` : fmtDateTime(req.preferred_time)}</span>
+
+                          <RouteTimeline
+                            start={req.start_area}
+                            destination={req.destination_area}
+                          />
+
+                          <div className="tc-meta-grid">
+                            <span className="tc-meta-item">
+                              <Icon name="clock" size={15} />
+                              {recurring
+                                ? `${formatTimeOnly(
+                                    req.preferred_time
+                                  )} (${formatRecurrence(
+                                    req.recurrence_type,
+                                    req.recurrence_days
+                                  )})`
+                                : formatDateTime(req.preferred_time)}
+                            </span>
                           </div>
-                          {req.notes && <div className="tc-notes">{req.notes}</div>}
-                          <div className="tc-item-foot">
-                            <div className="tc-row">
-                              <button type="button" className="tc-btn tc-btn-soft" disabled={busy} onClick={() => openEditRequest(req)}>
-                                <Icon name="edit" size={14} /> تعديل
+
+                          {req.notes && <div className="tc-notes-box">{req.notes}</div>}
+
+                          <div className="tc-listing-footer">
+                            <div className="tc-btn-row">
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-soft"
+                                disabled={isBusy}
+                                onClick={() => openEditRequestModal(req)}
+                              >
+                                <Icon name="edit" size={14} />
+                                تعديل
                               </button>
-                              {!closed && !exp ? (
-                                <button type="button" className="tc-btn tc-btn-warn" disabled={busy} onClick={() => manageOwnRequest(req, 'closed')}>
-                                  <Icon name="check" size={14} /> لقيت توصيلة (إغلاق)
+
+                              {!isClosed && !isExpired ? (
+                                <button
+                                  type="button"
+                                  className="tc-btn tc-btn-warn"
+                                  disabled={isBusy}
+                                  onClick={() => handleOwnRequestStatus(req, 'closed')}
+                                >
+                                  <Icon name="check" size={14} />
+                                  لقيت توصيلة (إغلاق)
                                 </button>
                               ) : (
-                                !exp && (
-                                  <button type="button" className="tc-btn tc-btn-soft" disabled={busy} onClick={() => manageOwnRequest(req, 'active')}>
+                                !isExpired && (
+                                  <button
+                                    type="button"
+                                    className="tc-btn tc-btn-soft"
+                                    disabled={isBusy}
+                                    onClick={() => handleOwnRequestStatus(req, 'active')}
+                                  >
                                     إعادة تفعيل
                                   </button>
                                 )
                               )}
-                              <button type="button" className="tc-btn tc-btn-danger" disabled={busy} onClick={() => deleteOwnRequest(req)}>
-                                <Icon name="trash" size={14} /> حذف نهائياً
+
+                              <button
+                                type="button"
+                                className="tc-btn tc-btn-danger"
+                                disabled={isBusy}
+                                onClick={() => handleOwnRequestDelete(req)}
+                              >
+                                <Icon name="trash" size={14} />
+                                حذف نهائياً
                               </button>
                             </div>
-                            <button type="button" className="tc-btn tc-btn-ghost" onClick={() => copyText(req.manageCode, req.id)}>
-                              <Icon name="copy" size={14} /> {copiedId === req.id ? 'نُسخ ✓' : 'الرمز'}
+
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-ghost"
+                              onClick={() => handleCopyText(req.manageCode, req.id)}
+                            >
+                              <Icon name="copy" size={14} />
+                              {copiedId === req.id ? 'نُسخ ✓' : 'الرمز'}
                             </button>
                           </div>
                         </article>
@@ -1742,31 +4060,92 @@ export default function App() {
                 </section>
 
                 <section className="tc-card">
-                  <h3 className="tc-h3">إدارة إعلان من هاتف آخر (بالرمز السري)</h3>
-                  {manualMsg.text && <div className={`tc-alert ${manualMsg.type === 'ok' ? 'a-ok' : 'a-err'}`}>{manualMsg.text}</div>}
-                  <div className="tc-chips" style={{ marginBottom: 10 }}>
-                    <button type="button" className={`tc-chip ${manualKind === 'offer' ? 'active' : ''}`} onClick={() => setManualKind('offer')}>عرض سائق</button>
-                    <button type="button" className={`tc-chip ${manualKind === 'request' ? 'active' : ''}`} onClick={() => setManualKind('request')}>طلب طالب</button>
+                  <h3 className="tc-h3">إدارة إعلان برمز يدوي (من هاتف آخر)</h3>
+                  <p className="tc-muted">
+                    إذا نشرت إعلانك من جهاز آخر، اختر نوعه والصق الرمز (
+                    <code>id_token</code>) للتحكم به أو حذفه.
+                  </p>
+
+                  {manualFeedback.text && (
+                    <div
+                      className={`tc-alert ${
+                        manualFeedback.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                      }`}
+                    >
+                      {manualFeedback.text}
+                    </div>
+                  )}
+
+                  <div className="tc-chips" style={{ marginBottom: '12px' }}>
+                    <button
+                      type="button"
+                      className={`tc-chip ${manualKind === 'offer' ? 'active' : ''}`}
+                      onClick={() => setManualKind('offer')}
+                    >
+                      عرض سائق
+                    </button>
+                    <button
+                      type="button"
+                      className={`tc-chip ${manualKind === 'request' ? 'active' : ''}`}
+                      onClick={() => setManualKind('request')}
+                    >
+                      طلب طالب
+                    </button>
                   </div>
+
                   <div className="tc-grid-2">
                     <div className="tc-field">
-                      <label className="tc-label">الرمز الكامل (id_token)</label>
-                      <input type="text" className="tc-input tc-ltr" value={manualCode} onChange={(e) => setManualCode(e.target.value)} placeholder="الصق الرمز هنا..." />
+                      <label className="tc-label">رمز الإدارة الكامل (id_token)</label>
+                      <input
+                        type="text"
+                        value={manualCode}
+                        onChange={(e) => setManualCode(e.target.value)}
+                        placeholder="الصق الرمز هنا..."
+                        className="tc-input tc-input-ltr"
+                      />
                     </div>
                     {manualKind === 'offer' && (
                       <div className="tc-field">
-                        <label className="tc-label">المقاعد المتاحة</label>
-                        <input type="number" min="0" max="50" className="tc-input" value={manualSeats} onChange={(e) => setManualSeats(e.target.value)} />
+                        <label className="tc-label">عدد المقاعد المتاحة الجديد</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="50"
+                          value={manualSeats}
+                          onChange={(e) => setManualSeats(e.target.value)}
+                          className="tc-input"
+                        />
                       </div>
                     )}
                   </div>
-                  <div className="tc-row" style={{ marginTop: 10 }}>
+
+                  <div className="tc-btn-row" style={{ marginTop: '12px' }}>
                     {manualKind === 'offer' && (
-                      <button type="button" className="tc-btn tc-btn-soft" disabled={manualBusy} onClick={() => runManual('active')}>تحديث المقاعد</button>
+                      <button
+                        type="button"
+                        className="tc-btn tc-btn-soft"
+                        disabled={manualLoading}
+                        onClick={() => handleManualAction('active')}
+                      >
+                        تحديث المقاعد
+                      </button>
                     )}
-                    <button type="button" className="tc-btn tc-btn-warn" disabled={manualBusy} onClick={() => runManual('closed')}>إغلاق</button>
-                    <button type="button" className="tc-btn tc-btn-danger" disabled={manualBusy} onClick={() => runManual('delete')}>
-                      <Icon name="trash" size={14} /> حذف نهائياً
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-warn"
+                      disabled={manualLoading}
+                      onClick={() => handleManualAction('closed')}
+                    >
+                      إغلاق الإعلان
+                    </button>
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-danger"
+                      disabled={manualLoading}
+                      onClick={() => handleManualAction('delete')}
+                    >
+                      <Icon name="trash" size={14} />
+                      حذف نهائياً
                     </button>
                   </div>
                 </section>
@@ -1775,335 +4154,911 @@ export default function App() {
           </>
         )}
 
-        {/* ==================== أعرض مشواراً ==================== */}
+        {/* ======================= أعرض مشواراً ======================= */}
         {tab === TABS.OFFER && (
           <section className="tc-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-              <h2 className="tc-h2" style={{ margin: 0 }}><Icon name="car" size={19} /> أعرض توصيلة أو ترحيل</h2>
-              {totalMyAds > 0 && (
-                <button type="button" className="tc-btn tc-btn-soft" onClick={() => openAds('mine')}>إعلاناتي ({totalMyAds})</button>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginBottom: '6px',
+              }}
+            >
+              <h2 className="tc-h2" style={{ margin: 0 }}>
+                <Icon name="car" size={20} />
+                أعرض توصيلة أو ترحيل (لأصحاب العربات)
+              </h2>
+              {totalMyAdsCount > 0 && (
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-soft"
+                  onClick={() => openAds('mine')}
+                >
+                  إدارة إعلاناتي ({totalMyAdsCount})
+                </button>
               )}
             </div>
-            <p className="tc-muted">انشر عرضك لطلاب جامعة الخرطوم، وسيُحفظ تلقائياً في «إعلاناتي» للتعديل أو الحذف بضغطة زر.</p>
+            <p className="tc-muted">
+              انشر رحلتك لطلاب جامعة الخرطوم، وسيُحفظ إعلانك تلقائياً في «إعلاناتي»
+              ويظهر لك بشارة «إعلانك» مع أزرار التعديل والحذف مباشرة.
+            </p>
 
-            {offerErr && <div className="tc-alert a-err">{offerErr}</div>}
+            {offerError && <div className="tc-alert tc-alert-err">{offerError}</div>}
+
             {savedOfferCode && (
-              <div className="tc-alert a-ok">
-                <strong>تم نشر عرضك وحفظه في «إعلاناتي» بنجاح!</strong>
-                <div className="tc-code">{savedOfferCode}</div>
-                <div className="tc-row" style={{ marginTop: 10 }}>
-                  <button type="button" className="tc-btn tc-btn-call" onClick={() => openAds('mine')}>الانتقال إلى إعلاناتي</button>
-                  <button type="button" className="tc-btn tc-btn-ghost" onClick={() => copyText(savedOfferCode, 'so')}>
-                    <Icon name="copy" size={14} /> {copiedId === 'so' ? 'نُسخ ✓' : 'نسخ الرمز'}
+              <div className="tc-alert tc-alert-ok">
+                <strong>تم نشر العرض وحفظه في «إعلاناتي» بنجاح!</strong>
+                <div style={{ marginTop: '5px' }}>
+                  يمكنك الآن تعديله أو تحديث مقاعده أو حذفه من قسم «إعلاناتي»، أو نسخ
+                  هذا الرمز الاحتياطي إذا أردت إدارته من هاتف آخر:
+                </div>
+                <div className="tc-code-box">{savedOfferCode}</div>
+                <div className="tc-btn-row" style={{ marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-call"
+                    onClick={() => openAds('mine')}
+                  >
+                    الانتقال إلى إعلاناتي
+                  </button>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-ghost"
+                    onClick={() => handleCopyText(savedOfferCode, 'saved_offer')}
+                  >
+                    <Icon name="copy" size={15} />
+                    {copiedId === 'saved_offer' ? 'تم النسخ ✓' : 'نسخ الرمز'}
+                  </button>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-ghost"
+                    onClick={() => openAds('offers')}
+                  >
+                    عرض في الإعلانات
                   </button>
                 </div>
               </div>
             )}
 
-            <form onSubmit={publishOffer}>
-              <div className="tc-sec">
-                <div className="tc-sec-title"><Icon name="repeat" size={15} /> 1. نوع العرض</div>
+            <form onSubmit={handlePublishOffer}>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="repeat" size={16} />
+                  1. نوع العرض
+                </div>
                 <div className="tc-chips">
-                  {RECURRENCE_CHOICES.map((c) => (
-                    <button key={c.value} type="button" className={`tc-chip ${offerForm.recurrence_type === c.value ? 'active' : ''}`} onClick={() => setOfferForm({ ...offerForm, recurrence_type: c.value })}>
-                      {c.label}
+                  {RECURRENCE_CHOICES.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`tc-chip ${
+                        offerForm.recurrence_type === opt.value ? 'active' : ''
+                      }`}
+                      onClick={() =>
+                        setOfferForm({ ...offerForm, recurrence_type: opt.value })
+                      }
+                    >
+                      {opt.label}
                     </button>
                   ))}
                 </div>
+
                 {offerForm.recurrence_type === 'weekdays' && (
-                  <div className="tc-chips" style={{ marginTop: 10 }}>
-                    {WEEKDAYS.map((d) => {
-                      const on = offerForm.recurrence_days.includes(d.key);
-                      return (
+                  <div style={{ marginTop: '12px' }}>
+                    <label className="tc-label">
+                      اختر أيام الترحيل المنتظم <span className="tc-req">*</span>
+                    </label>
+                    <div className="tc-chips">
+                      {WEEKDAYS.map((day) => (
                         <button
-                          key={d.key}
+                          key={day.key}
                           type="button"
-                          className={`tc-chip ${on ? 'active' : ''}`}
-                          onClick={() =>
-                            setOfferForm((p) => ({
-                              ...p,
-                              recurrence_days: on ? p.recurrence_days.filter((x) => x !== d.key) : [...p.recurrence_days, d.key],
-                            }))
-                          }
+                          className={`tc-chip ${
+                            offerForm.recurrence_days.includes(day.key) ? 'active' : ''
+                          }`}
+                          onClick={() => toggleOfferRecurrenceDay(day.key)}
                         >
-                          {d.label}
+                          {day.label}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="tc-sec">
-                <div className="tc-sec-title"><Icon name="car" size={15} /> 2. بيانات السائق والتواصل</div>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="car" size={16} />
+                  2. بيانات السائق والتواصل
+                </div>
                 <div className="tc-grid-2">
                   <div className="tc-field">
-                    <label className="tc-label">اسم السائق <span className="tc-req">*</span></label>
-                    <input type="text" className="tc-input" value={offerForm.driver_name} onChange={(e) => setOfferForm({ ...offerForm, driver_name: e.target.value })} placeholder="مثال: أحمد محمد" required />
+                    <label className="tc-label">
+                      اسم السائق <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={offerForm.driver_name}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, driver_name: e.target.value })
+                      }
+                      placeholder="مثال: أحمد محمد"
+                      className="tc-input"
+                      required
+                    />
                   </div>
+
                   <div className="tc-field">
-                    <label className="tc-label">نوع العربة <span className="tc-req">*</span></label>
-                    <input type="text" className="tc-input" value={offerForm.vehicle_type} onChange={(e) => setOfferForm({ ...offerForm, vehicle_type: e.target.value })} placeholder="مثال: يارس أبيض / أكسنت" required />
+                    <label className="tc-label">
+                      نوع العربة <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={offerForm.vehicle_type}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, vehicle_type: e.target.value })
+                      }
+                      placeholder="مثال: يارس أبيض / أكسنت / هايس"
+                      className="tc-input"
+                      required
+                    />
                   </div>
+
                   <div className="tc-field">
-                    <label className="tc-label">رقم الواتساب <span className="tc-req">*</span></label>
-                    <input type="tel" className="tc-input tc-ltr" value={offerForm.whatsapp_number} onChange={(e) => setOfferForm({ ...offerForm, whatsapp_number: e.target.value })} placeholder="0912345678" required />
+                    <label className="tc-label">
+                      رقم الواتساب <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={offerForm.whatsapp_number}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, whatsapp_number: e.target.value })
+                      }
+                      placeholder="مثال: 0912345678"
+                      className="tc-input tc-input-ltr"
+                      required
+                    />
                   </div>
+
                   <div className="tc-field">
                     <label className="tc-label">رقم اتصال إضافي (اختياري)</label>
-                    <input type="tel" className="tc-input tc-ltr" value={offerForm.phone_number} onChange={(e) => setOfferForm({ ...offerForm, phone_number: e.target.value })} placeholder="اختياري" />
+                    <input
+                      type="tel"
+                      value={offerForm.phone_number}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, phone_number: e.target.value })
+                      }
+                      placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
+                      className="tc-input tc-input-ltr"
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="tc-sec">
-                <div className="tc-sec-title"><Icon name="ads" size={15} /> 3. المسار والموعد والمقاعد</div>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="route" size={16} />
+                  3. المسار والتوقيت
+                </div>
                 <div className="tc-grid-2">
-                  <AreaInput label="منطقة الانطلاق" value={offerForm.start_area} onChange={(v) => setOfferForm({ ...offerForm, start_area: v })} />
-                  <AreaInput label="الوجهة" value={offerForm.destination_area} onChange={(v) => setOfferForm({ ...offerForm, destination_area: v })} />
+                  <AreaInput
+                    label="منطقة الانطلاق"
+                    value={offerForm.start_area}
+                    onChange={(val) => setOfferForm({ ...offerForm, start_area: val })}
+                    placeholder="اكتب نقطة الانطلاق"
+                  />
+                  <AreaInput
+                    label="الوجهة"
+                    value={offerForm.destination_area}
+                    onChange={(val) =>
+                      setOfferForm({ ...offerForm, destination_area: val })
+                    }
+                    placeholder="اكتب الوجهة (مثال: مجمع الوسط - كلية الهندسة)"
+                  />
                 </div>
-                <div className="tc-field" style={{ marginTop: 10 }}>
-                  <label className="tc-label">المحطات الوسيطة (اختياري، افصل بفاصلة)</label>
-                  <input type="text" className="tc-input" value={offerForm.stops_text} onChange={(e) => setOfferForm({ ...offerForm, stops_text: e.target.value })} placeholder="مثال: شارع الستين، المعمورة، بري" />
+
+                <div className="tc-field" style={{ marginTop: '12px' }}>
+                  <label className="tc-label">
+                    المحطات الوسيطة في المسار (اختياري، افصل بينها بفاصلة)
+                  </label>
+                  <input
+                    type="text"
+                    value={offerForm.intermediate_stops_input}
+                    onChange={(e) =>
+                      setOfferForm({
+                        ...offerForm,
+                        intermediate_stops_input: e.target.value,
+                      })
+                    }
+                    placeholder="مثال: شارع الستين، المعمورة، بري"
+                    className="tc-input"
+                  />
                 </div>
-                <div className="tc-grid-2" style={{ marginTop: 10 }}>
+
+                <div className="tc-grid-2" style={{ marginTop: '12px' }}>
                   <div className="tc-field">
-                    <label className="tc-label">{isRecurring(offerForm.recurrence_type) ? 'وقت التحرك المعتاد (تاريخ أول يوم)' : 'موعد المغادرة (في المستقبل)'} <span className="tc-req">*</span></label>
-                    <input type="datetime-local" className="tc-input" value={offerForm.departure_time} onChange={(e) => setOfferForm({ ...offerForm, departure_time: e.target.value })} required />
+                    <label className="tc-label">
+                      {offerIsRecurring
+                        ? 'تاريخ ووقت أول رحلة (توقيت التحرك المعتاد)'
+                        : 'موعد المغادرة (في المستقبل)'}{' '}
+                      <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={offerForm.departure_time}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, departure_time: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
                   </div>
-                  {isRecurring(offerForm.recurrence_type) ? (
+
+                  {offerIsRecurring ? (
                     <div className="tc-field">
                       <label className="tc-label">مدة بقاء إعلان الترحيل</label>
-                      <select className="tc-input" value={offerForm.rec_days} onChange={(e) => setOfferForm({ ...offerForm, rec_days: Number(e.target.value) })}>
-                        <option value={7}>أسبوع (7 أيام)</option>
+                      <select
+                        value={offerForm.recurring_valid_days}
+                        onChange={(e) =>
+                          setOfferForm({
+                            ...offerForm,
+                            recurring_valid_days: Number(e.target.value),
+                          })
+                        }
+                        className="tc-input"
+                      >
+                        <option value={7}>أسبوع واحد (7 أيام)</option>
                         <option value={14}>أسبوعان (14 يوماً)</option>
-                        <option value={30}>شهر (30 يوماً)</option>
+                        <option value={30}>شهر كامل (30 يوماً)</option>
                       </select>
                     </div>
                   ) : (
                     <div className="tc-field">
-                      <label className="tc-label">بقاء الإعلان بعد الموعد (ساعات)</label>
-                      <input type="number" min="1" max="72" className="tc-input" value={offerForm.exp_hours} onChange={(e) => setOfferForm({ ...offerForm, exp_hours: e.target.value })} />
+                      <label className="tc-label">
+                        بقاء الإعلان بعد المغادرة (بالساعات)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={offerForm.expires_after_hours}
+                        onChange={(e) =>
+                          setOfferForm({
+                            ...offerForm,
+                            expires_after_hours: e.target.value,
+                          })
+                        }
+                        className="tc-input"
+                      />
                     </div>
                   )}
-                  <div className="tc-field">
-                    <label className="tc-label">إجمالي المقاعد <span className="tc-req">*</span></label>
-                    <input type="number" min="1" max="50" className="tc-input" value={offerForm.total_seats} onChange={(e) => setOfferForm({ ...offerForm, total_seats: e.target.value })} required />
-                  </div>
-                  <div className="tc-field">
-                    <label className="tc-label">المقاعد المتاحة <span className="tc-req">*</span></label>
-                    <input type="number" min="0" max="50" className="tc-input" value={offerForm.available_seats} onChange={(e) => setOfferForm({ ...offerForm, available_seats: e.target.value })} required />
-                  </div>
-                </div>
-                <div className="tc-field" style={{ marginTop: 10 }}>
-                  <label className="tc-label">السعر للمقعد (ج.س — اكتب 0 إذا مجاناً أو بالاتفاق)</label>
-                  <input type="number" min="0" step="50" className="tc-input" value={offerForm.price_per_seat} onChange={(e) => setOfferForm({ ...offerForm, price_per_seat: e.target.value })} />
                 </div>
               </div>
 
-              <button type="submit" className="tc-btn tc-btn-primary" disabled={offerBusy}>
-                {offerBusy ? 'جاري النشر...' : isRecurring(offerForm.recurrence_type) ? 'نشر عرض الترحيل المنتظم' : 'نشر عرض التوصيلة'}
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="clock" size={16} />
+                  4. المقاعد والتكلفة
+                </div>
+                <div className="tc-grid-2">
+                  <div className="tc-field">
+                    <label className="tc-label">
+                      إجمالي مقاعد العربة <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={offerForm.total_seats}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, total_seats: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="tc-field">
+                    <label className="tc-label">
+                      المقاعد المتاحة الآن <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      value={offerForm.available_seats}
+                      onChange={(e) =>
+                        setOfferForm({ ...offerForm, available_seats: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="tc-field" style={{ marginTop: '12px' }}>
+                  <label className="tc-label">
+                    السعر للمقعد (جنيه سوداني — اكتب 0 إذا كان مجاناً أو بالاتفاق)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="50"
+                    value={offerForm.price_per_seat}
+                    onChange={(e) =>
+                      setOfferForm({ ...offerForm, price_per_seat: e.target.value })
+                    }
+                    className="tc-input"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="tc-btn tc-btn-primary"
+                disabled={offerSubmitting}
+              >
+                {offerSubmitting
+                  ? 'جاري النشر...'
+                  : offerIsRecurring
+                  ? 'نشر عرض الترحيل المنتظم'
+                  : 'نشر عرض التوصيلة'}
               </button>
             </form>
           </section>
         )}
 
-        {/* ==================== اطلب توصيلة / ترحيل ==================== */}
+        {/* ======================= اطلب توصيلة / ترحيل ======================= */}
         {tab === TABS.REQUEST && (
           <section className="tc-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-              <h2 className="tc-h2" style={{ margin: 0 }}><Icon name="hand" size={19} /> اطلب توصيلة أو ترحيل</h2>
-              {totalMyAds > 0 && (
-                <button type="button" className="tc-btn tc-btn-soft" onClick={() => openAds('mine')}>إعلاناتي ({totalMyAds})</button>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginBottom: '6px',
+              }}
+            >
+              <h2 className="tc-h2" style={{ margin: 0 }}>
+                <Icon name="hand" size={20} />
+                اطلب توصيلة أو ترحيل (لطلاب جامعة الخرطوم)
+              </h2>
+              {totalMyAdsCount > 0 && (
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-soft"
+                  onClick={() => openAds('mine')}
+                >
+                  إدارة إعلاناتي ({totalMyAdsCount})
+                </button>
               )}
             </div>
-            <p className="tc-muted">انشر طلبك وسيُحفظ تلقائياً في «إعلاناتي» لتعديله أو إغلاقه عند إيجاد توصيلة أو حذفه نهائياً.</p>
+            <p className="tc-muted">
+              حدد هل تحتاج <strong>توصيلة سريعة لمرة واحدة</strong> أم{' '}
+              <strong>ترحيلاً منتظماً</strong> لمجمعك في جامعة الخرطوم، ويمكنك تعديل
+              طلبك أو إغلاقه أو حذفه نهائياً في أي وقت من «إعلاناتي».
+            </p>
 
-            {reqErr && <div className="tc-alert a-err">{reqErr}</div>}
-            {savedReqCode && (
-              <div className="tc-alert a-ok">
+            {requestError && (
+              <div className="tc-alert tc-alert-err">{requestError}</div>
+            )}
+
+            {savedRequestCode && (
+              <div className="tc-alert tc-alert-ok">
                 <strong>تم نشر طلبك وحفظه في «إعلاناتي» بنجاح!</strong>
-                <div className="tc-code">{savedReqCode}</div>
-                <div className="tc-row" style={{ marginTop: 10 }}>
-                  <button type="button" className="tc-btn tc-btn-call" onClick={() => openAds('mine')}>الانتقال إلى إعلاناتي</button>
-                  <button type="button" className="tc-btn tc-btn-ghost" onClick={() => copyText(savedReqCode, 'sr')}>
-                    <Icon name="copy" size={14} /> {copiedId === 'sr' ? 'نُسخ ✓' : 'نسخ الرمز'}
+                <div style={{ marginTop: '5px' }}>
+                  يمكنك الآن تعديله أو إغلاقه عند إيجاد توصيلة أو حذفه نهائياً من
+                  «إعلاناتي»، وهذا الرمز الاحتياطي إذا احتجته من هاتف آخر:
+                </div>
+                <div className="tc-code-box">{savedRequestCode}</div>
+                <div className="tc-btn-row" style={{ marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-call"
+                    onClick={() => openAds('mine')}
+                  >
+                    الانتقال إلى إعلاناتي
+                  </button>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-ghost"
+                    onClick={() => handleCopyText(savedRequestCode, 'saved_req')}
+                  >
+                    <Icon name="copy" size={15} />
+                    {copiedId === 'saved_req' ? 'تم النسخ ✓' : 'نسخ الرمز'}
+                  </button>
+                  <button
+                    type="button"
+                    className="tc-btn tc-btn-ghost"
+                    onClick={() => openAds('requests')}
+                  >
+                    عرض في الإعلانات
                   </button>
                 </div>
               </div>
             )}
 
-            <form onSubmit={publishRequest}>
-              <div className="tc-sec">
-                <div className="tc-sec-title"><Icon name="repeat" size={15} /> 1. نوع الطلب</div>
+            <form onSubmit={handlePublishRequest}>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="repeat" size={16} />
+                  1. نوع الطلب
+                </div>
                 <div className="tc-chips">
-                  {RECURRENCE_CHOICES.map((c) => (
-                    <button key={c.value} type="button" className={`tc-chip ${reqForm.recurrence_type === c.value ? 'active' : ''}`} onClick={() => setReqForm({ ...reqForm, recurrence_type: c.value })}>
-                      {c.label}
+                  {RECURRENCE_CHOICES.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`tc-chip ${
+                        requestForm.recurrence_type === opt.value ? 'active' : ''
+                      }`}
+                      onClick={() =>
+                        setRequestForm({ ...requestForm, recurrence_type: opt.value })
+                      }
+                    >
+                      {opt.label}
                     </button>
                   ))}
                 </div>
-                {reqForm.recurrence_type === 'weekdays' && (
-                  <div className="tc-chips" style={{ marginTop: 10 }}>
-                    {WEEKDAYS.map((d) => {
-                      const on = reqForm.recurrence_days.includes(d.key);
-                      return (
+
+                {requestForm.recurrence_type === 'weekdays' && (
+                  <div style={{ marginTop: '12px' }}>
+                    <label className="tc-label">
+                      اختر أيام الترحيل المطلوبة <span className="tc-req">*</span>
+                    </label>
+                    <div className="tc-chips">
+                      {WEEKDAYS.map((day) => (
                         <button
-                          key={d.key}
+                          key={day.key}
                           type="button"
-                          className={`tc-chip ${on ? 'active' : ''}`}
-                          onClick={() =>
-                            setReqForm((p) => ({
-                              ...p,
-                              recurrence_days: on ? p.recurrence_days.filter((x) => x !== d.key) : [...p.recurrence_days, d.key],
-                            }))
-                          }
+                          className={`tc-chip ${
+                            requestForm.recurrence_days.includes(day.key) ? 'active' : ''
+                          }`}
+                          onClick={() => toggleRequestRecurrenceDay(day.key)}
                         >
-                          {d.label}
+                          {day.label}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="tc-sec">
-                <div className="tc-sec-title"><Icon name="hand" size={15} /> 2. بيانات الطالب والتواصل</div>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="hand" size={16} />
+                  2. بيانات الطالب والتواصل
+                </div>
                 <div className="tc-grid-2">
                   <div className="tc-field">
-                    <label className="tc-label">الاسم <span className="tc-req">*</span></label>
-                    <input type="text" className="tc-input" value={reqForm.passenger_name} onChange={(e) => setReqForm({ ...reqForm, passenger_name: e.target.value })} placeholder="مثال: سارة علي" required />
+                    <label className="tc-label">
+                      الاسم <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.passenger_name}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, passenger_name: e.target.value })
+                      }
+                      placeholder="مثال: سارة علي"
+                      className="tc-input"
+                      required
+                    />
                   </div>
+
                   <div className="tc-field">
-                    <label className="tc-label">المقاعد المطلوبة <span className="tc-req">*</span></label>
-                    <input type="number" min="1" max="20" className="tc-input" value={reqForm.seats_needed} onChange={(e) => setReqForm({ ...reqForm, seats_needed: e.target.value })} required />
+                    <label className="tc-label">
+                      عدد المقاعد المطلوبة <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={requestForm.seats_needed}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, seats_needed: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
                   </div>
+
                   <div className="tc-field">
-                    <label className="tc-label">رقم الواتساب <span className="tc-req">*</span></label>
-                    <input type="tel" className="tc-input tc-ltr" value={reqForm.whatsapp_number} onChange={(e) => setReqForm({ ...reqForm, whatsapp_number: e.target.value })} placeholder="0912345678" required />
+                    <label className="tc-label">
+                      رقم الواتساب <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={requestForm.whatsapp_number}
+                      onChange={(e) =>
+                        setRequestForm({
+                          ...requestForm,
+                          whatsapp_number: e.target.value,
+                        })
+                      }
+                      placeholder="مثال: 0912345678"
+                      className="tc-input tc-input-ltr"
+                      required
+                    />
                   </div>
+
                   <div className="tc-field">
                     <label className="tc-label">رقم اتصال إضافي (اختياري)</label>
-                    <input type="tel" className="tc-input tc-ltr" value={reqForm.phone_number} onChange={(e) => setReqForm({ ...reqForm, phone_number: e.target.value })} placeholder="اختياري" />
+                    <input
+                      type="tel"
+                      value={requestForm.phone_number}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, phone_number: e.target.value })
+                      }
+                      placeholder="اتركه فارغاً لاستخدام رقم الواتساب"
+                      className="tc-input tc-input-ltr"
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="tc-sec">
-                <div className="tc-sec-title"><Icon name="ads" size={15} /> 3. المسار والموعد</div>
+              <div className="tc-form-section">
+                <div className="tc-form-section-title">
+                  <Icon name="route" size={16} />
+                  3. المسار والتوقيت
+                </div>
                 <div className="tc-grid-2">
-                  <AreaInput label="منطقة الانطلاق" value={reqForm.start_area} onChange={(v) => setReqForm({ ...reqForm, start_area: v })} />
-                  <AreaInput label="الوجهة" value={reqForm.destination_area} onChange={(v) => setReqForm({ ...reqForm, destination_area: v })} />
+                  <AreaInput
+                    label="منطقة الانطلاق"
+                    value={requestForm.start_area}
+                    onChange={(val) =>
+                      setRequestForm({ ...requestForm, start_area: val })
+                    }
+                    placeholder="اكتب منطقة انطلاقك"
+                  />
+                  <AreaInput
+                    label="الوجهة"
+                    value={requestForm.destination_area}
+                    onChange={(val) =>
+                      setRequestForm({ ...requestForm, destination_area: val })
+                    }
+                    placeholder="اكتب المجمع أو الكلية أو المنطقة"
+                  />
+                </div>
+
+                <div className="tc-grid-2" style={{ marginTop: '12px' }}>
                   <div className="tc-field">
-                    <label className="tc-label">{isRecurring(reqForm.recurrence_type) ? 'توقيت التحرك المعتاد (أول يوم)' : 'الوقت المفضل (في المستقبل)'} <span className="tc-req">*</span></label>
-                    <input type="datetime-local" className="tc-input" value={reqForm.preferred_time} onChange={(e) => setReqForm({ ...reqForm, preferred_time: e.target.value })} required />
+                    <label className="tc-label">
+                      {requestIsRecurring
+                        ? 'تاريخ ووقت أول يوم (توقيت التحرك المعتاد)'
+                        : 'الوقت المفضل للتحرك (في المستقبل)'}{' '}
+                      <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={requestForm.preferred_time}
+                      onChange={(e) =>
+                        setRequestForm({ ...requestForm, preferred_time: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
                   </div>
-                  {isRecurring(reqForm.recurrence_type) ? (
+
+                  {requestIsRecurring ? (
                     <div className="tc-field">
                       <label className="tc-label">مدة بقاء طلب الترحيل</label>
-                      <select className="tc-input" value={reqForm.rec_days} onChange={(e) => setReqForm({ ...reqForm, rec_days: Number(e.target.value) })}>
-                        <option value={7}>أسبوع (7 أيام)</option>
+                      <select
+                        value={requestForm.recurring_valid_days}
+                        onChange={(e) =>
+                          setRequestForm({
+                            ...requestForm,
+                            recurring_valid_days: Number(e.target.value),
+                          })
+                        }
+                        className="tc-input"
+                      >
+                        <option value={7}>أسبوع واحد (7 أيام)</option>
                         <option value={14}>أسبوعان (14 يوماً)</option>
-                        <option value={30}>شهر (30 يوماً)</option>
+                        <option value={30}>شهر كامل (30 يوماً)</option>
                       </select>
                     </div>
                   ) : (
                     <div className="tc-field">
-                      <label className="tc-label">بقاء الطلب بعد الموعد (ساعات)</label>
-                      <input type="number" min="1" max="72" className="tc-input" value={reqForm.exp_hours} onChange={(e) => setReqForm({ ...reqForm, exp_hours: e.target.value })} />
+                      <label className="tc-label">
+                        بقاء الطلب بعد الموعد (بالساعات)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={requestForm.expires_after_hours}
+                        onChange={(e) =>
+                          setRequestForm({
+                            ...requestForm,
+                            expires_after_hours: e.target.value,
+                          })
+                        }
+                        className="tc-input"
+                      />
                     </div>
                   )}
                 </div>
-                <div className="tc-field" style={{ marginTop: 10 }}>
+
+                <div className="tc-field" style={{ marginTop: '12px' }}>
                   <label className="tc-label">ملاحظات إضافية (اختياري)</label>
-                  <textarea rows="2" className="tc-input" value={reqForm.notes} onChange={(e) => setReqForm({ ...reqForm, notes: e.target.value })} placeholder="مثال: الانتظار أمام بوابة الهندسة..." />
+                  <textarea
+                    rows="2"
+                    value={requestForm.notes}
+                    onChange={(e) =>
+                      setRequestForm({ ...requestForm, notes: e.target.value })
+                    }
+                    placeholder="مثال: الانتظار أمام بوابة الهندسة، أو تفاصيل الرجعة..."
+                    className="tc-input"
+                  />
                 </div>
               </div>
 
-              <button type="submit" className="tc-btn tc-btn-primary" disabled={reqBusy}>
-                {reqBusy ? 'جاري النشر...' : isRecurring(reqForm.recurrence_type) ? 'نشر طلب الترحيل المنتظم' : 'نشر طلب التوصيلة'}
+              <button
+                type="submit"
+                className="tc-btn tc-btn-primary"
+                disabled={requestSubmitting}
+              >
+                {requestSubmitting
+                  ? 'جاري النشر...'
+                  : requestIsRecurring
+                  ? 'نشر طلب الترحيل المنتظم'
+                  : 'نشر طلب التوصيلة'}
               </button>
             </form>
           </section>
         )}
 
-        {/* ==================== الإدارة ==================== */}
+        {/* ======================= الإدارة ======================= */}
         {tab === TABS.ADMIN && (
           <>
             {!session ? (
-              <section className="tc-card" style={{ maxWidth: 440, margin: '10px auto' }}>
-                <h2 className="tc-h2"><Icon name="shield" size={19} /> دخول لوحة الإدارة</h2>
-                {loginErr && <div className="tc-alert a-err">{loginErr}</div>}
-                <form onSubmit={adminLogin}>
+              <section className="tc-card" style={{ maxWidth: '460px', margin: '12px auto' }}>
+                <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+                  <div className="tc-empty-icon">
+                    <Icon name="shield" size={24} />
+                  </div>
+                  <h2 className="tc-h2" style={{ justifyContent: 'center' }}>
+                    دخول لوحة الإدارة
+                  </h2>
+                  <p className="tc-muted" style={{ marginBottom: 0 }}>
+                    مخصصة لمشرف توصيلة السنتر — جامعة الخرطوم.
+                  </p>
+                </div>
+
+                {loginError && <div className="tc-alert tc-alert-err">{loginError}</div>}
+
+                <form onSubmit={handleAdminLogin}>
                   <div className="tc-field">
                     <label className="tc-label">البريد الإلكتروني</label>
-                    <input type="email" className="tc-input tc-ltr" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <input
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="tc-input tc-input-ltr"
+                      required
+                    />
                   </div>
                   <div className="tc-field">
                     <label className="tc-label">كلمة المرور</label>
-                    <input type="password" className="tc-input tc-ltr" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="tc-input tc-input-ltr"
+                      required
+                    />
                   </div>
-                  <button type="submit" className="tc-btn tc-btn-primary" disabled={loginBusy}>
-                    {loginBusy ? 'جاري التحقق...' : 'تسجيل الدخول'}
+                  <button
+                    type="submit"
+                    className="tc-btn tc-btn-primary"
+                    disabled={loginLoading}
+                    style={{ marginTop: '6px' }}
+                  >
+                    {loginLoading ? 'جاري التحقق...' : 'تسجيل الدخول'}
                   </button>
                 </form>
               </section>
-            ) : checkingAdmin ? (
-              <section className="tc-card">جاري التحقق من صلاحيات المشرف...</section>
+            ) : adminCheckLoading ? (
+              <section className="tc-card">
+                <p className="tc-muted" style={{ margin: 0 }}>
+                  جاري التحقق من صلاحيات المشرف...
+                </p>
+              </section>
             ) : !isAdmin ? (
               <section className="tc-card">
-                <div className="tc-alert a-err">هذا الحساب ({session.user?.email}) غير مضاف في جدول <code>admin_users</code>.</div>
-                <button type="button" className="tc-btn tc-btn-soft" onClick={adminLogout}>خروج</button>
+                <div className="tc-alert tc-alert-err">
+                  تم تسجيل الدخول بحساب ({session.user?.email})، لكنه غير مضاف في جدول{' '}
+                  <code>admin_users</code>.
+                </div>
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-soft"
+                  onClick={handleAdminLogout}
+                >
+                  تسجيل الخروج
+                </button>
               </section>
             ) : (
               <>
                 <section className="tc-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '10px',
+                    }}
+                  >
                     <div>
-                      <h2 className="tc-h2" style={{ margin: 0 }}><Icon name="shield" size={19} /> لوحة الإدارة</h2>
-                      <span style={{ fontSize: '.82rem', color: '#526b6e' }}>{session.user?.email}</span>
+                      <h2 className="tc-h2" style={{ margin: 0 }}>
+                        <Icon name="shield" size={20} />
+                        لوحة تحكم الإدارة
+                      </h2>
+                      <p className="tc-muted" style={{ margin: '4px 0 0' }}>
+                        المشرف: {session.user?.email}
+                      </p>
                     </div>
-                    <div className="tc-row">
-                      <button type="button" className="tc-btn tc-btn-soft" onClick={fetchAdmin} disabled={adminLoading}><Icon name="refresh" size={14} /> تحديث</button>
-                      <button type="button" className="tc-btn tc-btn-warn" onClick={deleteExpired}><Icon name="trash" size={14} /> حذف المنتهي</button>
-                      <button type="button" className="tc-btn tc-btn-danger" onClick={adminLogout}>خروج</button>
+                    <div className="tc-btn-row">
+                      <button
+                        type="button"
+                        className="tc-btn tc-btn-soft"
+                        onClick={fetchAdminDashboard}
+                        disabled={adminDataLoading}
+                      >
+                        <Icon name="refresh" size={15} />
+                        تحديث
+                      </button>
+                      <button
+                        type="button"
+                        className="tc-btn tc-btn-warn"
+                        onClick={handleDeleteExpiredAds}
+                      >
+                        <Icon name="trash" size={15} />
+                        حذف المنتهي
+                      </button>
+                      <button
+                        type="button"
+                        className="tc-btn tc-btn-danger"
+                        onClick={handleAdminLogout}
+                      >
+                        خروج
+                      </button>
                     </div>
                   </div>
                 </section>
 
-                <div className="tc-stats-3">
-                  <div className="tc-stat-box"><strong>{adminReports.filter((x) => x.status === 'pending').length}</strong><span>بلاغات جديدة</span></div>
-                  <div className="tc-stat-box"><strong>{adminOffers.length}</strong><span>العروض</span></div>
-                  <div className="tc-stat-box"><strong>{adminRequests.length}</strong><span>الطلبات</span></div>
+                <div className="tc-admin-stats">
+                  <div className="tc-admin-stat">
+                    <span className="tc-admin-stat-num">{pendingReportsCount}</span>
+                    <span className="tc-admin-stat-label">بلاغات قيد المراجعة</span>
+                  </div>
+                  <div className="tc-admin-stat">
+                    <span className="tc-admin-stat-num">{adminOffers.length}</span>
+                    <span className="tc-admin-stat-label">إجمالي العروض</span>
+                  </div>
+                  <div className="tc-admin-stat">
+                    <span className="tc-admin-stat-num">{adminRequests.length}</span>
+                    <span className="tc-admin-stat-label">إجمالي الطلبات</span>
+                  </div>
                 </div>
 
-                {adminMsg.text && <div className={`tc-alert ${adminMsg.type === 'ok' ? 'a-ok' : 'a-err'}`}>{adminMsg.text}</div>}
+                {adminFeedback.text && (
+                  <div
+                    className={`tc-alert ${
+                      adminFeedback.type === 'ok' ? 'tc-alert-ok' : 'tc-alert-err'
+                    }`}
+                  >
+                    {adminFeedback.text}
+                  </div>
+                )}
 
                 <section className="tc-card">
                   <h2 className="tc-h2">البلاغات ({adminReports.length})</h2>
-                  {!adminReports.length ? (
-                    <p className="tc-muted" style={{ marginBottom: 0 }}>لا توجد بلاغات.</p>
+                  {adminDataLoading ? (
+                    <div className="tc-skeleton" />
+                  ) : adminReports.length === 0 ? (
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      لا توجد بلاغات حالياً.
+                    </p>
                   ) : (
                     adminReports.map((rep) => {
-                      const lo = rep.target_type === 'offer' ? adminOffersMap[rep.offer_id] : null;
-                      const lr = rep.target_type === 'request' ? adminRequestsMap[rep.request_id] : null;
-                      const tid = rep.target_type === 'offer' ? rep.offer_id : rep.request_id;
+                      const linkedOffer =
+                        rep.target_type === 'offer' ? adminOffersMap[rep.offer_id] : null;
+                      const linkedRequest =
+                        rep.target_type === 'request'
+                          ? adminRequestsMap[rep.request_id]
+                          : null;
+                      const targetId =
+                        rep.target_type === 'offer' ? rep.offer_id : rep.request_id;
+
                       return (
-                        <article key={rep.id} className="tc-item">
-                          <div className="tc-item-top">
-                            <strong>{rep.target_type === 'offer' ? 'بلاغ على عرض سائق' : 'بلاغ على طلب طالب'}</strong>
-                            <span className={`tc-badge ${rep.status === 'pending' ? 'b-warn' : rep.status === 'reviewed' ? 'b-ok' : 'b-neu'}`}>{rep.status}</span>
+                        <article key={rep.id} className="tc-listing">
+                          <div className="tc-listing-top">
+                            <strong>
+                              {rep.target_type === 'offer'
+                                ? 'بلاغ على عرض سائق'
+                                : 'بلاغ على طلب طالب'}
+                            </strong>
+                            <span
+                              className={`tc-badge ${
+                                rep.status === 'pending'
+                                  ? 'tc-badge-warn'
+                                  : rep.status === 'reviewed'
+                                  ? 'tc-badge-ok'
+                                  : 'tc-badge-neutral'
+                              }`}
+                            >
+                              {rep.status === 'pending'
+                                ? 'قيد المراجعة'
+                                : rep.status === 'reviewed'
+                                ? 'تمت المراجعة'
+                                : 'تم التجاهل'}
+                            </span>
                           </div>
-                          <div style={{ fontSize: '.87rem', lineHeight: 1.65 }}>
-                            <div><strong>السبب:</strong> {rep.reason}</div>
-                            {rep.details && <div><strong>تفاصيل:</strong> {rep.details}</div>}
-                            {lo && <div className="tc-notes" style={{ marginTop: 6 }}>{lo.driver_name} — {lo.start_area} ← {lo.destination_area}</div>}
-                            {lr && <div className="tc-notes" style={{ marginTop: 6 }}>{lr.passenger_name} — {lr.start_area} ← {lr.destination_area}</div>}
+
+                          <div style={{ fontSize: '0.88rem', lineHeight: 1.7 }}>
+                            <div>
+                              <strong>السبب:</strong> {rep.reason}
+                            </div>
+                            {rep.details && (
+                              <div>
+                                <strong>تفاصيل:</strong> {rep.details}
+                              </div>
+                            )}
+                            <div style={{ color: '#526b6e', fontSize: '0.82rem' }}>
+                              تاريخ البلاغ: {formatDateTime(rep.created_at)}
+                            </div>
+
+                            {linkedOffer && (
+                              <div className="tc-notes-box" style={{ marginTop: '8px' }}>
+                                <strong>الإعلان المرتبط:</strong> {linkedOffer.driver_name}{' '}
+                                ({linkedOffer.vehicle_type}) — {linkedOffer.start_area} ←{' '}
+                                {linkedOffer.destination_area} • الحالة: {linkedOffer.status}
+                              </div>
+                            )}
+
+                            {linkedRequest && (
+                              <div className="tc-notes-box" style={{ marginTop: '8px' }}>
+                                <strong>الطلب المرتبط:</strong>{' '}
+                                {linkedRequest.passenger_name} — {linkedRequest.start_area}{' '}
+                                ← {linkedRequest.destination_area} • الحالة:{' '}
+                                {linkedRequest.status}
+                              </div>
+                            )}
                           </div>
-                          <div className="tc-row" style={{ marginTop: 10 }}>
-                            <button type="button" className="tc-btn tc-btn-soft" onClick={() => updateReportStatus(rep.id, 'reviewed')}>تمت المراجعة</button>
-                            <button type="button" className="tc-btn tc-btn-warn" onClick={() => updateReportStatus(rep.id, 'dismissed')}>تجاهل</button>
-                            <button type="button" className="tc-btn tc-btn-danger" onClick={() => adminDelete(rep.target_type, tid)}>حذف الإعلان</button>
+
+                          <div className="tc-btn-row" style={{ marginTop: '10px' }}>
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-soft"
+                              onClick={() => handleUpdateReportStatus(rep.id, 'reviewed')}
+                            >
+                              تمت المراجعة
+                            </button>
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-warn"
+                              onClick={() => handleUpdateReportStatus(rep.id, 'dismissed')}
+                            >
+                              تجاهل
+                            </button>
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-danger"
+                              onClick={() =>
+                                handleAdminDeleteListing(rep.target_type, targetId)
+                              }
+                            >
+                              <Icon name="trash" size={14} />
+                              حذف الإعلان المرتبط
+                            </button>
                           </div>
                         </article>
                       );
@@ -2112,33 +5067,113 @@ export default function App() {
                 </section>
 
                 <section className="tc-card">
-                  <h2 className="tc-h2">كل العروض ({adminOffers.length})</h2>
-                  {adminOffers.map((o) => (
-                    <div key={o.id} className="tc-item">
-                      <div className="tc-item-top">
-                        <strong>{o.driver_name}: {o.start_area} ← {o.destination_area}</strong>
-                        <span className="tc-badge b-neu">{new Date(o.expires_at) <= new Date() ? 'منتهي' : o.status}</span>
-                      </div>
-                      <button type="button" className="tc-btn tc-btn-danger" onClick={() => adminDelete('offer', o.id)}>
-                        <Icon name="trash" size={14} /> حذف العرض
-                      </button>
-                    </div>
-                  ))}
+                  <h2 className="tc-h2">كل عروض السائقين ({adminOffers.length})</h2>
+                  {adminOffers.length === 0 ? (
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      لا توجد عروض مسجلة.
+                    </p>
+                  ) : (
+                    adminOffers.map((o) => {
+                      const expired = new Date(o.expires_at).getTime() <= Date.now();
+                      const recurring = isRecurringType(o.recurrence_type);
+                      return (
+                        <div key={o.id} className="tc-listing">
+                          <div className="tc-listing-top">
+                            <strong>
+                              {o.driver_name}: {o.start_area} ← {o.destination_area}
+                            </strong>
+                            <div className="tc-btn-row">
+                              <span
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
+                              </span>
+                              <span
+                                className={`tc-badge ${
+                                  expired || o.status === 'closed'
+                                    ? 'tc-badge-full'
+                                    : 'tc-badge-ok'
+                                }`}
+                              >
+                                {expired ? 'منتهي' : o.status}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: '#425d60' }}>
+                            الموعد: {formatDateTime(o.departure_time)} • المقاعد:{' '}
+                            {o.available_seats}/{o.total_seats}
+                          </div>
+                          <div style={{ marginTop: '10px' }}>
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-danger"
+                              onClick={() => handleAdminDeleteListing('offer', o.id)}
+                            >
+                              <Icon name="trash" size={14} />
+                              حذف العرض
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </section>
 
                 <section className="tc-card">
-                  <h2 className="tc-h2">كل الطلبات ({adminRequests.length})</h2>
-                  {adminRequests.map((r) => (
-                    <div key={r.id} className="tc-item">
-                      <div className="tc-item-top">
-                        <strong>{r.passenger_name}: {r.start_area} ← {r.destination_area}</strong>
-                        <span className="tc-badge b-neu">{new Date(r.expires_at) <= new Date() ? 'منتهي' : r.status}</span>
-                      </div>
-                      <button type="button" className="tc-btn tc-btn-danger" onClick={() => adminDelete('request', r.id)}>
-                        <Icon name="trash" size={14} /> حذف الطلب
-                      </button>
-                    </div>
-                  ))}
+                  <h2 className="tc-h2">كل طلبات الطلاب ({adminRequests.length})</h2>
+                  {adminRequests.length === 0 ? (
+                    <p className="tc-muted" style={{ marginBottom: 0 }}>
+                      لا توجد طلبات مسجلة.
+                    </p>
+                  ) : (
+                    adminRequests.map((r) => {
+                      const expired = new Date(r.expires_at).getTime() <= Date.now();
+                      const recurring = isRecurringType(r.recurrence_type);
+                      return (
+                        <div key={r.id} className="tc-listing">
+                          <div className="tc-listing-top">
+                            <strong>
+                              {r.passenger_name}: {r.start_area} ← {r.destination_area}
+                            </strong>
+                            <div className="tc-btn-row">
+                              <span
+                                className={`tc-badge ${
+                                  recurring ? 'tc-badge-rec' : 'tc-badge-once'
+                                }`}
+                              >
+                                {recurring ? 'ترحيل منتظم' : 'توصيلة'}
+                              </span>
+                              <span
+                                className={`tc-badge ${
+                                  expired || r.status === 'closed'
+                                    ? 'tc-badge-full'
+                                    : 'tc-badge-once'
+                                }`}
+                              >
+                                {expired ? 'منتهي' : r.status}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: '#425d60' }}>
+                            الوقت: {formatDateTime(r.preferred_time)} • المقاعد:{' '}
+                            {r.seats_needed}
+                          </div>
+                          <div style={{ marginTop: '10px' }}>
+                            <button
+                              type="button"
+                              className="tc-btn tc-btn-danger"
+                              onClick={() => handleAdminDeleteListing('request', r.id)}
+                            >
+                              <Icon name="trash" size={14} />
+                              حذف الطلب
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </section>
               </>
             )}
@@ -2146,114 +5181,312 @@ export default function App() {
         )}
       </main>
 
-      {/* ==================== نافذة التعديل ==================== */}
+      {/* نافذة تعديل الإعلان المنبثقة */}
       {editModal && (
-        <div className="tc-modal-bg" onClick={() => !editSaving && setEditModal(null)}>
+        <div
+          className="tc-modal-backdrop"
+          onClick={() => {
+            if (!editSubmitting) setEditModal(null);
+          }}
+        >
           <div className="tc-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="tc-h3">{editModal.kind === 'offer' ? 'تعديل عرض السائق' : 'تعديل طلب التوصيلة / الترحيل'}</h3>
-            {editErr && <div className="tc-alert a-err">{editErr}</div>}
-            <form onSubmit={saveEdit}>
+            <h3 className="tc-h3">
+              {editModal.kind === 'offer'
+                ? 'تعديل عرض السائق'
+                : 'تعديل طلب التوصيلة / الترحيل'}
+            </h3>
+
+            {editError && <div className="tc-alert tc-alert-err">{editError}</div>}
+
+            <form onSubmit={handleSaveEditModal}>
               {editModal.kind === 'offer' ? (
                 <>
                   <div className="tc-field">
-                    <label className="tc-label">نوع العربة</label>
-                    <input type="text" className="tc-input" value={editModal.vehicle_type} onChange={(e) => setEditModal({ ...editModal, vehicle_type: e.target.value })} required />
+                    <label className="tc-label">
+                      نوع العربة <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editModal.vehicle_type}
+                      onChange={(e) =>
+                        setEditModal({ ...editModal, vehicle_type: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
                   </div>
-                  <AreaInput label="منطقة الانطلاق" value={editModal.start_area} onChange={(v) => setEditModal({ ...editModal, start_area: v })} />
-                  <AreaInput label="الوجهة" value={editModal.destination_area} onChange={(v) => setEditModal({ ...editModal, destination_area: v })} />
+                  <AreaInput
+                    label="منطقة الانطلاق"
+                    value={editModal.start_area}
+                    onChange={(val) => setEditModal({ ...editModal, start_area: val })}
+                  />
+                  <AreaInput
+                    label="الوجهة"
+                    value={editModal.destination_area}
+                    onChange={(val) =>
+                      setEditModal({ ...editModal, destination_area: val })
+                    }
+                  />
                   <div className="tc-field">
-                    <label className="tc-label">المحطات الوسيطة</label>
-                    <input type="text" className="tc-input" value={editModal.stops_text} onChange={(e) => setEditModal({ ...editModal, stops_text: e.target.value })} />
+                    <label className="tc-label">المحطات الوسيطة (افصل بفاصلة)</label>
+                    <input
+                      type="text"
+                      value={editModal.intermediate_stops_input}
+                      onChange={(e) =>
+                        setEditModal({
+                          ...editModal,
+                          intermediate_stops_input: e.target.value,
+                        })
+                      }
+                      className="tc-input"
+                    />
                   </div>
                   <div className="tc-field">
-                    <label className="tc-label">موعد التحرك</label>
-                    <input type="datetime-local" className="tc-input" value={editModal.departure_time} onChange={(e) => setEditModal({ ...editModal, departure_time: e.target.value })} required />
+                    <label className="tc-label">
+                      موعد التحرك <span className="tc-req">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={editModal.departure_time}
+                      onChange={(e) =>
+                        setEditModal({ ...editModal, departure_time: e.target.value })
+                      }
+                      className="tc-input"
+                      required
+                    />
                   </div>
                   <div className="tc-grid-2">
                     <div className="tc-field">
                       <label className="tc-label">إجمالي المقاعد</label>
-                      <input type="number" min="1" max="50" className="tc-input" value={editModal.total_seats} onChange={(e) => setEditModal({ ...editModal, total_seats: e.target.value })} required />
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={editModal.total_seats}
+                        onChange={(e) =>
+                          setEditModal({ ...editModal, total_seats: e.target.value })
+                        }
+                        className="tc-input"
+                        required
+                      />
                     </div>
                     <div className="tc-field">
-                      <label className="tc-label">المتاحة</label>
-                      <input type="number" min="0" max="50" className="tc-input" value={editModal.available_seats} onChange={(e) => setEditModal({ ...editModal, available_seats: e.target.value })} required />
+                      <label className="tc-label">المقاعد المتاحة</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={editModal.available_seats}
+                        onChange={(e) =>
+                          setEditModal({ ...editModal, available_seats: e.target.value })
+                        }
+                        className="tc-input"
+                        required
+                      />
                     </div>
                   </div>
-                  <div className="tc-field" style={{ marginTop: 10 }}>
+                  <div className="tc-field" style={{ marginTop: '12px' }}>
                     <label className="tc-label">السعر للمقعد (ج.س)</label>
-                    <input type="number" min="0" step="50" className="tc-input" value={editModal.price_per_seat} onChange={(e) => setEditModal({ ...editModal, price_per_seat: e.target.value })} />
+                    <input
+                      type="number"
+                      min="0"
+                      step="50"
+                      value={editModal.price_per_seat}
+                      onChange={(e) =>
+                        setEditModal({ ...editModal, price_per_seat: e.target.value })
+                      }
+                      className="tc-input"
+                    />
                   </div>
                 </>
               ) : (
                 <>
-                  <AreaInput label="منطقة الانطلاق" value={editModal.start_area} onChange={(v) => setEditModal({ ...editModal, start_area: v })} />
-                  <AreaInput label="الوجهة" value={editModal.destination_area} onChange={(v) => setEditModal({ ...editModal, destination_area: v })} />
+                  <AreaInput
+                    label="منطقة الانطلاق"
+                    value={editModal.start_area}
+                    onChange={(val) => setEditModal({ ...editModal, start_area: val })}
+                  />
+                  <AreaInput
+                    label="الوجهة"
+                    value={editModal.destination_area}
+                    onChange={(val) =>
+                      setEditModal({ ...editModal, destination_area: val })
+                    }
+                  />
                   <div className="tc-grid-2">
                     <div className="tc-field">
-                      <label className="tc-label">الوقت المفضل</label>
-                      <input type="datetime-local" className="tc-input" value={editModal.preferred_time} onChange={(e) => setEditModal({ ...editModal, preferred_time: e.target.value })} required />
+                      <label className="tc-label">
+                        الوقت المفضل <span className="tc-req">*</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={editModal.preferred_time}
+                        onChange={(e) =>
+                          setEditModal({ ...editModal, preferred_time: e.target.value })
+                        }
+                        className="tc-input"
+                        required
+                      />
                     </div>
                     <div className="tc-field">
-                      <label className="tc-label">المقاعد المطلوبة</label>
-                      <input type="number" min="1" max="20" className="tc-input" value={editModal.seats_needed} onChange={(e) => setEditModal({ ...editModal, seats_needed: e.target.value })} required />
+                      <label className="tc-label">عدد المقاعد المطلوبة</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={editModal.seats_needed}
+                        onChange={(e) =>
+                          setEditModal({ ...editModal, seats_needed: e.target.value })
+                        }
+                        className="tc-input"
+                        required
+                      />
                     </div>
                   </div>
-                  <div className="tc-field" style={{ marginTop: 10 }}>
-                    <label className="tc-label">ملاحظات</label>
-                    <textarea rows="2" className="tc-input" value={editModal.notes} onChange={(e) => setEditModal({ ...editModal, notes: e.target.value })} />
+                  <div className="tc-field" style={{ marginTop: '12px' }}>
+                    <label className="tc-label">ملاحظات إضافية</label>
+                    <textarea
+                      rows="2"
+                      value={editModal.notes}
+                      onChange={(e) =>
+                        setEditModal({ ...editModal, notes: e.target.value })
+                      }
+                      className="tc-input"
+                    />
                   </div>
                 </>
               )}
-              <div className="tc-row" style={{ marginTop: 14 }}>
-                <button type="submit" className="tc-btn tc-btn-call" disabled={editSaving}>{editSaving ? 'جاري الحفظ...' : 'حفظ التعديلات'}</button>
-                <button type="button" className="tc-btn tc-btn-ghost" disabled={editSaving} onClick={() => setEditModal(null)}>إلغاء</button>
+
+              <div className="tc-btn-row" style={{ marginTop: '14px' }}>
+                <button
+                  type="submit"
+                  className="tc-btn tc-btn-call"
+                  disabled={editSubmitting}
+                >
+                  {editSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                </button>
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-ghost"
+                  disabled={editSubmitting}
+                  onClick={() => setEditModal(null)}
+                >
+                  إلغاء
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* ==================== نافذة البلاغ ==================== */}
+      {/* نافذة البلاغ المنبثقة */}
       {reportTarget && (
-        <div className="tc-modal-bg" onClick={() => !reportBusy && setReportTarget(null)}>
+        <div
+          className="tc-modal-backdrop"
+          onClick={() => {
+            if (!reportLoading) setReportTarget(null);
+          }}
+        >
           <div className="tc-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="tc-h3" style={{ color: '#b42318' }}>إرسال بلاغ</h3>
-            <p className="tc-muted">{reportTarget.label}</p>
-            <form onSubmit={submitReport}>
+            <h3 className="tc-h3" style={{ color: '#b42318' }}>
+              إرسال بلاغ عن محتوى
+            </h3>
+            <p className="tc-muted" style={{ marginBottom: '12px' }}>
+              {reportTarget.label}
+            </p>
+            <form onSubmit={handleSubmitReport}>
               <div className="tc-field">
-                <label className="tc-label">سبب البلاغ <span className="tc-req">*</span></label>
-                <input type="text" className="tc-input" value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="مثال: رقم غير صحيح أو إعلان مزعج" required />
+                <label className="tc-label">
+                  سبب البلاغ <span className="tc-req">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="مثال: رقم غير صحيح، إعلان مزعج..."
+                  className="tc-input"
+                  required
+                />
               </div>
               <div className="tc-field">
-                <label className="tc-label">تفاصيل (اختياري)</label>
-                <textarea rows="2" className="tc-input" value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} />
+                <label className="tc-label">تفاصيل إضافية (اختياري)</label>
+                <textarea
+                  rows="3"
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="أضف أي تفاصيل تساعد المشرف..."
+                  className="tc-input"
+                />
               </div>
-              <div className="tc-row" style={{ marginTop: 12 }}>
-                <button type="submit" className="tc-btn tc-btn-danger" disabled={reportBusy}>{reportBusy ? 'إرسال...' : 'تأكيد البلاغ'}</button>
-                <button type="button" className="tc-btn tc-btn-ghost" onClick={() => setReportTarget(null)}>إلغاء</button>
+              <div className="tc-btn-row" style={{ marginTop: '14px' }}>
+                <button
+                  type="submit"
+                  className="tc-btn tc-btn-danger"
+                  disabled={reportLoading}
+                >
+                  {reportLoading ? 'جاري الإرسال...' : 'تأكيد إرسال البلاغ'}
+                </button>
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-ghost"
+                  onClick={() => {
+                    setReportTarget(null);
+                    setReportReason('');
+                    setReportDetails('');
+                  }}
+                >
+                  إلغاء
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* ==================== شريط التنقل السفلي للموبايل ==================== */}
-      <nav className="tc-bnav">
-        <button type="button" className={`tc-bnav-btn ${tab === TABS.HOME ? 'active' : ''}`} onClick={() => openTab(TABS.HOME)}>
-          <Icon name="home" size={20} /><span>الرئيسية</span>
+      {/* شريط التنقل السفلي للموبايل */}
+      <nav className="tc-bottom-nav" aria-label="التنقل السفلي للموبايل">
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.HOME ? 'active' : ''}`}
+          onClick={() => openTab(TABS.HOME)}
+        >
+          <Icon name="home" size={20} />
+          <span>الرئيسية</span>
         </button>
-        <button type="button" className={`tc-bnav-btn ${tab === TABS.ADS ? 'active' : ''}`} onClick={() => openAds('all')}>
-          {totalLiveAds > 0 && <span className="tc-bnav-cnt">{totalLiveAds}</span>}
-          <Icon name="ads" size={20} /><span>الإعلانات</span>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.ADS ? 'active' : ''}`}
+          onClick={() => openAds('all')}
+        >
+          {totalLiveAds > 0 && (
+            <span className="tc-bottom-count">{totalLiveAds}</span>
+          )}
+          <Icon name="ads" size={20} />
+          <span>الإعلانات</span>
         </button>
-        <button type="button" className={`tc-bnav-btn ${tab === TABS.OFFER ? 'active' : ''}`} onClick={() => openTab(TABS.OFFER)}>
-          <Icon name="car" size={20} /><span>أعرض</span>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.OFFER ? 'active' : ''}`}
+          onClick={() => openTab(TABS.OFFER)}
+        >
+          <Icon name="car" size={20} />
+          <span>أعرض</span>
         </button>
-        <button type="button" className={`tc-bnav-btn ${tab === TABS.REQUEST ? 'active' : ''}`} onClick={() => openTab(TABS.REQUEST)}>
-          <Icon name="hand" size={20} /><span>اطلب</span>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.REQUEST ? 'active' : ''}`}
+          onClick={() => openTab(TABS.REQUEST)}
+        >
+          <Icon name="hand" size={20} />
+          <span>اطلب</span>
         </button>
-        <button type="button" className={`tc-bnav-btn ${tab === TABS.ADMIN ? 'active' : ''}`} onClick={() => openTab(TABS.ADMIN)}>
-          <Icon name="shield" size={20} /><span>الإدارة</span>
+        <button
+          type="button"
+          className={`tc-bottom-btn ${tab === TABS.ADMIN ? 'active' : ''}`}
+          onClick={() => openTab(TABS.ADMIN)}
+        >
+          <Icon name="shield" size={20} />
+          <span>الإدارة</span>
         </button>
       </nav>
     </div>
