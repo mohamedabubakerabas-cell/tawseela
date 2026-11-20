@@ -1534,6 +1534,31 @@ function RouteTimeline({ start, destination, stops = [] }) {
   );
 }
 
+const HOME_CSS = `
+.tc-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.tc-quick-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 16px 10px; min-height: 104px;
+  border: 1px solid #d9e6e7; border-radius: 18px; background: #ffffff; color: #073e44;
+  font-family: inherit; font-weight: 800; font-size: 1rem; cursor: pointer; text-align: center;
+  box-shadow: 0 2px 8px rgba(7, 62, 68, 0.06);
+}
+.tc-quick-tile:active { transform: scale(0.98); }
+.tc-quick-tile.wide {
+  grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 14px;
+  min-height: 84px; padding: 14px 18px; background: #0b555c; color: #ffffff;
+  border-color: #0b555c; text-align: right;
+}
+.tc-quick-ico {
+  width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.tc-quick-text { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.tc-quick-sub { font-size: 0.8rem; font-weight: 500; opacity: 0.85; }
+.tc-howto summary { cursor: pointer; font-weight: 700; color: #0b555c; }
+`;
+
+
 export default function App() {
   const [tab, setTab] = useState(() => {
     try {
@@ -2924,6 +2949,7 @@ export default function App() {
   return (
     <div className="tc-app">
       <style>{APP_CSS}</style>
+      <style>{HOME_CSS}</style>
 
       <header className="tc-header">
         <div className="tc-header-inner">
@@ -3004,150 +3030,97 @@ export default function App() {
         {/* ======================= الرئيسية ======================= */}
         {tab === TABS.HOME && (
           <>
-            <section className="tc-hero">
-              <div className="tc-hero-kicker">
-                <Icon name="campus" size={15} />
-                <span>مبادرة طلابية لطلاب جامعة الخرطوم</span>
-              </div>
-              <h2 className="tc-hero-title">مشوارك لجامعة الخرطوم أسهل وأوفر مع زملائك</h2>
-              <p className="tc-hero-desc">
-                منصة مجانية تربط طلاب جامعة الخرطوم أصحاب العربات بزملائهم على نفس
-                المسار لمجمعات الوسط وشمبات والطب والتربية — سواء لـ{' '}
-                <strong>توصيلة سريعة لليوم</strong> أو{' '}
-                <strong>ترحيل منتظم يومي أو أسبوعي</strong>، بدون تسجيل حساب.
+            <section className="tc-hero" style={{ padding: '18px 18px 16px' }}>
+              <h2
+                className="tc-hero-title"
+                style={{ fontSize: '1.3rem', lineHeight: 1.45, margin: 0 }}
+              >
+                مشوارك لجامعة الخرطوم أسهل وأوفر
+              </h2>
+              <p className="tc-hero-desc" style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>
+                منصة مجانية بين زملاء الجامعة، بدون تسجيل حساب
               </p>
-              <div className="tc-stats-strip">
-                <button
-                  type="button"
-                  className="tc-stat-chip"
-                  onClick={() => openAds('offers')}
+            </section>
+
+            <section className="tc-quick-grid">
+              <button
+                type="button"
+                className="tc-quick-tile wide"
+                onClick={() => openAds('all')}
+              >
+                <span
+                  className="tc-quick-ico"
+                  style={{ background: 'rgba(255,255,255,0.16)' }}
                 >
-                  <Icon name="car" size={16} />
-                  <span>{filteredOffers.length} عرض سائق متاح الآن</span>
-                  <Icon name="chevronLeft" size={14} />
-                </button>
-                <button
-                  type="button"
-                  className="tc-stat-chip"
-                  onClick={() => openAds('requests')}
+                  <Icon name="ads" size={26} />
+                </span>
+                <span className="tc-quick-text">
+                  <span>ابحث عن ترحيل</span>
+                  <span className="tc-quick-sub">
+                    {filteredOffers.length} عرض سائق • {filteredRequests.length} طلب طالب
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="tc-quick-tile"
+                onClick={() => openTab(TABS.OFFER)}
+              >
+                <span
+                  className="tc-quick-ico"
+                  style={{ background: '#e6f7ed', color: '#15803d' }}
                 >
-                  <Icon name="hand" size={16} />
-                  <span>{filteredRequests.length} طلب طالب نشط</span>
-                  <Icon name="chevronLeft" size={14} />
-                </button>
-              </div>
+                  <Icon name="car" size={26} />
+                </span>
+                <span>أعرض مشواراً</span>
+              </button>
+
+              <button
+                type="button"
+                className="tc-quick-tile"
+                onClick={() => openTab(TABS.REQUEST)}
+              >
+                <span
+                  className="tc-quick-ico"
+                  style={{ background: '#fef5e7', color: '#c47119' }}
+                >
+                  <Icon name="hand" size={26} />
+                </span>
+                <span>اطلب ترحيل</span>
+              </button>
             </section>
 
             {totalMyAdsCount > 0 && (
               <section
                 className="tc-card"
                 style={{
-                  padding: '15px 16px',
+                  padding: '12px 14px',
                   borderColor: '#0d5c63',
                   background: 'linear-gradient(135deg, #eef7f6 0%, #ffffff 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
                 }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                  }}
+                <strong style={{ color: '#073e44', fontSize: '0.92rem' }}>
+                  لديك {totalMyAdsCount} إعلان على هذا الجهاز
+                </strong>
+                <button
+                  type="button"
+                  className="tc-btn tc-btn-call"
+                  onClick={() => openAds('mine')}
                 >
-                  <div>
-                    <strong style={{ color: '#073e44', fontSize: '0.96rem' }}>
-                      لديك {totalMyAdsCount} إعلان محفوظ على هذا الجهاز ({myOffers.length}{' '}
-                      عرض • {myRequests.length} طلب)
-                    </strong>
-                    <div style={{ fontSize: '0.82rem', color: '#526b6e', marginTop: '2px' }}>
-                      عدّل بياناتها أو أغلقها أو احذفها نهائياً بضغطة زر.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="tc-btn tc-btn-call"
-                    onClick={() => openAds('mine')}
-                  >
-                    <Icon name="edit" size={15} />
-                    إدارة إعلاناتي
-                  </button>
-                </div>
+                  <Icon name="edit" size={15} />
+                  إدارة إعلاناتي
+                </button>
               </section>
             )}
 
-            <section className="tc-actions-grid">
-              <button
-                type="button"
-                className="tc-action-tile primary"
-                onClick={() => openAds('all')}
-              >
-                <span
-                  className="tc-tile-icon"
-                  style={{ background: '#0b555c', color: '#ffffff' }}
-                >
-                  <Icon name="ads" size={24} />
-                </span>
-                <span className="tc-tile-body">
-                  <span className="tc-tile-title">تصفح الإعلانات ({totalLiveAds})</span>
-                  <span className="tc-tile-sub">
-                    استعرض عروض السائقين وطلبات طلاب جامعة الخرطوم أو أدر إعلاناتك
-                  </span>
-                </span>
-                <span className="tc-tile-arrow">
-                  <Icon name="chevronLeft" size={20} />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className="tc-action-tile"
-                onClick={() => openTab(TABS.OFFER)}
-              >
-                <span
-                  className="tc-tile-icon"
-                  style={{ background: '#e6f7ed', color: '#15803d' }}
-                >
-                  <Icon name="car" size={24} />
-                </span>
-                <span className="tc-tile-body">
-                  <span className="tc-tile-title">أعرض توصيلة أو ترحيل (لدي عربة)</span>
-                  <span className="tc-tile-sub">
-                    شارك مقاعدك الفارغة مع زملائك وتحكم بها بضغطة زر من جهازك
-                  </span>
-                </span>
-                <span className="tc-tile-arrow">
-                  <Icon name="chevronLeft" size={20} />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className="tc-action-tile"
-                onClick={() => openTab(TABS.REQUEST)}
-              >
-                <span
-                  className="tc-tile-icon"
-                  style={{ background: '#fef5e7', color: '#c47119' }}
-                >
-                  <Icon name="hand" size={24} />
-                </span>
-                <span className="tc-tile-body">
-                  <span className="tc-tile-title">أطلب توصيلة أو ترحيل</span>
-                  <span className="tc-tile-sub">
-                    انشر منطقتك ومجمعك الجامعي وموعدك ليتواصل معك السائقون مباشرة
-                  </span>
-                </span>
-                <span className="tc-tile-arrow">
-                  <Icon name="chevronLeft" size={20} />
-                </span>
-              </button>
-            </section>
-
-            <section className="tc-card">
-              <h3 className="tc-h3">توصيلة سريعة أم ترحيل منتظم؟</h3>
-              <div className="tc-info-grid">
+            <details className="tc-card tc-howto">
+              <summary>كيف يعمل؟ توصيلة سريعة أم ترحيل منتظم</summary>
+              <div className="tc-info-grid" style={{ marginTop: '10px' }}>
                 <div className="tc-info-mini">
                   <span className="tc-badge tc-badge-once" style={{ flexShrink: 0 }}>
                     <Icon name="clock" size={14} /> توصيلة
@@ -3167,7 +3140,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            </section>
+            </details>
           </>
         )}
 
