@@ -75,6 +75,7 @@ const OFFER_PUBLIC_COLUMNS = [
   'status',
   'expires_at',
   'created_at',
+  'updated_at',
 ].join(', ');
 
 const REQUEST_PUBLIC_COLUMNS = [
@@ -1341,6 +1342,21 @@ function buildTelLink(rawPhone) {
   return num ? `tel:+${num}` : '';
 }
 
+function formatTimeAgo(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(diff)) return '';
+  const ago = (n, one, two, few, many) =>
+    n === 1 ? `قبل ${one}` : n === 2 ? `قبل ${two}` : `قبل ${n} ${n <= 10 ? few : many}`;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'الآن';
+  if (min < 60) return ago(min, 'دقيقة', 'دقيقتين', 'دقائق', 'دقيقة');
+  const h = Math.floor(min / 60);
+  if (h < 24) return ago(h, 'ساعة', 'ساعتين', 'ساعات', 'ساعة');
+  const d = Math.floor(h / 24);
+  return ago(d, 'يوم', 'يومين', 'أيام', 'يوماً');
+}
+
 function formatDateTime(iso) {
   if (!iso) return 'غير محدد';
   const d = new Date(iso);
@@ -1520,21 +1536,20 @@ function RouteTimeline({ start, destination, stops = [] }) {
 
 export default function App() {
   const [tab, setTab] = useState(() => {
-  try {
-    return localStorage.getItem('tc_seen') ? TABS.ADS : TABS.HOME;
-  } catch {
-    return TABS.HOME;
-  }
-});
+    try {
+      return localStorage.getItem('tc_seen') ? TABS.ADS : TABS.HOME;
+    } catch {
+      return TABS.HOME;
+    }
+  });
 
-useEffect(() => {
-  try {
-    localStorage.setItem('tc_seen', '1');
-  } catch {
-    /* ignore */
-  }
-}, []);
-  
+  useEffect(() => {
+    try {
+      localStorage.setItem('tc_seen', '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [boardSection, setBoardSection] = useState('all'); // 'all' | 'offers' | 'requests' | 'mine'
 
   // حالة الإعلانات والبحث
@@ -3353,7 +3368,7 @@ useEffect(() => {
                           offer.recurrence_days
                         )})`
                       : formatDateTime(offer.departure_time);
-                    const waText = `السلام عليكم كابتن ${offer.driver_name}، شاهدت عرض (${kindText}) في توصيلة السنتر - جامعة الخرطوم من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. هل يوجد مقعد متاح؟`;
+                    const waText = `السلام عليكم كابتن ${offer.driver_name}، أنا من طلاب جامعة الخرطوم وشفت عرضك (${kindText}) في توصيلة السنتر: من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. أرغب في حجز مقعد، هل ما زال متاحاً؟ شكراً.`;
                     const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
                     const telHref = buildTelLink(
                       offer.phone_number || offer.whatsapp_number
@@ -3408,6 +3423,10 @@ useEffect(() => {
                           <span className="tc-meta-item">
                             <Icon name="clock" size={15} />
                             {timeText}
+                          </span>
+                          <span className="tc-meta-item">
+                            <Icon name="clock" size={15} />
+                            آخر تحديث {formatTimeAgo(offer.updated_at || offer.created_at)}
                           </span>
                         </div>
 
@@ -3501,7 +3520,7 @@ useEffect(() => {
                                     className="tc-btn tc-btn-wa"
                                   >
                                     <Icon name="whatsapp" size={16} />
-                                    واتساب
+                                    {isFull ? 'اسأل عن مقعد' : 'احجز مقعد'}
                                   </a>
                                 )}
                                 {telHref && (
@@ -3611,6 +3630,10 @@ useEffect(() => {
                           <span className="tc-meta-item">
                             <Icon name="clock" size={15} />
                             {timeText}
+                          </span>
+                          <span className="tc-meta-item">
+                            <Icon name="clock" size={15} />
+                            نُشر {formatTimeAgo(req.created_at)}
                           </span>
                         </div>
 
