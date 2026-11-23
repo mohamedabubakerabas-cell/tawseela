@@ -1535,83 +1535,89 @@ function RouteTimeline({ start, destination, stops = [] }) {
 }
 
 const HOME_CSS = `
-.tc-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
-.tc-quick-tile {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 16px 10px; min-height: 104px;
-  border: 1px solid #d9e6e7; border-radius: 18px; background: #ffffff; color: #073e44;
-  font-family: inherit; font-weight: 800; font-size: 1rem; cursor: pointer; text-align: center;
-  box-shadow: 0 2px 8px rgba(7, 62, 68, 0.06);
+.tc-hero2 {
+  position: relative; overflow: hidden; border-radius: 24px; color: #ffffff;
+  min-height: 210px; padding: 20px 18px 16px; margin-top: 4px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+  background-image: url('/hero.jpg'), url("%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M-20 270 C 100 240 150 150 240 170 S 380 230 430 90' fill='none' stroke='%23b8f0dc' stroke-opacity='.4' stroke-width='3' stroke-dasharray='9 12' stroke-linecap='round'/%3E%3Cpath d='M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z' transform='translate(50 50)' fill='%23f08a47' fill-opacity='0.85'/%3E%3Cpath d='M0 -8 L2.0 -2.0 L8 0 L2.0 2.0 L0 8 L-2.0 2.0 L-8 0 L-2.0 -2.0 Z' transform='translate(330 40)' fill='%23ffd28a' fill-opacity='0.85'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(190 90)' fill='%23ffffff' fill-opacity='0.6'/%3E%3Cpath d='M0 -9 L2.25 -2.25 L9 0 L2.25 2.25 L0 9 L-2.25 2.25 L-9 0 L-2.25 -2.25 Z' transform='translate(360 170)' fill='%23f08a47' fill-opacity='0.75'/%3E%3Cpath d='M0 -7 L1.75 -1.75 L7 0 L1.75 1.75 L0 7 L-1.75 1.75 L-7 0 L-1.75 -1.75 Z' transform='translate(70 200)' fill='%23ffd28a' fill-opacity='0.75'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(280 250)' fill='%23ffffff' fill-opacity='0.55'/%3E%3Ccircle cx='120' cy='140' r='2.5' fill='%23f08a47' fill-opacity='.6'/%3E%3Ccircle cx='250' cy='60' r='2' fill='%23ffffff' fill-opacity='.6'/%3E%3C/svg%3E"), linear-gradient(150deg, #1c8d76 0%, #0b555c 100%);
+  background-size: cover, cover, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  box-shadow: var(--shadow-md);
 }
-.tc-quick-tile:active { transform: scale(0.98); }
-.tc-quick-tile.wide {
-  grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 14px;
-  min-height: 84px; padding: 14px 18px; background: linear-gradient(135deg, #f08a47 0%, #e8703f 100%); color: #ffffff;
-  border-color: #e8703f; text-align: right;
+.tc-hero2::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none;
+  background: linear-gradient(200deg, rgba(8, 64, 70, 0.55) 0%, rgba(8, 64, 70, 0) 62%);
 }
-.tc-quick-ico {
-  width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
+.tc-hero2 > * { position: relative; z-index: 1; }
+.tc-hero2-title { margin: 0; max-width: 80%; font-size: 1.4rem; font-weight: 800; line-height: 1.5; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); }
+.tc-hero2-search {
+  display: flex; align-items: center; gap: 10px; width: 100%; border: 0; cursor: pointer;
+  background: rgba(255, 255, 255, 0.95); color: #5b7377; border-radius: 999px;
+  padding: 13px 16px; font: inherit; font-size: 0.95rem; text-align: right;
 }
-.tc-quick-text { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
-.tc-quick-sub { font-size: 0.8rem; font-weight: 500; opacity: 0.85; }
+.tc-act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.tc-act {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  min-height: 112px; padding: 16px 10px; border: 0; border-radius: 20px; cursor: pointer;
+  font: inherit; font-weight: 800; font-size: 1rem; box-shadow: var(--shadow-sm);
+}
+.tc-act:active { transform: scale(0.98); }
+.tc-act.dark { background: #0b555c; color: #ffffff; }
+.tc-act.light { background: #ffffff; color: #073e44; border: 1px solid var(--border); }
+.tc-act-ico { color: #e8873f; display: inline-flex; }
+.tc-sec-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 2px 10px; }
+.tc-sec-head h2 { margin: 0; font-size: 1.1rem; color: #073e44; }
+.tc-link-btn { background: none; border: 0; color: #d9632b; font: inherit; font-weight: 700; cursor: pointer; }
+.tc-mini { background: #ffffff; border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+.tc-mini-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: #526b6e; font-size: 0.9rem; font-weight: 600; }
+.tc-mini-foot { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 2px dashed #dbe7e4; }
+.tc-mini-info { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.tc-mini-foot .tc-btn { width: 100%; justify-content: center; }
 .tc-howto summary { cursor: pointer; font-weight: 700; color: #0b555c; }
 `;
 
 
 const THEME_CSS = `
 :root {
-  --bg: #0e5f58;
-  --surface: #fffdf8;
-  --surface-soft: #fbf3e8;
+  --bg: #f4f8f7;
+  --surface: #ffffff;
+  --surface-soft: #f6faf9;
   --primary-light: #e3f3ee;
   --accent: #ec7a3c;
   --accent-soft: #fff0e2;
-  --border: #eadfcf;
-  --border-strong: #d6c5ad;
-  --shadow-sm: 0 4px 14px rgba(4, 44, 48, 0.16);
-  --shadow-md: 0 10px 28px rgba(4, 44, 48, 0.26);
+  --border: #e3ece9;
+  --border-strong: #cddcd8;
+  --shadow-sm: 0 2px 10px rgba(11, 85, 92, 0.08);
+  --shadow-md: 0 8px 24px rgba(11, 85, 92, 0.14);
 }
-body { background: #0e5f58; }
-.tc-app { position: relative; }
-.tc-app::before {
-  content: '';
-  position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-  z-index: -1; pointer-events: none;
-  background-image: url("%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M-20 770 C 110 700 150 580 250 530 S 420 370 330 210 S 350 60 430 10' fill='none' stroke='%23b8f0dc' stroke-opacity='.34' stroke-width='3' stroke-dasharray='9 12' stroke-linecap='round'/%3E%3Cpath d='M-30 430 C 80 390 150 310 120 210 S 30 90 150 -20' fill='none' stroke='%23b8f0dc' stroke-opacity='.2' stroke-width='2.5' stroke-dasharray='6 10' stroke-linecap='round'/%3E%3Cpath d='M0 -11 L2.75 -2.75 L11 0 L2.75 2.75 L0 11 L-2.75 2.75 L-11 0 L-2.75 -2.75 Z' transform='translate(60 90)' fill='%23f08a47' fill-opacity='0.8'/%3E%3Cpath d='M0 -8 L2.0 -2.0 L8 0 L2.0 2.0 L0 8 L-2.0 2.0 L-8 0 L-2.0 -2.0 Z' transform='translate(335 60)' fill='%23ffd28a' fill-opacity='0.8'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(210 170)' fill='%23ffffff' fill-opacity='0.55'/%3E%3Cpath d='M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z' transform='translate(370 270)' fill='%23f08a47' fill-opacity='0.7'/%3E%3Cpath d='M0 -7 L1.75 -1.75 L7 0 L1.75 1.75 L0 7 L-1.75 1.75 L-7 0 L-1.75 -1.75 Z' transform='translate(40 300)' fill='%23ffd28a' fill-opacity='0.7'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(300 400)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z' transform='translate(90 520)' fill='%23f08a47' fill-opacity='0.65'/%3E%3Cpath d='M0 -7 L1.75 -1.75 L7 0 L1.75 1.75 L0 7 L-1.75 1.75 L-7 0 L-1.75 -1.75 Z' transform='translate(360 560)' fill='%23ffd28a' fill-opacity='0.7'/%3E%3Cpath d='M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z' transform='translate(200 640)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -8 L2.0 -2.0 L8 0 L2.0 2.0 L0 8 L-2.0 2.0 L-8 0 L-2.0 -2.0 Z' transform='translate(40 720)' fill='%23ffd28a' fill-opacity='0.6'/%3E%3Cpath d='M0 -11 L2.75 -2.75 L11 0 L2.75 2.75 L0 11 L-2.75 2.75 L-11 0 L-2.75 -2.75 Z' transform='translate(310 740)' fill='%23f08a47' fill-opacity='0.7'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(150 40)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(240 330)' fill='%23ffd28a' fill-opacity='0.6'/%3E%3Ccircle cx='120' cy='380' r='2.5' fill='%23f08a47' fill-opacity='.6'/%3E%3Ccircle cx='270' cy='100' r='2' fill='%23ffffff' fill-opacity='.6'/%3E%3Ccircle cx='20' cy='610' r='2.5' fill='%23ffd28a' fill-opacity='.6'/%3E%3Ccircle cx='380' cy='450' r='2' fill='%23ffffff' fill-opacity='.6'/%3E%3Ccircle cx='180' cy='760' r='2' fill='%23f08a47' fill-opacity='.6'/%3E%3C/svg%3E"), linear-gradient(165deg, #1c8d76 0%, #14715f 40%, #0b4d55 100%);
+body { background: #f4f8f7; }
+.tc-header {
+  border-bottom: 3px solid var(--accent);
+  background-image: url("%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 140' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M-10 120 C 90 100 140 40 230 60 S 360 110 420 30' fill='none' stroke='%23b8f0dc' stroke-opacity='.32' stroke-width='2.5' stroke-dasharray='8 10' stroke-linecap='round'/%3E%3Cpath d='M0 -8 L2.0 -2.0 L8 0 L2.0 2.0 L0 8 L-2.0 2.0 L-8 0 L-2.0 -2.0 Z' transform='translate(36 28)' fill='%23f08a47' fill-opacity='0.8'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(150 22)' fill='%23ffd28a' fill-opacity='0.8'/%3E%3Cpath d='M0 -7 L1.75 -1.75 L7 0 L1.75 1.75 L0 7 L-1.75 1.75 L-7 0 L-1.75 -1.75 Z' transform='translate(300 26)' fill='%23f08a47' fill-opacity='0.7'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(370 92)' fill='%23ffd28a' fill-opacity='0.8'/%3E%3Cpath d='M0 -5 L1.25 -1.25 L5 0 L1.25 1.25 L0 5 L-1.25 1.25 L-5 0 L-1.25 -1.25 Z' transform='translate(90 100)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Cpath d='M0 -4 L1.0 -1.0 L4 0 L1.0 1.0 L0 4 L-1.0 1.0 L-4 0 L-1.0 -1.0 Z' transform='translate(220 112)' fill='%23ffffff' fill-opacity='0.5'/%3E%3Ccircle cx='190' cy='70' r='2' fill='%23ffffff' fill-opacity='.6'/%3E%3Ccircle cx='330' cy='60' r='2' fill='%23f08a47' fill-opacity='.6'/%3E%3C/svg%3E"), linear-gradient(135deg, #0b555c 0%, #12776a 100%);
   background-size: cover, cover;
   background-position: center, center;
   background-repeat: no-repeat, no-repeat;
 }
-.tc-header { border-bottom: 3px solid var(--accent); }
-.tc-hero { border: 1px solid rgba(255, 255, 255, 0.14); }
-.tc-main > section:not(.tc-card) > .tc-h2 { color: #ffffff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }
-.tc-listing { background: var(--surface); border-inline-start: 6px solid var(--accent); }
-.tc-listing.tc-listing-req { border-inline-start-color: #1f9a80; }
-.tc-listing-own {
-  border: 1.5px solid #0d5c63; border-inline-start: 6px solid #0d5c63;
-  background: linear-gradient(180deg, #f3fbf8 0%, var(--surface) 42%);
-}
-.tc-listing-footer { border-top: 2px dashed #e0cfb5; }
+.tc-listing { background: #ffffff; border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-sm); }
+.tc-listing-own { border: 1.5px solid #0d5c63; background: linear-gradient(180deg, #f1faf7 0%, #ffffff 45%); }
+.tc-listing-footer { border-top: 2px dashed #dbe7e4; }
 .tc-route-line { border-right: 2px dashed var(--accent); }
-.tc-dot-start { background: #1f9a80; box-shadow: 0 0 0 3px rgba(31, 154, 128, 0.22); }
-.tc-segmented-4 { background: rgba(255, 248, 238, 0.96); }
-.tc-seg-btn.active { background: var(--accent); color: #ffffff; box-shadow: 0 3px 10px rgba(236, 122, 60, 0.4); }
-.tc-bottom-nav { background: rgba(255, 250, 242, 0.97); border-top: 3px solid var(--accent); }
-.tc-bottom-btn.active { color: #d9632b; background: #ffeede; }
-.tc-btn-primary { background: linear-gradient(135deg, #f08a47 0%, #e8703f 100%); box-shadow: 0 6px 16px rgba(232, 112, 63, 0.35); }
-.tc-btn-call { background: #12786a; }
-.tc-btn-call:hover { background: #0d5c63; }
-.tc-btn-soft { background: #e3f3ee; border-color: #bfe3d8; }
-.tc-btn-ghost { background: #fff8ee; }
-.tc-input { border-color: #e0d3c0; }
-.tc-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(236, 122, 60, 0.18); }
+.tc-dot-start { background: #0b555c; box-shadow: 0 0 0 3px rgba(11, 85, 92, 0.15); }
+.tc-dot-end { background: var(--accent); box-shadow: 0 0 0 3px rgba(236, 122, 60, 0.18); }
 .tc-badge-once { background: #ffe9d6; color: #c4561f; }
 .tc-badge-rec { background: #dff3ec; color: #0b6b5e; }
-.tc-skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.12) 75%);
-  background-size: 200% 100%;
-}
+.tc-btn-primary { background: linear-gradient(135deg, #f08a47 0%, #e8703f 100%); }
+.tc-btn-call { background: #0b555c; }
+.tc-btn-call:hover { background: #084046; }
+.tc-btn-danger { background: #ffffff; color: #c0392b; border: 1.5px solid #f1c9c4; }
+.tc-btn-danger:hover { background: #fdecea; }
+.tc-bottom-nav { background: rgba(255, 255, 255, 0.97); border-top: 1px solid var(--border); }
+.tc-bottom-btn.active { color: #0b555c; background: #e3f3ee; }
+.tc-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(236, 122, 60, 0.18); }
+.tc-form-section-title { color: #0b555c; }
+.tc-form-section-title svg { color: var(--accent); }
+.tc-form-section + .tc-form-section { border-top: 2px dashed #cfe3dd; margin-top: 18px; padding-top: 16px; }
 `;
 
 export default function App() {
@@ -3086,64 +3092,24 @@ export default function App() {
         {/* ======================= الرئيسية ======================= */}
         {tab === TABS.HOME && (
           <>
-            <section className="tc-hero" style={{ padding: '18px 18px 16px' }}>
-              <h2
-                className="tc-hero-title"
-                style={{ fontSize: '1.3rem', lineHeight: 1.45, margin: 0 }}
-              >
-                مشوارك لجامعة الخرطوم أسهل وأوفر
-              </h2>
-              <p className="tc-hero-desc" style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>
-                منصة مجانية بين زملاء الجامعة، بدون تسجيل حساب
-              </p>
+            <section className="tc-hero2">
+              <h2 className="tc-hero2-title">مشوارك للجامعة أسهل وأوفر</h2>
+              <button type="button" className="tc-hero2-search" onClick={() => openAds('all')}>
+                <Icon name="search" size={18} />
+                ابحث عن مسارك...
+              </button>
             </section>
 
-            <section className="tc-quick-grid">
-              <button
-                type="button"
-                className="tc-quick-tile wide"
-                onClick={() => openAds('all')}
-              >
-                <span
-                  className="tc-quick-ico"
-                  style={{ background: 'rgba(255,255,255,0.16)' }}
-                >
-                  <Icon name="ads" size={26} />
-                </span>
-                <span className="tc-quick-text">
-                  <span>ابحث عن ترحيل</span>
-                  <span className="tc-quick-sub">
-                    {filteredOffers.length} عرض سائق • {filteredRequests.length} طلب طالب
-                  </span>
-                </span>
+            <section className="tc-act-grid">
+              <button type="button" className="tc-act dark" onClick={() => openTab(TABS.OFFER)}>
+                <Icon name="car" size={30} />
+                أعرض مشواراً
               </button>
-
-              <button
-                type="button"
-                className="tc-quick-tile"
-                onClick={() => openTab(TABS.OFFER)}
-              >
-                <span
-                  className="tc-quick-ico"
-                  style={{ background: '#dff3ec', color: '#0b6b5e' }}
-                >
-                  <Icon name="car" size={26} />
+              <button type="button" className="tc-act light" onClick={() => openTab(TABS.REQUEST)}>
+                <span className="tc-act-ico">
+                  <Icon name="hand" size={30} />
                 </span>
-                <span>أعرض مشواراً</span>
-              </button>
-
-              <button
-                type="button"
-                className="tc-quick-tile"
-                onClick={() => openTab(TABS.REQUEST)}
-              >
-                <span
-                  className="tc-quick-ico"
-                  style={{ background: '#ffe9d6', color: '#d9632b' }}
-                >
-                  <Icon name="hand" size={26} />
-                </span>
-                <span>اطلب ترحيل</span>
+                اطلب ترحيل
               </button>
             </section>
 
@@ -3174,6 +3140,87 @@ export default function App() {
               </section>
             )}
 
+            <div className="tc-sec-head">
+              <h2>أقرب الرحلات</h2>
+              <button type="button" className="tc-link-btn" onClick={() => openAds('all')}>
+                عرض الكل
+              </button>
+            </div>
+
+            {(() => {
+              const upcoming = filteredOffers
+                .filter((o) => o.status !== 'full' && (Number(o.available_seats) || 0) > 0)
+                .slice(0, 3);
+              if (boardLoading && upcoming.length === 0) {
+                return <p className="tc-muted">جارٍ تحميل الرحلات...</p>;
+              }
+              if (upcoming.length === 0) {
+                return (
+                  <div className="tc-card" style={{ textAlign: 'center' }}>
+                    <p className="tc-muted" style={{ margin: '0 0 10px' }}>
+                      لا توجد رحلات متاحة حالياً. كن أول من ينشر مشواره!
+                    </p>
+                    <button
+                      type="button"
+                      className="tc-btn tc-btn-call"
+                      onClick={() => openTab(TABS.OFFER)}
+                    >
+                      أعرض مشواراً
+                    </button>
+                  </div>
+                );
+              }
+              return upcoming.map((offer) => {
+                const rec = isRecurringType(offer.recurrence_type);
+                const when = rec
+                  ? `الساعة ${formatTimeOnly(offer.departure_time)} (${formatRecurrence(
+                      offer.recurrence_type,
+                      offer.recurrence_days
+                    )})`
+                  : formatDateTime(offer.departure_time);
+                const waText = `السلام عليكم كابتن ${offer.driver_name}، شفت عرضك في توصيلة السنتر: من (${offer.start_area}) إلى (${offer.destination_area}) — ${when}. أرغب في حجز مقعد، هل ما زال متاحاً؟ شكراً.`;
+                return (
+                  <article className="tc-mini" key={offer.id}>
+                    <div className="tc-mini-top">
+                      <span>
+                        {offer.driver_name} • {Number(offer.available_seats) || 0} مقاعد
+                      </span>
+                      <span className={`tc-badge ${rec ? 'tc-badge-rec' : 'tc-badge-once'}`}>
+                        {rec ? 'ترحيل منتظم' : 'توصيلة'}
+                      </span>
+                    </div>
+                    <RouteTimeline
+                      start={offer.start_area}
+                      destination={offer.destination_area}
+                      stops={offer.intermediate_stops}
+                    />
+                    <div className="tc-mini-foot">
+                      <div className="tc-mini-info">
+                        <span className="tc-meta-item">
+                          <Icon name="clock" size={15} />
+                          {when}
+                        </span>
+                        <span className="tc-price-tag">
+                          {Number(offer.price_per_seat) > 0
+                            ? `${Number(offer.price_per_seat).toLocaleString()} ج.س`
+                            : 'بالاتفاق'}
+                        </span>
+                      </div>
+                      <a
+                        className="tc-btn tc-btn-call"
+                        href={buildWhatsAppLink(offer.whatsapp_number, waText)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Icon name="whatsapp" size={16} />
+                        احجز مقعد
+                      </a>
+                    </div>
+                  </article>
+                );
+              });
+            })()}
+
             <details className="tc-card tc-howto">
               <summary>كيف يعمل؟ توصيلة سريعة أم ترحيل منتظم</summary>
               <div className="tc-info-grid" style={{ marginTop: '10px' }}>
@@ -3199,7 +3246,6 @@ export default function App() {
             </details>
           </>
         )}
-
         {/* ======================= الإعلانات + إعلاناتي ======================= */}
         {tab === TABS.ADS && (
           <>
