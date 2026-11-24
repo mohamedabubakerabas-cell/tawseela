@@ -20,25 +20,119 @@ const TABS = {
 const MY_OFFERS_STORAGE_KEY = 'tawseelat_my_offers_v1';
 const MY_REQUESTS_STORAGE_KEY = 'tawseelat_my_requests_v1';
 
-const POPULAR_AREAS = [
-  'مجمع الوسط (السنتر) - البوابة الرئيسية',
-  'مجمع الوسط - كلية الهندسة',
-  'مجمع الوسط - شارع الجامعة',
-  'مجمع شمبات (الزراعة / البيطرة)',
-  'مجمع الطب والعلوم الصحية (القصر)',
-  'كلية التربية - أم درمان',
-  'الخرطوم - السوق العربي',
-  'الخرطوم - الرياض',
-  'الخرطوم - العمارات',
-  'الخرطوم - الصحافة',
-  'الخرطوم - جبرة',
-  'الخرطوم - الكلاكلة',
-  'بحري - المؤسسة',
-  'بحري - الحلفايا / كافوري',
-  'أم درمان - السوق الشعبي',
-  'أم درمان - الثورة',
-  'أم درمان - الموردة / المهندسين',
+const AREA_GROUPS = [
+  {
+    label: 'نقاط الجامعة',
+    areas: [
+      'مجمع الوسط (السنتر) - البوابة الرئيسية',
+      'مجمع الوسط - كلية الهندسة',
+      'مجمع الوسط - شارع الجامعة',
+      'مجمع شمبات (الزراعة / البيطرة)',
+      'مجمع الطب والعلوم الصحية (القصر)',
+      'كلية التربية - أم درمان',
+    ],
+  },
+  {
+    label: 'الخرطوم',
+    areas: [
+      'الخرطوم - السوق العربي',
+      'الخرطوم - الرياض',
+      'الخرطوم - العمارات',
+      'الخرطوم - الصحافة',
+      'الخرطوم - جبرة',
+      'الخرطوم - الكلاكلة',
+      'الخرطوم - شرق النيل',
+      'الخرطوم - الأزهري',
+      'الخرطوم - الطائف',
+      'الخرطوم - أركويت',
+      'الخرطوم - بري',
+      'الخرطوم - السجانة',
+    ],
+  },
+  {
+    label: 'أم درمان',
+    areas: [
+      'أم درمان - السوق الشعبي',
+      'أم درمان - الثورة',
+      'أم درمان - الموردة',
+      'أم درمان - المهندسين',
+      'أم درمان - المنارة',
+      'أم درمان - الجرافة',
+      'أم درمان - الشهداء',
+      'أم درمان - الملازمين',
+      'أم درمان - الفتيحاب',
+      'أم درمان - الدوحة',
+      'أم درمان - العرضة',
+    ],
+  },
+  {
+    label: 'بحري',
+    areas: [
+      'بحري - المؤسسة',
+      'بحري - الحلفايا / كافوري',
+      'بحري - شمبات',
+      'بحري - الكدرو',
+      'بحري - الدروشاب',
+      'بحري - السامراب',
+      'بحري - دردوق',
+      'بحري - الشعبية',
+      'بحري - الصافية',
+      'بحري - الأملاك',
+    ],
+  },
 ];
+
+const POPULAR_AREAS = AREA_GROUPS.flatMap((g) => g.areas);
+
+// فصل اسم المنطقة المختارة عن تفاصيل المكان: "الأزهري (مربع 1 جوار الرازي)"
+function splitAreaValue(value) {
+  const v = (value || '').trim();
+  if (!v) return { name: '', detail: '' };
+  if (POPULAR_AREAS.includes(v)) return { name: v, detail: '' };
+  const sorted = [...POPULAR_AREAS].sort((a, b) => b.length - a.length);
+  for (const p of sorted) {
+    if (v.startsWith(p + ' (') && v.endsWith(')')) {
+      return { name: p, detail: v.slice(p.length + 2, -1) };
+    }
+  }
+  return { name: '', detail: '' };
+}
+
+// توحيد الكتابة العربية للبحث (الازهري = الأزهري، ة = ه، ى = ي)
+function normalizeArabic(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// مطابقة المسار؛ في الترحيل المنتظم (ذهاب وعودة) لا يهم الاتجاه
+function routeMatches({ start, dest, stops }, startQ, destQ, anyDirection) {
+  const s = normalizeArabic(start);
+  const d = normalizeArabic(dest);
+  const st = normalizeArabic(Array.isArray(stops) ? stops.join(' ') : '');
+  const q1 = normalizeArabic(startQ);
+  const q2 = normalizeArabic(destQ);
+  const inStart = (q) => !q || s.includes(q) || st.includes(q);
+  const inDest = (q) => !q || d.includes(q) || st.includes(q);
+  if (inStart(q1) && inDest(q2)) return true;
+  return Boolean(anyDirection) && inDest(q1) && inStart(q2);
+}
+
+function formatReturnTime(hhmm) {
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm || '');
+  if (!m) return '';
+  return new Date(2000, 0, 1, Number(m[1]), Number(m[2])).toLocaleTimeString('ar', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
 
 const WEEKDAYS = [
   { key: 'sun', label: 'الأحد' },
@@ -76,6 +170,8 @@ const OFFER_PUBLIC_COLUMNS = [
   'expires_at',
   'created_at',
   'updated_at',
+  'return_time',
+  'notes',
 ].join(', ');
 
 const REQUEST_PUBLIC_COLUMNS = [
@@ -1450,13 +1546,14 @@ function parseManageCode(rawCode) {
 }
 
 function AreaInput({ label, value, onChange, placeholder }) {
-  const isPreset = POPULAR_AREAS.includes(value);
-  const [customMode, setCustomMode] = useState(Boolean(value) && !isPreset);
+  const parsed = splitAreaValue(value);
+  const [customMode, setCustomMode] = useState(Boolean(value) && !parsed.name);
 
   useEffect(() => {
-    if (value && !POPULAR_AREAS.includes(value)) {
+    const p = splitAreaValue(value);
+    if (value && !p.name) {
       setCustomMode(true);
-    } else if (POPULAR_AREAS.includes(value)) {
+    } else if (p.name) {
       setCustomMode(false);
     }
   }, [value]);
@@ -1468,8 +1565,13 @@ function AreaInput({ label, value, onChange, placeholder }) {
       onChange('');
     } else {
       setCustomMode(false);
-      onChange(val);
+      onChange(val && parsed.detail ? `${val} (${parsed.detail})` : val);
     }
+  };
+
+  const setDetail = (d) => {
+    const clean = d.replace(/[()]/g, '');
+    onChange(clean ? `${parsed.name} (${clean})` : parsed.name);
   };
 
   return (
@@ -1478,18 +1580,34 @@ function AreaInput({ label, value, onChange, placeholder }) {
         {label} <span className="tc-req">*</span>
       </label>
       <select
-        value={customMode ? '__custom__' : value}
+        value={customMode ? '__custom__' : parsed.name}
         onChange={handleSelect}
         className="tc-input"
       >
-        <option value="">-- اختر مجمعاً أو منطقة أو اكتب موقعاً مخصصاً --</option>
-        {POPULAR_AREAS.map((area) => (
-          <option key={area} value={area}>
-            {area}
-          </option>
+        <option value="">-- اختر المنطقة --</option>
+        {AREA_GROUPS.map((g) => (
+          <optgroup key={g.label} label={g.label}>
+            {g.areas.map((area) => (
+              <option key={area} value={area}>
+                {area}
+              </option>
+            ))}
+          </optgroup>
         ))}
-        <option value="__custom__">موقع آخر (كتابة يدوية)...</option>
+        <option value="__custom__">منطقة أخرى (كتابة يدوية)...</option>
       </select>
+      {!customMode && parsed.name && (
+        <div style={{ marginTop: '8px' }}>
+          <input
+            type="text"
+            maxLength={50}
+            value={parsed.detail}
+            onChange={(e) => setDetail(e.target.value)}
+            placeholder="تفاصيل المكان (اختياري): مثل مربع 1 جوار جامعة الرازي"
+            className="tc-input"
+          />
+        </div>
+      )}
       {customMode && (
         <div style={{ marginTop: '8px' }}>
           <input
@@ -1506,12 +1624,27 @@ function AreaInput({ label, value, onChange, placeholder }) {
   );
 }
 
+function AreaLabel({ value }) {
+  const { name, detail } = splitAreaValue(value);
+  if (!name) return <span>{value}</span>;
+  return (
+    <span>
+      <strong>{name}</strong>
+      {detail && (
+        <span style={{ display: 'block', fontSize: '0.8rem', color: '#526b6e', fontWeight: 500 }}>
+          {detail}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function RouteTimeline({ start, destination, stops = [] }) {
   return (
     <div className="tc-route-box">
       <div className="tc-route-point">
         <span className="tc-dot-start" />
-        <span>{start}</span>
+        <AreaLabel value={start} />
       </div>
       <div className="tc-route-line" />
       {Array.isArray(stops) && stops.length > 0 && (
@@ -1528,7 +1661,7 @@ function RouteTimeline({ start, destination, stops = [] }) {
       )}
       <div className="tc-route-point">
         <span className="tc-dot-end" />
-        <span>{destination}</span>
+        <AreaLabel value={destination} />
       </div>
     </div>
   );
@@ -1615,6 +1748,7 @@ body { background: #f4f8f7; }
 .tc-bottom-nav { background: rgba(255, 255, 255, 0.97); border-top: 1px solid var(--border); }
 .tc-bottom-btn.active { color: #0b555c; background: #e3f3ee; }
 .tc-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(236, 122, 60, 0.18); }
+.tc-price-muted { font-size: 0.82rem; color: #6b8184; font-weight: 600; }
 .tc-form-section-title { color: #0b555c; }
 .tc-form-section-title svg { color: var(--accent); }
 .tc-form-section + .tc-form-section { border-top: 2px dashed #cfe3dd; margin-top: 18px; padding-top: 16px; }
@@ -1696,6 +1830,8 @@ export default function App() {
     available_seats: 3,
     price_per_seat: 0,
     expires_after_hours: 3,
+    return_time: '',
+    notes: '',
     recurring_valid_days: 14,
   });
   const [offerSubmitting, setOfferSubmitting] = useState(false);
@@ -1773,7 +1909,7 @@ export default function App() {
     setBoardError('');
     try {
       const nowIso = new Date().toISOString();
-      const [offersRes, requestsRes] = await Promise.all([
+      let [offersRes, requestsRes] = await Promise.all([
         supabase
           .from('ride_offers')
           .select(OFFER_PUBLIC_COLUMNS)
@@ -1790,6 +1926,16 @@ export default function App() {
           .order('created_at', { ascending: false }),
       ]);
 
+      if (offersRes.error && /return_time|notes|column/i.test(offersRes.error.message || '')) {
+        const baseCols = OFFER_PUBLIC_COLUMNS.replace(', return_time', '').replace(', notes', '');
+        offersRes = await supabase
+          .from('ride_offers')
+          .select(baseCols)
+          .gt('expires_at', nowIso)
+          .in('status', ['active', 'full'])
+          .order('departure_time', { ascending: true })
+          .order('created_at', { ascending: false });
+      }
       if (offersRes.error) throw offersRes.error;
       if (requestsRes.error) throw requestsRes.error;
 
@@ -1954,17 +2100,14 @@ export default function App() {
         if (searchTripKind === 'recurring' && !recurring) return false;
         return true;
       })
-      .filter((o) => {
-        const stopsText = Array.isArray(o.intermediate_stops)
-          ? o.intermediate_stops.join(' ')
-          : '';
-        const startHaystack = `${o.start_area || ''} ${stopsText}`.toLowerCase();
-        const destHaystack = `${o.destination_area || ''} ${stopsText}`.toLowerCase();
-        return (
-          (!startQ || startHaystack.includes(startQ)) &&
-          (!destQ || destHaystack.includes(destQ))
-        );
-      })
+      .filter((o) =>
+        routeMatches(
+          { start: o.start_area, dest: o.destination_area, stops: o.intermediate_stops },
+          searchStart,
+          searchDest,
+          isRecurringType(o.recurrence_type)
+        )
+      )
       .sort((a, b) => {
         const depDiff =
           getEffectiveSortTimestamp(a.departure_time, a.recurrence_type) -
@@ -1987,11 +2130,14 @@ export default function App() {
         if (searchTripKind === 'recurring' && !recurring) return false;
         return true;
       })
-      .filter((r) => {
-        const okStart = !startQ || (r.start_area || '').toLowerCase().includes(startQ);
-        const okDest = !destQ || (r.destination_area || '').toLowerCase().includes(destQ);
-        return okStart && okDest;
-      })
+      .filter((r) =>
+        routeMatches(
+          { start: r.start_area, dest: r.destination_area, stops: [] },
+          searchStart,
+          searchDest,
+          isRecurringType(r.recurrence_type)
+        )
+      )
       .sort((a, b) => {
         const timeDiff =
           getEffectiveSortTimestamp(a.preferred_time, a.recurrence_type) -
@@ -2132,6 +2278,18 @@ export default function App() {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    if (stopsArray.some((s) => s.length > 40)) {
+      setOfferError(
+        'اسم المحطة في خانة "يمر بـ" لازم يكون قصيراً (أقل من 40 حرفاً). اكتب التفاصيل الطويلة في خانة الملاحظات.'
+      );
+      return;
+    }
+    const returnTime =
+      recurring && /^([01]\d|2[0-3]):[0-5]\d$/.test(offerForm.return_time || '')
+        ? offerForm.return_time
+        : null;
+    const offerNotes = (offerForm.notes || '').trim().slice(0, 300);
+
     const expiresDate = recurring
       ? new Date(
           depDate.getTime() +
@@ -2173,6 +2331,8 @@ export default function App() {
       expires_at: expiresDate.toISOString(),
       manage_token: generatedToken,
     };
+    if (returnTime) payload.return_time = returnTime;
+    if (offerNotes) payload.notes = offerNotes;
 
     setOfferSubmitting(true);
     try {
@@ -2221,6 +2381,8 @@ export default function App() {
         available_seats: 3,
         price_per_seat: 0,
         expires_after_hours: 3,
+        return_time: '',
+        notes: '',
         recurring_valid_days: 14,
       });
     } catch (err) {
@@ -3080,6 +3242,11 @@ export default function App() {
         </div>
       </header>
 
+      <datalist id="tc-areas-list">
+        {POPULAR_AREAS.map((a) => (
+          <option key={a} value={a} />
+        ))}
+      </datalist>
       <main className="tc-main">
         {!supabase && (
           <div className="tc-alert tc-alert-err">
@@ -3200,11 +3367,11 @@ export default function App() {
                           <Icon name="clock" size={15} />
                           {when}
                         </span>
-                        <span className="tc-price-tag">
-                          {Number(offer.price_per_seat) > 0
-                            ? `${Number(offer.price_per_seat).toLocaleString()} ج.س`
-                            : 'بالاتفاق'}
-                        </span>
+                        {Number(offer.price_per_seat) > 0 ? (
+<span className="tc-price-tag">{`${Number(offer.price_per_seat).toLocaleString()} ج.س`}</span>
+) : (
+<span className="tc-price-muted">السعر بالاتفاق</span>
+)}
                       </div>
                       <a
                         className="tc-btn tc-btn-call"
@@ -3339,6 +3506,7 @@ export default function App() {
                     <input
                       type="text"
                       value={searchStart}
+                      list="tc-areas-list"
                       onChange={(e) => setSearchStart(e.target.value)}
                       placeholder="مثال: الرياض، جبرة، الثورة، شمبات..."
                       className="tc-input"
@@ -3349,6 +3517,7 @@ export default function App() {
                     <input
                       type="text"
                       value={searchDest}
+                      list="tc-areas-list"
                       onChange={(e) => setSearchDest(e.target.value)}
                       placeholder="مثال: السنتر، الهندسة، الطب، شمبات..."
                       className="tc-input"
@@ -3437,12 +3606,16 @@ export default function App() {
                     const isFull = offer.status === 'full' || currentSeats <= 0;
                     const recurring = isRecurringType(offer.recurrence_type);
                     const kindText = recurring ? 'ترحيل منتظم' : 'توصيلة';
-                    const timeText = recurring
+                    const timeTextBase = recurring
                       ? `الساعة ${formatTimeOnly(offer.departure_time)} (${formatRecurrence(
                           offer.recurrence_type,
                           offer.recurrence_days
                         )})`
                       : formatDateTime(offer.departure_time);
+                    const timeText =
+                      recurring && offer.return_time
+                        ? `${timeTextBase} • عودة ${formatReturnTime(offer.return_time)}`
+                        : timeTextBase;
                     const waText = `السلام عليكم كابتن ${offer.driver_name}، أنا من طلاب جامعة الخرطوم وشفت عرضك (${kindText}) في توصيلة السنتر: من (${offer.start_area}) إلى (${offer.destination_area}) — ${timeText}. أرغب في حجز مقعد، هل ما زال متاحاً؟ شكراً.`;
                     const waHref = buildWhatsAppLink(offer.whatsapp_number, waText);
                     const telHref = buildTelLink(
@@ -3477,11 +3650,11 @@ export default function App() {
                                 : `متاح ${currentSeats} من ${totalSeats}`}
                             </span>
                           </div>
-                          <span className="tc-price-tag">
-                            {Number(offer.price_per_seat) > 0
-                              ? `${Number(offer.price_per_seat).toLocaleString()} ج.س`
-                              : 'مجاناً / بالاتفاق'}
-                          </span>
+                          {Number(offer.price_per_seat) > 0 ? (
+<span className="tc-price-tag">{`${Number(offer.price_per_seat).toLocaleString()} ج.س`}</span>
+) : (
+<span className="tc-price-muted">السعر بالاتفاق</span>
+)}
                         </div>
 
                         <RouteTimeline
@@ -3489,6 +3662,7 @@ export default function App() {
                           destination={offer.destination_area}
                           stops={offer.intermediate_stops}
                         />
+                        {offer.notes && <div className="tc-notes-box">{offer.notes}</div>}
 
                         <div className="tc-meta-grid">
                           <span className="tc-meta-item">
@@ -3887,11 +4061,11 @@ export default function App() {
                                   : `متاح ${currentSeats} من ${totalSeats}`}
                               </span>
                             </div>
-                            <span className="tc-price-tag">
-                              {Number(item.price_per_seat) > 0
-                                ? `${Number(item.price_per_seat).toLocaleString()} ج.س`
-                                : 'مجاناً / بالاتفاق'}
-                            </span>
+                            {Number(item.price_per_seat) > 0 ? (
+<span className="tc-price-tag">{`${Number(item.price_per_seat).toLocaleString()} ج.س`}</span>
+) : (
+<span className="tc-price-muted">السعر بالاتفاق</span>
+)}
                           </div>
 
                           <RouteTimeline
@@ -4475,7 +4649,7 @@ export default function App() {
 
                 <div className="tc-field" style={{ marginTop: '12px' }}>
                   <label className="tc-label">
-                    المحطات الوسيطة في المسار (اختياري، افصل بينها بفاصلة)
+                    المحطات الوسيطة (أسماء أماكن قصيرة، افصل بينها بفاصلة)
                   </label>
                   <input
                     type="text"
@@ -4487,6 +4661,18 @@ export default function App() {
                       })
                     }
                     placeholder="مثال: شارع الستين، المعمورة، بري"
+                    className="tc-input"
+                  />
+                </div>
+
+                <div className="tc-field" style={{ marginTop: '12px' }}>
+                  <label className="tc-label">ملاحظات للركاب (اختياري)</label>
+                  <textarea
+                    rows="2"
+                    maxLength={300}
+                    value={offerForm.notes}
+                    onChange={(e) => setOfferForm({ ...offerForm, notes: e.target.value })}
+                    placeholder="مثال: التحرك من الأزهري عبر شارع الستين، وأنتظر 5 دقائق فقط"
                     className="tc-input"
                   />
                 </div>
@@ -4549,6 +4735,21 @@ export default function App() {
                     </div>
                   )}
                 </div>
+
+                {offerIsRecurring && (
+                  <div className="tc-field" style={{ marginTop: '12px' }}>
+                    <label className="tc-label">وقت رحلة العودة (اختياري)</label>
+                    <input
+                      type="time"
+                      value={offerForm.return_time}
+                      onChange={(e) => setOfferForm({ ...offerForm, return_time: e.target.value })}
+                      className="tc-input"
+                    />
+                    <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#6b8184' }}>
+                      إذا كانت لديك رحلة عودة في نفس اليوم (مثلاً بعد المحاضرات)، حدّد وقتها لتظهر في نفس الإعلان.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="tc-form-section">
@@ -4594,7 +4795,7 @@ export default function App() {
 
                 <div className="tc-field" style={{ marginTop: '12px' }}>
                   <label className="tc-label">
-                    السعر للمقعد (جنيه سوداني — اكتب 0 إذا كان مجاناً أو بالاتفاق)
+                    السعر للمقعد بالجنيه السوداني (اختياري)
                   </label>
                   <input
                     type="number"
@@ -4606,6 +4807,9 @@ export default function App() {
                     }
                     className="tc-input"
                   />
+                  <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#6b8184' }}>
+                    إذا تركته 0 يظهر "السعر بالاتفاق". تحديد السعر يقلل الرسائل والمساومة.
+                  </p>
                 </div>
               </div>
 
