@@ -1755,21 +1755,7 @@ body { background: #f4f8f7; }
 `;
 
 export default function App() {
-  const [tab, setTab] = useState(() => {
-    try {
-      return localStorage.getItem('tc_seen') ? TABS.ADS : TABS.HOME;
-    } catch {
-      return TABS.HOME;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('tc_seen', '1');
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const [tab, setTab] = useState(TABS.HOME);
   const [boardSection, setBoardSection] = useState('all'); // 'all' | 'offers' | 'requests' | 'mine'
 
   // حالة الإعلانات والبحث
