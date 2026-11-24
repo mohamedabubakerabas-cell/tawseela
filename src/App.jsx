@@ -1295,9 +1295,14 @@ function Icon({ name, size = 18 }) {
       );
     case 'whatsapp':
       return (
-        <svg {...common}>
-          <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.5L3 20l1.2-5.1A8.5 8.5 0 1 1 21 11.5Z" />
-          <path d="M9.5 9.5c.3 1.7 2.3 3.7 4 4" />
+        <svg
+          width={Math.max(size, 20)}
+          height={Math.max(size, 20)}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
         </svg>
       );
     case 'phone':
@@ -1749,6 +1754,14 @@ body { background: #f4f8f7; }
 .tc-bottom-btn.active { color: #0b555c; background: #e3f3ee; }
 .tc-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(236, 122, 60, 0.18); }
 .tc-price-muted { font-size: 0.82rem; color: #6b8184; font-weight: 600; }
+.tc-toast {
+  position: fixed; left: 12px; right: 12px; bottom: 96px; z-index: 1000;
+  max-width: 520px; margin: 0 auto; padding: 14px 16px; border-radius: 16px;
+  background: #0b555c; color: #ffffff; font-weight: 700; text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28); animation: tc-toast-in 0.25s ease;
+}
+.tc-toast-error { background: #b3382c; }
+@keyframes tc-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .tc-form-section-title { color: #0b555c; }
 .tc-form-section-title svg { color: var(--accent); }
 .tc-form-section + .tc-form-section { border-top: 2px dashed #cfe3dd; margin-top: 18px; padding-top: 16px; }
@@ -1822,6 +1835,18 @@ export default function App() {
   });
   const [offerSubmitting, setOfferSubmitting] = useState(false);
   const [offerError, setOfferError] = useState('');
+
+  // إشعار عائم يظهر في أسفل الشاشة مهما كان مكان التمرير
+  const [toast, setToast] = useState(null);
+  const showToast = (text, kind = 'ok') => setToast({ text, kind, id: Date.now() });
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+  useEffect(() => {
+    if (offerError) showToast(offerError, 'error');
+  }, [offerError]);
   const [savedOfferCode, setSavedOfferCode] = useState('');
 
   // نموذج طلب توصيلة / ترحيل للطالب
@@ -1841,6 +1866,9 @@ export default function App() {
   });
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [requestError, setRequestError] = useState('');
+  useEffect(() => {
+    if (requestError) showToast(requestError, 'error');
+  }, [requestError]);
   const [savedRequestCode, setSavedRequestCode] = useState('');
 
   // تبويب الإدارة
@@ -2371,6 +2399,11 @@ export default function App() {
         notes: '',
         recurring_valid_days: 14,
       });
+      showToast('تم نشر عرضك بنجاح ✓ احتفظ برمز الإدارة');
+      setTimeout(() => {
+        const el = document.getElementById('tc-offer-success');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
     } catch (err) {
       setOfferError(err?.message || 'حدث خطأ أثناء نشر العرض.');
     } finally {
@@ -2514,6 +2547,11 @@ export default function App() {
         expires_after_hours: 3,
         recurring_valid_days: 14,
       });
+      showToast('تم نشر طلبك بنجاح ✓ سيتواصل معك السائقون عبر واتساب');
+      setTimeout(() => {
+        const el = document.getElementById('tc-request-success');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
     } catch (err) {
       setRequestError(err?.message || 'حدث خطأ أثناء نشر الطلب.');
     } finally {
@@ -3228,6 +3266,15 @@ export default function App() {
         </div>
       </header>
 
+      {toast && (
+        <div
+          className={`tc-toast ${toast.kind === 'error' ? 'tc-toast-error' : ''}`}
+          role="status"
+          onClick={() => setToast(null)}
+        >
+          {toast.text}
+        </div>
+      )}
       <datalist id="tc-areas-list">
         {POPULAR_AREAS.map((a) => (
           <option key={a} value={a} />
@@ -3360,7 +3407,7 @@ export default function App() {
 )}
                       </div>
                       <a
-                        className="tc-btn tc-btn-call"
+                        className="tc-btn tc-btn-wa"
                         href={buildWhatsAppLink(offer.whatsapp_number, waText)}
                         target="_blank"
                         rel="noreferrer"
@@ -4462,7 +4509,7 @@ export default function App() {
             {offerError && <div className="tc-alert tc-alert-err">{offerError}</div>}
 
             {savedOfferCode && (
-              <div className="tc-alert tc-alert-ok">
+              <div id="tc-offer-success" style={{ scrollMarginTop: '100px' }} className="tc-alert tc-alert-ok">
                 <strong>تم نشر العرض وحفظه في «إعلاناتي» بنجاح!</strong>
                 <div style={{ marginTop: '5px' }}>
                   يمكنك الآن تعديله أو تحديث مقاعده أو حذفه من قسم «إعلاناتي»، أو نسخ
@@ -4852,7 +4899,7 @@ export default function App() {
             )}
 
             {savedRequestCode && (
-              <div className="tc-alert tc-alert-ok">
+              <div id="tc-request-success" style={{ scrollMarginTop: '100px' }} className="tc-alert tc-alert-ok">
                 <strong>تم نشر طلبك وحفظه في «إعلاناتي» بنجاح!</strong>
                 <div style={{ marginTop: '5px' }}>
                   يمكنك الآن تعديله أو إغلاقه عند إيجاد توصيلة أو حذفه نهائياً من
