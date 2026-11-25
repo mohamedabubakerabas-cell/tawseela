@@ -3188,6 +3188,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const openTerms = () => {
+    openTab(TABS.HOME);
+    setTimeout(() => {
+      const el = document.getElementById('tc-terms');
+      if (el) {
+        el.open = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
+
   const openAds = (section = 'all') => {
     setBoardSection(section);
     openTab(TABS.ADS);
@@ -3443,6 +3454,40 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </details>
+            <details id="tc-terms" className="tc-card tc-howto" style={{ marginTop: '10px' }}>
+              <summary>الشروط والخصوصية والمسؤولية</summary>
+              <ul
+                style={{
+                  margin: '10px 0 0',
+                  paddingInlineStart: '18px',
+                  fontSize: '0.88rem',
+                  color: '#425d60',
+                  lineHeight: 1.9,
+                }}
+              >
+                <li>توصيلة السنتر مبادرة طلابية مستقلة، وليست خدمة رسمية من الجامعة.</li>
+                <li>
+                  الموقع وسيط يعرّف الطلاب ببعضهم فقط. لا يملك العربات، ولا يتحمل مسؤولية
+                  الرحلات أو الحوادث أو الاتفاقات المالية، والاتفاق على المسار والسعر بين الطرفين.
+                </li>
+                <li>
+                  عند نشر إعلانك أو طلبك يظهر رقم الواتساب (ورقم الاتصال إن أضفته) لكل زوار
+                  الموقع، ويُستخدم ليتواصل معك الآخرون فقط.
+                </li>
+                <li>
+                  للسلامة: تأكد من هوية الطرف الآخر قبل الركوب، والتقِ في أماكن معروفة (كبوابات
+                  الجامعة)، وأخبر صديقاً أو أحد أهلك بتفاصيل الرحلة.
+                </li>
+                <li>
+                  تختفي الإعلانات تلقائياً بعد انتهاء مدتها، ويمكنك حذف إعلانك في أي وقت برمز
+                  الإدارة.
+                </li>
+                <li>
+                  يحق للإدارة حذف أي إعلان وهمي أو مسيء أو مخالف، وحظر الرقم المسيء. استخدم زر
+                  «إبلاغ» لأي إعلان مشبوه.
+                </li>
+              </ul>
             </details>
           </>
         )}
@@ -4846,6 +4891,19 @@ export default function App() {
                 </div>
               </div>
 
+              <p style={{ margin: '4px 0 12px', fontSize: '0.82rem', color: '#6b8184', lineHeight: 1.7 }}>
+                بالضغط على «نشر» توافق على ظهور رقمك لزوار الموقع، وعلى{' '}
+                <button
+                  type="button"
+                  className="tc-link-btn"
+                  style={{ fontSize: 'inherit', padding: 0 }}
+                  onClick={openTerms}
+                >
+                  الشروط والمسؤولية
+                </button>
+                .
+              </p>
+
               <button
                 type="submit"
                 className="tc-btn tc-btn-primary"
@@ -5148,6 +5206,19 @@ export default function App() {
                   />
                 </div>
               </div>
+
+              <p style={{ margin: '4px 0 12px', fontSize: '0.82rem', color: '#6b8184', lineHeight: 1.7 }}>
+                بالضغط على «نشر» توافق على ظهور رقمك لزوار الموقع، وعلى{' '}
+                <button
+                  type="button"
+                  className="tc-link-btn"
+                  style={{ fontSize: 'inherit', padding: 0 }}
+                  onClick={openTerms}
+                >
+                  الشروط والمسؤولية
+                </button>
+                .
+              </p>
 
               <button
                 type="submit"
