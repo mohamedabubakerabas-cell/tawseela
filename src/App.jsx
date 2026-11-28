@@ -20,6 +20,101 @@ const TABS = {
 const MY_OFFERS_STORAGE_KEY = 'tawseelat_my_offers_v1';
 const MY_REQUESTS_STORAGE_KEY = 'tawseelat_my_requests_v1';
 
+// ===== إعدادات اختيارية: ضع الروابط هنا (اتركها فارغة لإخفاء الزر) =====
+const COMMUNITY_URL = ''; // رابط قناة واتساب أو تلجرام للمستجدات
+const SUPPORT_WHATSAPP = ''; // رقم واتساب الدعم، مثل 0912345678
+const SHARE_URL = typeof window !== 'undefined' ? `${window.location.origin}/?v=3` : '';
+
+const FAQ_ITEMS = [
+  {
+    q: 'كيف أجد ترحيلاً أو توصيلة؟',
+    a: 'ادخل صفحة «الإعلانات»، وابحث بمنطقة الانطلاق والوجهة، ثم اضغط «احجز مقعد» لتفتح محادثة واتساب جاهزة مع السائق.',
+  },
+  {
+    q: 'كيف أنشر مشواري إذا كانت لدي عربة؟',
+    a: 'من تبويب «أعرض» املأ الخانات واضغط «نشر». بعد النشر يظهر لك رمز الإدارة، احتفظ به.',
+  },
+  {
+    q: 'ما الفرق بين التوصيلة والترحيل المنتظم؟',
+    a: 'التوصيلة لمشوار واحد في وقت محدد، ويختفي إعلانها تلقائياً بعد الموعد. الترحيل المنتظم لمن يتحرك بنفس المسار يومياً أو في أيام الدراسة، ويبقى ظاهراً أسبوعاً أو أسبوعين أو شهراً، ويمكنك إضافة وقت للعودة.',
+  },
+  {
+    q: 'هل أحتاج إلى حساب؟',
+    a: 'لا. إعلاناتك تُحفظ على جهازك في «إعلاناتي» لتعدّلها أو تحذفها بسهولة.',
+  },
+  {
+    q: 'غيّرت هاتفي أو مسحت بيانات المتصفح، كيف أدير إعلاني؟',
+    a: 'ادخل «الإعلانات» ثم «إعلاناتي»، وأضف إعلانك باستخدام رمز الإدارة الذي ظهر لك عند النشر.',
+  },
+  {
+    q: 'ضاع رمز الإدارة، ماذا أفعل؟',
+    a: 'لا يمكن استرجاعه. سيختفي إعلانك تلقائياً عند انتهاء مدته، ويمكنك نشر إعلان جديد.',
+  },
+  {
+    q: 'كم يبقى الإعلان ظاهراً؟',
+    a: 'التوصيلة: عدد الساعات التي تحددها بعد وقت التحرك (من 1 إلى 24 ساعة). الترحيل المنتظم: 7 أو 14 أو 30 يوماً.',
+  },
+  {
+    q: 'كيف يتم الدفع وتحديد السعر؟',
+    a: 'السائق يحدد سعر المقعد (اختياري)، والاتفاق النهائي بينك وبينه. لا يوجد دفع داخل الموقع.',
+  },
+  {
+    q: 'كيف أبلغ عن إعلان مشبوه أو مسيء؟',
+    a: 'اضغط زر «إبلاغ» في بطاقة الإعلان وسنراجعه.',
+  },
+  {
+    q: 'هل الموقع تابع للجامعة؟',
+    a: 'لا. هو منصة طلابية مستقلة.',
+  },
+];
+
+function InfoTip({ text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <button
+        type="button"
+        aria-label="شرح الحقل"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          marginInlineStart: '6px',
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          border: '1px solid #9bb7b4',
+          background: open ? '#0b555c' : '#ffffff',
+          color: open ? '#ffffff' : '#0b555c',
+          fontSize: '0.75rem',
+          fontWeight: 800,
+          lineHeight: 1,
+          cursor: 'pointer',
+          padding: 0,
+        }}
+      >
+        i
+      </button>
+      {open && (
+        <span
+          style={{
+            display: 'block',
+            marginTop: '6px',
+            padding: '8px 10px',
+            background: '#eef7f6',
+            border: '1px solid #cfe3dd',
+            borderRadius: '10px',
+            fontSize: '0.82rem',
+            fontWeight: 500,
+            color: '#35595c',
+            lineHeight: 1.7,
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
 const AREA_GROUPS = [
   {
     label: 'نقاط الجامعة',
@@ -2268,11 +2363,11 @@ export default function App() {
     }
     if (
       Number.isNaN(availableSeats) ||
-      availableSeats < 0 ||
+            availableSeats < 1 ||
       availableSeats > 50 ||
       availableSeats > totalSeats
     ) {
-      setOfferError('المقاعد المتاحة يجب أن تكون بين 0 وإجمالي المقاعد.');
+      setOfferError('المقاعد المتاحة يجب أن تكون بين 1 وإجمالي المقاعد.');
       return;
     }
     if (Number.isNaN(pricePerSeat) || pricePerSeat < 0) {
@@ -2315,7 +2410,7 @@ export default function App() {
         )
       : new Date(
           depDate.getTime() +
-            Math.max(1, Number(offerForm.expires_after_hours) || 3) *
+            Math.min(24, Math.max(1, Number(offerForm.expires_after_hours) || 3)) *
               60 *
               60 *
               1000
@@ -2477,7 +2572,7 @@ export default function App() {
         )
       : new Date(
           prefDate.getTime() +
-            Math.max(1, Number(requestForm.expires_after_hours) || 3) *
+            Math.min(24, Math.max(1, Number(requestForm.expires_after_hours) || 3)) *
               60 *
               60 *
               1000
@@ -2763,7 +2858,9 @@ export default function App() {
       departure_time: toDatetimeLocalValue(src.departure_time),
       total_seats: Number(src.total_seats) || 4,
       available_seats: Number(src.available_seats) || 0,
-      price_per_seat: Number(src.price_per_seat) || 0,
+            price_per_seat: Number(src.price_per_seat) || 0,
+      notes: src.notes || '',
+      return_time: src.return_time || '',
     });
   };
 
@@ -2823,6 +2920,11 @@ export default function App() {
         .map((s) => s.trim())
         .filter(Boolean);
 
+            if (stopsArr.some((s) => s.length > 40)) {
+        setEditError('اسم المحطة في خانة "يمر بـ" لازم يكون قصيراً (أقل من 40 حرفاً). اكتب التفاصيل الطويلة في الملاحظات.');
+        return;
+      }
+
       const recurring = isRecurringType(editModal.recurrence_type);
       const baseExpiry = recurring
         ? depDate.getTime() + 14 * 24 * 60 * 60 * 1000
@@ -2852,11 +2954,31 @@ export default function App() {
           return;
         }
 
+                const notesText = (editModal.notes || '').trim().slice(0, 300);
+        const retTime =
+          recurring && /^([01]\d|2[0-3]):[0-5]\d$/.test(editModal.return_time || '')
+            ? editModal.return_time
+            : '';
+        let extrasOk = true;
+        try {
+          const extras = await supabase.rpc('driver_update_offer_extras', {
+            p_offer_id: editModal.id,
+            p_manage_token: editModal.manageToken,
+            p_notes: notesText,
+            p_return_time: retTime,
+          });
+          extrasOk = !extras.error && extras.data !== false;
+        } catch (extraErr) {
+          extrasOk = false;
+        }
+
         persistMyOffers((prev) =>
           prev.map((item) =>
             item.id === editModal.id
               ? {
                   ...item,
+                  notes: notesText,
+                  return_time: retTime || null,
                   vehicle_type: vehicle,
                   start_area: startA,
                   destination_area: destA,
@@ -2871,7 +2993,12 @@ export default function App() {
               : item
           )
         );
-        setOwnerFeedback({ type: 'ok', text: 'تم تحديث بيانات عرضك بنجاح.' });
+        setOwnerFeedback({
+          type: extrasOk ? 'ok' : 'error',
+          text: extrasOk
+            ? 'تم تحديث بيانات عرضك بنجاح.'
+            : 'تم تحديث بياناتك، لكن تعذر حفظ الملاحظات ووقت العودة.',
+        });
         setEditModal(null);
         fetchPublicListings();
       } catch (err) {
@@ -3183,10 +3310,45 @@ export default function App() {
   const offerIsRecurring = isRecurringType(offerForm.recurrence_type);
   const requestIsRecurring = isRecurringType(requestForm.recurrence_type);
 
-  const openTab = (nextTab) => {
+    const openTab = (nextTab) => {
+    // نجدد الوقت الافتراضي لو أصبح في الماضي (إذا ظل الموقع مفتوحاً لفترة)
+    const freshTime = () => toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000));
+    if (nextTab === TABS.OFFER) {
+      setOfferForm((f) =>
+        !f.departure_time || new Date(f.departure_time) < new Date()
+          ? { ...f, departure_time: freshTime() }
+          : f
+      );
+    }
+    if (nextTab === TABS.REQUEST) {
+      setRequestForm((f) =>
+        !f.preferred_time || new Date(f.preferred_time) < new Date()
+          ? { ...f, preferred_time: freshTime() }
+          : f
+      );
+    }
     setTab(nextTab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+    // دخول الإدارة مخفي: ?admin=1 في الرابط، أو 5 ضغطات سريعة على الشعار
+  const [adminTaps, setAdminTaps] = useState({ n: 0, t: 0 });
+  const handleBrandClick = () => {
+    const now = Date.now();
+    const n = now - adminTaps.t < 1500 ? adminTaps.n + 1 : 1;
+    if (n >= 5) {
+      setAdminTaps({ n: 0, t: 0 });
+      openTab(TABS.ADMIN);
+      return;
+    }
+    setAdminTaps({ n, t: now });
+    openTab(TABS.HOME);
+  };
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (new URLSearchParams(window.location.search).get('admin') === '1') setTab(TABS.ADMIN);
+    }
+  }, []);
 
   const openTerms = () => {
     openTab(TABS.HOME);
@@ -3212,7 +3374,7 @@ export default function App() {
 
       <header className="tc-header">
         <div className="tc-header-inner">
-          <div className="tc-brand" onClick={() => openTab(TABS.HOME)}>
+          <div className="tc-brand" onClick={handleBrandClick}>
             <div className="tc-logo-box">
               <Icon name="campus" size={22} />
             </div>
@@ -3255,14 +3417,7 @@ export default function App() {
               <Icon name="hand" size={16} />
               اطلب توصيلة
             </button>
-            <button
-              type="button"
-              className={`tc-nav-pill ${tab === TABS.ADMIN ? 'active' : ''}`}
-              onClick={() => openTab(TABS.ADMIN)}
-            >
-              <Icon name="shield" size={16} />
-              الإدارة
-            </button>
+            
           </nav>
 
           <button
@@ -3320,7 +3475,7 @@ export default function App() {
                 <span className="tc-act-ico">
                   <Icon name="hand" size={30} />
                 </span>
-                اطلب ترحيل
+                اطلب توصيلة
               </button>
             </section>
 
@@ -3369,7 +3524,7 @@ export default function App() {
                 return (
                   <div className="tc-card" style={{ textAlign: 'center' }}>
                     <p className="tc-muted" style={{ margin: '0 0 10px' }}>
-                      لا توجد رحلات متاحة حالياً. كن أول من ينشر مشواره!
+                      لسه مافي رحلات متاحة.. كن أول من ينشر مشواره وخلّي زملاءك يلقوك!
                     </p>
                     <button
                       type="button"
@@ -3432,6 +3587,36 @@ export default function App() {
               });
             })()}
 
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', margin: '4px 0 12px' }}>
+              {COMMUNITY_URL && (
+                <a className="tc-btn tc-btn-wa" href={COMMUNITY_URL} target="_blank" rel="noreferrer">
+                  <Icon name="whatsapp" size={18} />
+                  انضم لقناة المستجدات
+                </a>
+              )}
+              <a
+                className="tc-btn tc-btn-call"
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `السلام عليكم، شوف موقع توصيلة السنتر لمشاوير طلاب جامعة الخرطوم: ${SHARE_URL}`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Icon name="whatsapp" size={18} />
+                شارك الموقع
+              </a>
+              {SUPPORT_WHATSAPP && (
+                <a
+                  className="tc-btn tc-btn-call"
+                  href={buildWhatsAppLink(SUPPORT_WHATSAPP, 'مرحباً، عندي استفسار عن توصيلة السنتر')}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  تواصل مع الإدارة
+                </a>
+              )}
+            </div>
+
             <details className="tc-card tc-howto">
               <summary>كيف يعمل؟ توصيلة سريعة أم ترحيل منتظم</summary>
               <div className="tc-info-grid" style={{ marginTop: '10px' }}>
@@ -3455,6 +3640,21 @@ export default function App() {
                 </div>
               </div>
             </details>
+            <details id="tc-faq" className="tc-card tc-howto" style={{ marginTop: '10px' }}>
+              <summary>الأسئلة الشائعة</summary>
+              <div style={{ marginTop: '8px' }}>
+                {FAQ_ITEMS.map((item) => (
+                  <details key={item.q} style={{ padding: '8px 0', borderTop: '1px dashed #dbe7e4' }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#073e44', fontSize: '0.92rem' }}>
+                      {item.q}
+                    </summary>
+                    <p style={{ margin: '8px 0 0', fontSize: '0.88rem', color: '#425d60', lineHeight: 1.9 }}>
+                      {item.a}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </details>
             <details id="tc-terms" className="tc-card tc-howto" style={{ marginTop: '10px' }}>
               <summary>الشروط والخصوصية والمسؤولية</summary>
               <ul
@@ -3466,7 +3666,7 @@ export default function App() {
                   lineHeight: 1.9,
                 }}
               >
-                <li>توصيلة السنتر مبادرة طلابية مستقلة، وليست خدمة رسمية من الجامعة.</li>
+                <li>توصيلة السنتر منصة طلابية مستقلة تربط طلاب جامعة الخرطوم، وليست خدمة رسمية من الجامعة. الخدمات الأساسية مجانية خلال فترة الإطلاق.</li>
                 <li>
                   الموقع وسيط يعرّف الطلاب ببعضهم فقط. لا يملك العربات، ولا يتحمل مسؤولية
                   الرحلات أو الحوادث أو الاتفاقات المالية، والاتفاق على المسار والسعر بين الطرفين.
@@ -3661,7 +3861,7 @@ export default function App() {
                       <Icon name="car" size={24} />
                     </div>
                     <div style={{ fontWeight: 700, marginBottom: '6px' }}>
-                      لا توجد عروض سائقين مطابقة حالياً
+                      لسه مافي عربة في المسار دا
                     </div>
                     <p className="tc-muted" style={{ marginBottom: '12px' }}>
                       يمكنك مسح الفلاتر أو نشر طلبك ليتواصل معك السائقون على نفس المسار.
@@ -3897,7 +4097,7 @@ export default function App() {
                       <Icon name="hand" size={24} />
                     </div>
                     <div style={{ fontWeight: 700, marginBottom: '4px' }}>
-                      لا توجد طلبات طلاب مطابقة حالياً
+                      لسه ما في طلب على المسار دا
                     </div>
                     <p className="tc-muted" style={{ marginBottom: 0 }}>
                       عند نشر طلاب جامعة الخرطوم لطلبات توصيل أو ترحيل ستظهر هنا مباشرة.
@@ -4760,12 +4960,18 @@ export default function App() {
                     <label className="tc-label">
                       {offerIsRecurring
                         ? 'تاريخ ووقت أول رحلة (توقيت التحرك المعتاد)'
-                        : 'موعد المغادرة (في المستقبل)'}{' '}
+                                                 : 'موعد التحرك'}{' '}
                       <span className="tc-req">*</span>
+                      <InfoTip
+                        text={
+                          offerIsRecurring
+                            ? 'اختر أول يوم والوقت الذي تتحرك فيه عادةً. يظهر الإعلان للركاب كرحلة متكررة بهذا الوقت.'
+                            : 'اختر التاريخ ثم الوقت الذي ستتحرك فيه، ويجب أن يكون وقتاً لم يمضِ بعد. مثال: غداً 7:30 صباحاً.'
+                        }
+                      />
                     </label>
                     <input
-                      type="datetime-local"
-                      value={offerForm.departure_time}
+                      type="datetime-local" min={toDatetimeLocalValue(new Date())} value={offerForm.departure_time}
                       onChange={(e) =>
                         setOfferForm({ ...offerForm, departure_time: e.target.value })
                       }
@@ -4776,7 +4982,7 @@ export default function App() {
 
                   {offerIsRecurring ? (
                     <div className="tc-field">
-                      <label className="tc-label">مدة بقاء إعلان الترحيل</label>
+                      <label className="tc-label">مدة بقاء إعلان الترحيل <InfoTip text="المدة التي يبقى فيها إعلانك ظاهراً قبل أن يختفي تلقائياً. يمكنك نشره من جديد بعد انتهائها." /></label>
                       <select
                         value={offerForm.recurring_valid_days}
                         onChange={(e) =>
@@ -4795,21 +5001,21 @@ export default function App() {
                   ) : (
                     <div className="tc-field">
                       <label className="tc-label">
-                        بقاء الإعلان بعد المغادرة (بالساعات)
+                        بقاء الإعلان بعد وقت التحرك قبل حذفه تلقائياً (بالساعات)
+                        <InfoTip text="مثال: لو تحركت الساعة 7:30 وكتبت 3، يبقى الإعلان ظاهراً حتى 10:30 صباحاً ثم يختفي تلقائياً. الحد الأقصى 24 ساعة." />
                       </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="72"
-                        value={offerForm.expires_after_hours}
-                        onChange={(e) =>
-                          setOfferForm({
-                            ...offerForm,
-                            expires_after_hours: e.target.value,
-                          })
-                        }
-                        className="tc-input"
-                      />
+                      <div className="tc-chips">
+                        {[1, 2, 3, 6, 12, 24].map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            className={`tc-chip ${Number(offerForm.expires_after_hours) === h ? 'active' : ''}`}
+                            onClick={() => setOfferForm({ ...offerForm, expires_after_hours: h })}
+                          >
+                            {h === 1 ? 'ساعة' : h === 2 ? 'ساعتان' : h <= 10 ? `${h} ساعات` : `${h} ساعة`}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -4859,7 +5065,7 @@ export default function App() {
                     </label>
                     <input
                       type="number"
-                      min="0"
+                      min="1"
                       max="50"
                       value={offerForm.available_seats}
                       onChange={(e) =>
@@ -5139,12 +5345,18 @@ export default function App() {
                     <label className="tc-label">
                       {requestIsRecurring
                         ? 'تاريخ ووقت أول يوم (توقيت التحرك المعتاد)'
-                        : 'الوقت المفضل للتحرك (في المستقبل)'}{' '}
+                                                 : 'الوقت المناسب لك للتحرك'}{' '}
                       <span className="tc-req">*</span>
+                      <InfoTip
+                        text={
+                          requestIsRecurring
+                            ? 'اختر أول يوم والوقت الذي تحتاج فيه الترحيل عادةً.'
+                            : 'اختر التاريخ ثم الوقت الذي تريد التحرك فيه، ويجب أن يكون وقتاً لم يمضِ بعد.'
+                        }
+                      />
                     </label>
                     <input
-                      type="datetime-local"
-                      value={requestForm.preferred_time}
+                      type="datetime-local" min={toDatetimeLocalValue(new Date())} value={requestForm.preferred_time}
                       onChange={(e) =>
                         setRequestForm({ ...requestForm, preferred_time: e.target.value })
                       }
@@ -5155,7 +5367,7 @@ export default function App() {
 
                   {requestIsRecurring ? (
                     <div className="tc-field">
-                      <label className="tc-label">مدة بقاء طلب الترحيل</label>
+                      <label className="tc-label">مدة بقاء طلب الترحيل <InfoTip text="المدة التي يبقى فيها طلبك ظاهراً قبل أن يختفي تلقائياً. يمكنك نشره من جديد بعد انتهائها." /></label>
                       <select
                         value={requestForm.recurring_valid_days}
                         onChange={(e) =>
@@ -5174,21 +5386,21 @@ export default function App() {
                   ) : (
                     <div className="tc-field">
                       <label className="tc-label">
-                        بقاء الطلب بعد الموعد (بالساعات)
+                        بقاء الطلب بعد الموعد قبل حذفه تلقائياً (بالساعات)
+                        <InfoTip text="مثال: لو موعدك الساعة 7:30 وكتبت 3، يبقى طلبك ظاهراً حتى 10:30 صباحاً ثم يختفي تلقائياً. الحد الأقصى 24 ساعة." />
                       </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="72"
-                        value={requestForm.expires_after_hours}
-                        onChange={(e) =>
-                          setRequestForm({
-                            ...requestForm,
-                            expires_after_hours: e.target.value,
-                          })
-                        }
-                        className="tc-input"
-                      />
+                      <div className="tc-chips">
+                        {[1, 2, 3, 6, 12, 24].map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            className={`tc-chip ${Number(requestForm.expires_after_hours) === h ? 'active' : ''}`}
+                            onClick={() => setRequestForm({ ...requestForm, expires_after_hours: h })}
+                          >
+                            {h === 1 ? 'ساعة' : h === 2 ? 'ساعتان' : h <= 10 ? `${h} ساعات` : `${h} ساعة`}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -5716,9 +5928,30 @@ export default function App() {
                       onChange={(e) =>
                         setEditModal({ ...editModal, price_per_seat: e.target.value })
                       }
+                                            className="tc-input"
+                    />
+                  </div>
+                  <div className="tc-field" style={{ marginTop: '12px' }}>
+                    <label className="tc-label">ملاحظات للركاب (اختياري)</label>
+                    <textarea
+                      rows="2"
+                      maxLength={300}
+                      value={editModal.notes || ''}
+                      onChange={(e) => setEditModal({ ...editModal, notes: e.target.value })}
                       className="tc-input"
                     />
                   </div>
+                  {isRecurringType(editModal.recurrence_type) && (
+                    <div className="tc-field" style={{ marginTop: '12px' }}>
+                      <label className="tc-label">وقت رحلة العودة (اختياري)</label>
+                      <input
+                        type="time"
+                        value={editModal.return_time || ''}
+                        onChange={(e) => setEditModal({ ...editModal, return_time: e.target.value })}
+                        className="tc-input"
+                      />
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -5876,7 +6109,7 @@ export default function App() {
         </button>
         <button
           type="button"
-          className={`tc-bottom-btn ${tab === TABS.ADS ? 'active' : ''}`}
+          className={`tc-bottom-btn ${tab === TABS.ADS && boardSection !== 'mine' ? 'active' : ''}`}
           onClick={() => openAds('all')}
         >
           {totalLiveAds > 0 && (
@@ -5901,13 +6134,14 @@ export default function App() {
           <Icon name="hand" size={20} />
           <span>اطلب</span>
         </button>
-        <button
+                <button
           type="button"
-          className={`tc-bottom-btn ${tab === TABS.ADMIN ? 'active' : ''}`}
-          onClick={() => openTab(TABS.ADMIN)}
+          className={`tc-bottom-btn ${tab === TABS.ADS && boardSection === 'mine' ? 'active' : ''}`}
+          onClick={() => openAds('mine')}
         >
-          <Icon name="shield" size={20} />
-          <span>الإدارة</span>
+          {totalMyAdsCount > 0 && <span className="tc-bottom-count">{totalMyAdsCount}</span>}
+          <Icon name="edit" size={20} />
+          <span>إعلاناتي</span>
         </button>
       </nav>
     </div>
